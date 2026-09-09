@@ -106,7 +106,7 @@ project between `active/` and `paused/` and every inbound link still resolves.
 | Hooks | 11 entries across 10 events, all vault-aware |
 | Templates | 20 file-type scaffolds + `board.html` |
 | Helpers | stdlib-only Python, one per file-touching verb; no build step |
-| Drift defense | `python3 scripts/validate.py` — 26 validators, run on pre-commit |
+| Drift defense | `python3 scripts/validate.py` — 28 validators, run on pre-commit |
 | Tests | `python3 -m unittest discover -p 'test_*.py'` |
 
 Hook wiring and the verb-to-helper map live in

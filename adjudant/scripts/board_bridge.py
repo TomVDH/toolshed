@@ -31,6 +31,7 @@ import argparse
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from _render import render
@@ -86,8 +87,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"error: project not found: {project_dir} (run /adjudant connect first)", file=sys.stderr)
         return 1
 
+    # Beans lives beside the code, and --project-dir may name either side of
+    # the link, so the code root is found by the breadcrumb rather than assumed.
+    import _beans
+    code_root = _beans.code_root_from(Path(args.project_dir))
+
     try:
-        verdict = ensure_board(project_dir)
+        verdict = ensure_board(project_dir, code_root=code_root)
     except Exception as e:  # a broken template/deck must not traceback at hook time
         print(f"error: {e}", file=sys.stderr)
         return 1

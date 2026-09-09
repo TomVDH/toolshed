@@ -289,8 +289,15 @@ def write_breadcrumb(
     existing = parse_breadcrumb(project_root) or {}
     cwt = existing.get("cost_warn_tokens", str(DEFAULT_WARN_TOKENS))
     sad = existing.get("stale_after_days", "30")
+    # Which store owns this repo's WORK ITEMS. A hand-set value always wins:
+    # `tracker: vault` in a repo that has beans is the documented escape hatch,
+    # and a re-connect that overrode it would take the choice away silently.
+    tracker = (existing.get("tracker") or "").strip().lower()
+    if tracker not in ("vault", "beans"):
+        import _beans
+        tracker = "beans" if _beans.detect(project_root) else "vault"
     canonical = {"vault_path", "vault_name", "slug", "mode",
-                 "cost_warn_tokens", "stale_after_days"}
+                 "cost_warn_tokens", "stale_after_days", "tracker"}
     extra = "".join(f"{k}: {v}\n" for k, v in existing.items()
                     if k not in canonical)
     content = (
@@ -300,6 +307,7 @@ def write_breadcrumb(
         f"mode: project\n"
         f"cost_warn_tokens: {cwt}\n"
         f"stale_after_days: {sad}\n"
+        f"tracker: {tracker}\n"
         + extra
     )
     bc = project_root / ".claude" / "adjudant"

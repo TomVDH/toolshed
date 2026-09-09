@@ -46,6 +46,7 @@ from typing import Any, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import _beans  # noqa: E402
 import _profile  # noqa: E402
 from _cost import (  # noqa: E402
     breadcrumb_int, cost_block, read_threshold, stat_walk,
@@ -777,6 +778,28 @@ def make_current(
         except Exception as e:            # a broken vault must not fail the report
             warnings.append(f"index regeneration skipped: {e}")
 
+    # The Beans mirror: a generated, read-only index of open beans, so dream can
+    # still reason about the work and the vault is not blind to it. On a machine
+    # without the CLI it is the only record of the work the vault can see, which
+    # is why an unreachable tracker LEAVES THE EXISTING FILE ALONE — a stale
+    # mirror beats an emptied one.
+    beans_root = _beans.code_root_from(code_root)
+    if _beans.owns(beans_root):
+        blocked = _beans.unreachable_reason(beans_root)
+        if blocked:
+            warnings.append(f"beans mirror not refreshed: {blocked}")
+        else:
+            res = _beans.list_beans(beans_root)
+            if res.ok:
+                changed = _beans.write_mirror(vault_project_dir, res.value, today)
+                steps["beans"] = {
+                    "open": len(_beans.open_beans(res.value)),
+                    "total": len(res.value),
+                    "mirror": "rewritten" if changed else "unchanged",
+                }
+            else:
+                warnings.append(f"beans mirror not refreshed: {res.reason}")
+
     return {"today": today, "slug": slug, "steps": steps, "warnings": warnings}
 
 
@@ -958,6 +981,28 @@ def capture_task(project_dir: Path, title: str, note: str = "") -> tuple:
     from board import ensure_board
     from board_bridge import kebab, render_task_note
 
+    # Beans owns the work items where it is the tracker, so a capture becomes a
+    # bean. Writing a vault task note there would create a card Beans never
+    # sees and the board never seeds — the exact two-stores-disagree failure
+    # the one-tracker rule exists to prevent.
+    code_root = _beans.code_root_from()
+    if _beans.owns(code_root):
+        blocked = _beans.unreachable_reason(code_root)
+        if blocked:
+            return 1, (f"error: {blocked}\n"
+                       f"  Nothing written. Once beans is reachable: "
+                       f"beans create {title!r}")
+        res = _beans.create(code_root, title, note)
+        if not res.ok:
+            return 1, f"error: beans create failed: {res.reason}"
+        new = res.value if isinstance(res.value, dict) else {}
+        bid = str(new.get("id") or "").strip() or "(id not reported)"
+        try:
+            verdict = ensure_board(project_dir, code_root=code_root)
+        except Exception as e:  # the bean landed; the board can catch up
+            return 0, f"created bean {bid} (board reseed failed: {e})"
+        return 0, f"created bean {bid}; board: {verdict}"
+
     slug = kebab(title)
     if not slug:
         return 1, "error: --title kebabs to nothing; give it at least one word"
@@ -970,7 +1015,7 @@ def capture_task(project_dir: Path, title: str, note: str = "") -> tuple:
     with file_lock(note_path):
         atomic_write_text(note_path, body)
     try:
-        verdict = ensure_board(project_dir)
+        verdict = ensure_board(project_dir, code_root=_beans.code_root_from())
     except Exception as e:  # the note landed; the board can catch up next hook
         return 0, f"wrote tasks/{slug}.md (board reseed failed: {e})"
     return 0, f"wrote tasks/{slug}.md; board: {verdict}"
