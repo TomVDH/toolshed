@@ -468,3 +468,86 @@ class TestTheBoardStaysOptIn(unittest.TestCase):
                 verdict = board.ensure_board(proj, code_root=root)
             self.assertEqual(verdict, "tracker-unreachable")
             self.assertFalse((proj / "board").exists(), "a blocked repo still got a board")
+
+
+class TestTheVerbSeesWhatTheHooksSee(unittest.TestCase):
+    """`board.cmd_scaffold` must hand `scaffold_one` the code root.
+
+    Every ambient caller already did. The verb a person types did not, so
+    `/adjudant board` in a Beans-owned repo rebuilt the deck from tasks/ and
+    replaced a deck of beans with a deck of task notes. Found 2026-09-09 on a
+    live repo with 72 beans and 71 task notes.
+    """
+
+    def _fixture(self, tmp: Path, *, slug: str = "demo", projects=("demo",)):
+        """A vault, one code root, and a fake beans that answers with one bean."""
+        vault = tmp / "V"
+        for name in projects:
+            proj = vault / "projects" / name
+            proj.mkdir(parents=True)
+            (proj / "brief.md").write_text("---\ntype: brief\nstatus: active\n---\n# D\n")
+            (proj / "tasks").mkdir()
+            (proj / "tasks" / "a-task-note.md").write_text(
+                "---\ntype: task\nstatus: next\n---\n\n## Task\n\nFrom the vault.\n")
+        root = tmp / "r"
+        (root / ".claude").mkdir(parents=True)
+        (root / ".claude" / "adjudant").write_text(
+            f"vault_path: {vault}\nslug: {slug}\nmode: project\ntracker: beans\n")
+        (root / ".beans.yml").write_text("beans:\n  path: .beans\n")
+        bindir = tmp / "bin"
+        _fake_beans(bindir, stdout=json.dumps([BEAN]))
+        return vault, root, bindir
+
+    def _deck(self, proj: Path) -> dict:
+        return json.loads((proj / "board" / "board-data.json").read_text())
+
+    def test_scaffold_seeds_from_beans_in_a_beans_owned_repo(self):
+        import board
+        with tempfile.TemporaryDirectory() as tmp:
+            vault, root, bindir = self._fixture(Path(tmp))
+            with _Env(path=str(bindir), project_dir=root):
+                rc = board.cli_main(["scaffold", "--project-dir", str(root)])
+            self.assertEqual(rc, 0)
+            deck = self._deck(vault / "projects" / "demo")
+            self.assertEqual(deck.get("tracker"), "beans")
+            self.assertEqual([c["source"] for c in deck["cards"]], ["beans"],
+                             "the verb rebuilt the deck from tasks/, not from beans")
+
+    def test_force_alone_is_not_refused_in_a_beans_owned_repo(self):
+        # build_deck ignores from_tasks when beans owns the repo, so there is
+        # no empty deck for the guard to protect against.
+        import board
+        with tempfile.TemporaryDirectory() as tmp:
+            vault, root, bindir = self._fixture(Path(tmp))
+            proj = vault / "projects" / "demo"
+            with _Env(path=str(bindir), project_dir=root):
+                self.assertEqual(board.cli_main(["scaffold", "--project-dir", str(root)]), 0)
+                rc = board.cli_main(["scaffold", "--project-dir", str(root), "--force"])
+            self.assertEqual(rc, 0, "--force was refused in the one repo that needs it")
+            deck = self._deck(proj)
+            self.assertEqual(deck.get("tracker"), "beans")
+
+    def test_all_never_hands_one_repos_code_root_to_another_project(self):
+        # --all walks projects it did not resolve from a breadcrumb. Passing
+        # this repo's code root to every one of them would mark them all
+        # Beans-owned and seed them all from THIS repo's beans.
+        import board
+        with tempfile.TemporaryDirectory() as tmp:
+            vault, root, bindir = self._fixture(
+                Path(tmp), slug="demo", projects=("demo", "other"))
+            with _Env(path=str(bindir), project_dir=root):
+                rc = board.cli_main(["scaffold", "--all", "--vault", str(vault),
+                                     "--project-dir", str(root), "--from-tasks"])
+            self.assertEqual(rc, 0)
+            mine = self._deck(vault / "projects" / "demo")
+            theirs = self._deck(vault / "projects" / "other")
+            self.assertEqual(mine.get("tracker"), "beans")
+            self.assertIsNone(theirs.get("tracker"),
+                              "a foreign project was marked Beans-owned")
+            self.assertNotIn("beans", [c.get("source") for c in theirs["cards"]])
+
+    def test_breadcrumb_slug_reads_the_slug_and_is_empty_without_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(_beans.breadcrumb_slug(_repo(Path(tmp), "beans")), "demo")
+            self.assertEqual(_beans.breadcrumb_slug(None), "")
+            self.assertEqual(_beans.breadcrumb_slug(Path(tmp) / "nowhere"), "")

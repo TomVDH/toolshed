@@ -858,7 +858,16 @@ def scaffold_one(
 
     # `--force` alone over an existing board would rebuild an EMPTY starter
     # deck on top of it — total loss of cards, notes, and drag state. Refuse.
-    if force and data_path.is_file() and not from_tasks and not data:
+    #
+    # A Beans-owned repo is the exception, and the reason is in `build_deck`:
+    # it ignores `from_tasks` entirely and reads `beans list`, so there is no
+    # empty deck to protect against and `--from-tasks` names a source that is
+    # never consulted. Refusing here sent Beans users to `--force --from-tasks`,
+    # a command whose name says tasks/ and whose effect is beans.
+    import _beans
+
+    if (force and data_path.is_file() and not from_tasks and not data
+            and not _beans.owns(code_root)):
         print("error: --force without --from-tasks (or --data) would overwrite "
               "the existing board with an empty deck — refusing. "
               "Add --from-tasks to rebuild from tasks/.", file=sys.stderr)
@@ -1098,6 +1107,20 @@ def _serve_hint(dest: Path) -> None:
 
 
 def cmd_scaffold(args: argparse.Namespace) -> int:
+    # The CODE root, so `build_deck` can see a Beans-owned repo. Every ambient
+    # caller already passed this; the verb a person types did not, so
+    # `/adjudant board` rebuilt a Beans project from tasks/ and silently
+    # replaced a deck of beans with a deck of task notes.
+    #
+    # `--all` and `--project` may target a project this cwd is not linked to,
+    # and that project's code root is not this one. Hand the root over only
+    # when the breadcrumb names the same slug.
+    import _beans
+
+    code_root = _beans.code_root_from(
+        Path(args.project_dir) if getattr(args, "project_dir", None) else None)
+    crumb_slug = _beans.breadcrumb_slug(code_root)
+
     # ── Mode: --all / --project both operate at the vault level ──
     if args.all or args.project:
         vault = _resolve_vault_root(args)
@@ -1120,7 +1143,8 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
             try:
                 if scaffold_one(pdir, pdir / "board", from_tasks=args.from_tasks,
                                 data=None, force=args.force, title=None, board_id=slug,
-                                vault_root=vault, kanban=args.kanban) == 0:
+                                vault_root=vault, kanban=args.kanban,
+                                code_root=code_root if slug == crumb_slug else None) == 0:
                     ok += 1
                 else:
                     rc = 1
@@ -1143,7 +1167,8 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
         rc = scaffold_one(pdir, dest, from_tasks=args.from_tasks, data=args.data,
                           force=args.force, title=args.title, board_id=args.project,
                           vault_root=vault, dest_explicit=bool(args.dest),
-                          kanban=args.kanban)
+                          kanban=args.kanban,
+                          code_root=code_root if args.project == crumb_slug else None)
         if rc == 0:
             _serve_hint(dest)
         return rc
@@ -1158,7 +1183,7 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
     rc = scaffold_one(project_dir, dest, from_tasks=args.from_tasks, data=args.data,
                       force=args.force, title=args.title, board_id=None,
                       vault_root=vault_hint, dest_explicit=bool(args.dest),
-                      kanban=args.kanban)
+                      kanban=args.kanban, code_root=code_root)
     if rc == 0:
         _serve_hint(dest)
     return rc

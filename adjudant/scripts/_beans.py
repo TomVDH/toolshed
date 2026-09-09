@@ -108,8 +108,8 @@ def available() -> bool:
     return shutil.which(BINARY) is not None
 
 
-def _breadcrumb_tracker(code_root: Path) -> str:
-    """The `tracker:` value in `<code_root>/.claude/adjudant`, lowercased.
+def _breadcrumb_value(code_root: Path, key: str) -> str:
+    """One key from `<code_root>/.claude/adjudant`, lowercased.
 
     Parsed here rather than via `_vault_walk.parse_breadcrumb` so this module
     stays importable when the vault layer is broken or mid-sync: a repo's
@@ -127,10 +127,27 @@ def _breadcrumb_tracker(code_root: Path) -> str:
         sep = ":" if ":" in line else ("=" if "=" in line else None)
         if not sep:
             continue
-        key, val = line.split(sep, 1)
-        if key.strip() == "tracker":
+        name, val = line.split(sep, 1)
+        if name.strip() == key:
             return val.strip().lower()
     return ""
+
+
+def _breadcrumb_tracker(code_root: Path) -> str:
+    """The `tracker:` value in this repo's breadcrumb, lowercased."""
+    return _breadcrumb_value(code_root, "tracker")
+
+
+def breadcrumb_slug(code_root: Optional[Path]) -> str:
+    """The vault project slug this code root is linked to, or ''.
+
+    A batch caller (`board --all`) walks projects it did NOT resolve from a
+    breadcrumb, so it must not hand this repo's code root to another project's
+    board. Comparing slugs is the only check that separates them.
+    """
+    if code_root is None:
+        return ""
+    return _breadcrumb_value(code_root, "slug")
 
 
 def owns(code_root: Optional[Path]) -> bool:
