@@ -371,3 +371,100 @@ class TestTheVaultMirror(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBeansIsOfferedNeverAssumed(unittest.TestCase):
+    """connect must not decide who owns the work items. Finding a beans project
+    is evidence, not consent: a repo can carry one and still want its cards in
+    the vault, and a re-connect must never switch that behind the user."""
+
+    def _connect(self, root, vault, **kw):
+        import connect
+        return connect.write_breadcrumb(root, vault, "V", "demo", kw.get("tracker"))
+
+    def _tracker_of(self, root):
+        return _beans._breadcrumb_tracker(root)
+
+    def test_a_beans_repo_still_defaults_to_the_vault(self):
+        # The guard. Auto-detecting here would take the choice away and would
+        # silently repoint every board in a repo that merely has beans.
+        with tempfile.TemporaryDirectory() as tmp:
+            root, vault = Path(tmp) / "r", Path(tmp) / "V"
+            (root / ".claude").mkdir(parents=True); vault.mkdir()
+            (root / ".beans").mkdir(); (root / ".beans.yml").write_text("beans:\n  path: .beans\n")
+            _fake_beans(Path(tmp) / "bin")
+            with _Env(path=Path(tmp) / "bin"):
+                self._connect(root, vault)
+            self.assertEqual(self._tracker_of(root), "vault")
+
+    def test_the_users_choice_is_what_lands(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, vault = Path(tmp) / "r", Path(tmp) / "V"
+            (root / ".claude").mkdir(parents=True); vault.mkdir()
+            self._connect(root, vault, tracker="beans")
+            self.assertEqual(self._tracker_of(root), "beans")
+
+    def test_a_reconnect_never_switches_a_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, vault = Path(tmp) / "r", Path(tmp) / "V"
+            (root / ".claude").mkdir(parents=True); vault.mkdir()
+            (root / ".beans").mkdir(); (root / ".beans.yml").write_text("beans:\n  path: .beans\n")
+            self._connect(root, vault, tracker="vault")
+            _fake_beans(Path(tmp) / "bin")
+            with _Env(path=Path(tmp) / "bin"):
+                self._connect(root, vault)          # no --tracker: keep what is written
+            self.assertEqual(self._tracker_of(root), "vault")
+
+    def test_the_contract_asks_rather_than_answers(self):
+        import connect
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "r"
+            (root / ".claude").mkdir(parents=True)
+            (root / ".beans").mkdir(); (root / ".beans.yml").write_text("beans:\n  path: .beans\n")
+            offer = connect._tracker_offer(root)
+            self.assertTrue(offer["beans_project"])
+            self.assertEqual(offer["default"], "vault")       # never beans by default
+            self.assertIn("beans", offer["options"])
+            self.assertIsNotNone(offer["ask"])                # there IS a question
+
+    def test_a_repo_without_beans_is_not_asked(self):
+        import connect
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "r"
+            (root / ".claude").mkdir(parents=True)
+            offer = connect._tracker_offer(root)
+            self.assertFalse(offer["beans_project"])
+            self.assertEqual(offer["options"], ["vault"])
+            self.assertIsNone(offer["ask"])
+
+
+class TestTheBoardStaysOptIn(unittest.TestCase):
+    """A board is born by running /adjudant board, and by nothing else. Beans
+    must not have quietly changed that."""
+
+    def test_no_hook_creates_a_board_that_does_not_exist(self):
+        # sessionend is the only ambient caller, and it is guarded on the deck
+        # already being there. Losing that guard would scaffold a board into
+        # every beans repo at the end of every session.
+        hooks = Path(__file__).resolve().parent.parent / "hooks" / "scripts"
+        text = (hooks / "sessionend.sh").read_text()
+        # Anchor on the INVOCATION, not the `-f ... board_bridge.py` existence
+        # check: the deck guard sits between the two.
+        i = text.index("--ensure-only")
+        window = text[max(0, i - 500):i]
+        self.assertIn("board-data.json", window,
+                      "sessionend calls board_bridge without checking the deck exists")
+
+    def test_ensure_board_reports_rather_than_creates_when_beans_is_unreachable(self):
+        import board
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp) / "V"; proj = vault / "projects" / "demo"
+            proj.mkdir(parents=True)
+            (proj / "brief.md").write_text("---\ntype: brief\nstatus: active\n---\n# D\n")
+            root = Path(tmp) / "r"; (root / ".claude").mkdir(parents=True)
+            (root / ".claude" / "adjudant").write_text(
+                f"vault_path: {vault}\nslug: demo\nmode: project\ntracker: beans\n")
+            with _Env(path="/nonexistent-bin"):
+                verdict = board.ensure_board(proj, code_root=root)
+            self.assertEqual(verdict, "tracker-unreachable")
+            self.assertFalse((proj / "board").exists(), "a blocked repo still got a board")
