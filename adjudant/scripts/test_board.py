@@ -1700,6 +1700,36 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("--mark-ink:#e2ddd7", block.replace(" ", ""))
         self.assertIn("--mark-eye:#d7dde2", block.replace(" ", ""))
 
+    def test_the_wipe_is_one_timeline_so_it_is_actually_a_reveal(self):
+        # A wipe is one constraint: the width of wordmark showing must EQUAL the
+        # width the band has vacated. The first cut ran the two on different
+        # curves, so the word was 90% drawn a fifth of a second in, sitting
+        # under an opaque bar that had not reached it. Nothing revealed
+        # anything. The pair only holds if they share duration, delay, driver
+        # and keyframe split, so that is what this pins.
+        band = re.search(r"animation:brand-unfurl ([^;]+);", self.src)
+        word = re.search(r"animation:brand-uncover ([^;]+) forwards", self.src)
+        self.assertIsNotNone(band, "band animation missing")
+        self.assertIsNotNone(word, "wordmark animation missing")
+        self.assertEqual(band.group(1).replace(" forwards", "").strip(),
+                         word.group(1).strip(),
+                         "the band and the wordmark must run on one timeline")
+        # both keyframe sets split at the same instant and share the exit curve
+        for name in ("brand-unfurl", "brand-uncover"):
+            block = re.search(name + r"\{(.*?)\n  \}", self.src, re.S)
+            self.assertIsNotNone(block, name + " keyframes missing")
+            self.assertIn("44%{", block.group(1).replace(" ", ""))
+            self.assertIn("cubic-bezier(.45,.05,.25,1)", block.group(1).replace(" ", ""))
+
+    def test_the_one_entrance_animation_still_yields_to_reduced_motion(self):
+        rm = self.src[self.src.index("prefers-reduced-motion"):]
+        block = rm[:rm.index("\n  }")]
+        # the clip-path that hides the wordmark has to be lifted, not just the
+        # animation stopped, or the mark would never appear at all
+        self.assertIn("animation:none", block.replace(" ", ""))
+        self.assertIn("clip-path:none", block.replace(" ", ""))
+        self.assertIn(".brand-band{display:none}", block.replace(" ", ""))
+
     def test_a_task_list_renders_its_state_not_its_syntax(self):
         # The sheet printed `<li>[ ] Test both embeds...</li>`: the raw marker,
         # with nothing separating done from not done. Beans' whole loop is

@@ -145,21 +145,59 @@
   .brand-mark{width:52px;height:auto;flex:none;position:relative;z-index:2;display:block}
   .brand-text{min-width:0}
   .brand-word{position:relative;height:28px;display:flex;align-items:center;overflow:hidden}
+  /* THE ONE ENTRANCE ANIMATION, and it is a deliberate exception. This theme
+     has no entrance vocabulary: nothing else on the board moves on arrival,
+     because chrome that announces itself is chrome you have to wait for. The
+     mark is not chrome. It is the one moment the board is allowed to be a
+     brand, it happens once per load, and it is over in seven tenths of a
+     second. Anything longer is a splash screen. */
   .brand-word svg{
     height:21px;width:auto;color:var(--text);display:block;
-    clip-path:inset(0 100% 0 0);animation:brand-uncover .9s var(--ease) .15s forwards
+    /* Locked to the band, not merely timed near it. See brand-uncover. */
+    clip-path:inset(0 100% 0 0);animation:brand-uncover .62s linear .06s forwards
   }
   .brand-band{
     position:absolute;inset:0;display:flex;flex-direction:column;
-    transform:translateX(-100%);animation:brand-sweep .9s var(--ease) .15s forwards;
+    /* Unfurled, not flown in. It used to be a finished three-colour block that
+       slid in from off-canvas, which read as a card being dealt from somewhere
+       outside the page. Clipped from the left edge instead, it grows out of the
+       figure standing there, which is where the plume already is. */
+    clip-path:inset(0 100% 0 0);
+    animation:brand-unfurl .62s linear .06s forwards;
     pointer-events:none
   }
   .brand-band i{flex:1}
   .brand-band i:nth-child(1){background:var(--band-1)}
   .brand-band i:nth-child(2){background:var(--band-2)}
   .brand-band i:nth-child(3){background:var(--band-3)}
-  @keyframes brand-uncover{to{clip-path:inset(0 0 0 0)}}
-  @keyframes brand-sweep{to{transform:translateX(101%)}}
+  /* THE TWO HALVES MUST BE ONE TIMELINE, and the first cut was not.
+     The band swept on its own curve while the word faded up on another, so the
+     word was already 90% drawn a fifth of a second in, sitting under an opaque
+     bar that had not reached it yet. Nothing was revealing anything; two things
+     were happening near each other.
+
+     A wipe is one constraint: the width of word showing must EQUAL the width the
+     band has vacated. The band occupies [left, 100%], so it has vacated [0,
+     left] -- which means the word's right inset must be exactly 100% minus the
+     band's left inset, at every instant. That is only true if both run the same
+     duration, the same delay, the same keyframe split and the same per-segment
+     easing. They do, below. Change one and you must change its pair.
+
+     Two curves, because it is two gestures. Out of the plume it decelerates,
+     the way something unfurling runs out of slack. Away to the right it moves
+     off evenly, because that half is not the band leaving, it is the wordmark
+     arriving, and the wordmark should not be flung at anyone. */
+  @keyframes brand-unfurl{
+    0%{clip-path:inset(0 100% 0 0);animation-timing-function:cubic-bezier(.16,.84,.44,1)}
+    44%{clip-path:inset(0 0 0 0);animation-timing-function:cubic-bezier(.45,.05,.25,1)}
+    100%{clip-path:inset(0 0 0 100%)}
+  }
+  @keyframes brand-uncover{
+    0%{clip-path:inset(0 100% 0 0)}
+    /* held: through the whole unfurl the word is behind the band anyway */
+    44%{clip-path:inset(0 100% 0 0);animation-timing-function:cubic-bezier(.45,.05,.25,1)}
+    100%{clip-path:inset(0 0 0 0)}
+  }
 
   /* ── Masthead ── */
   header.masthead{

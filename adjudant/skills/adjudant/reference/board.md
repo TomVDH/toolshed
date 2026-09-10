@@ -133,6 +133,24 @@ and inline markdown still parses inside a task's text.
 The card face strips the marker along with the bullet, after it rather than
 before, since the marker only starts the line once the bullet is gone.
 
+### The wipe
+
+The one entrance animation on the board, and a deliberate exception: nothing else
+moves on arrival, because chrome that announces itself is chrome you wait for.
+680 ms, once per load, and `render()` never recreates the nodes so a filter or a
+move cannot re-fire it.
+
+It is one timeline, not two things timed near each other. A wipe is a single
+constraint: the width of wordmark showing must equal the width the band has
+vacated. Both run the same duration, delay, driver and 44% keyframe split, and
+share the exit curve. Run them on separate curves and the wordmark finishes
+drawing while an opaque bar is still crossing it, which is what the first cut
+did. The band unfurls out of the figure by clip-path rather than sliding in from
+off-canvas, so it reads as the crest rather than a card dealt from outside.
+
+Under `prefers-reduced-motion` the band is removed and the wordmark's clip-path
+is lifted, not merely its animation stopped, or the mark would never appear.
+
 ### The display face
 
 Mozilla Headline Condensed SemiBold is embedded as a Latin-1 woff2 subset, 12 KB.
