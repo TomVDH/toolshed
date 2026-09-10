@@ -551,3 +551,67 @@ class TestTheVerbSeesWhatTheHooksSee(unittest.TestCase):
             self.assertEqual(_beans.breadcrumb_slug(_repo(Path(tmp), "beans")), "demo")
             self.assertEqual(_beans.breadcrumb_slug(None), "")
             self.assertEqual(_beans.breadcrumb_slug(Path(tmp) / "nowhere"), "")
+class TestTheVaultOperationLight(unittest.TestCase):
+    """`⊙` in front of the statusline's bolt means adjudant just wrote to the
+    vault. It cannot mean "a write is happening now": a hook's write finishes in
+    milliseconds and the statusline paints once per turn, so the signal is a
+    timestamp plus a linger window on the reader's side."""
+
+    def _marker(self, root, sid=""):
+        name = f"adjudant-vault-write-{sid}" if sid else "adjudant-vault-write"
+        return Path(root) / name
+
+    def test_it_writes_a_timestamp_the_reader_can_age(self):
+        import time
+        from _vault_walk import mark_vault_write
+        with tempfile.TemporaryDirectory() as tmp:
+            with _Env(path=os.environ["PATH"]):
+                os.environ["TMPDIR"] = tmp
+                try:
+                    mark_vault_write("sess-1")
+                    m = self._marker(tmp, "sess-1")
+                    self.assertTrue(m.is_file())
+                    self.assertLess(abs(int(m.read_text()) - int(time.time())), 5)
+                finally:
+                    os.environ.pop("TMPDIR", None)
+
+    def test_it_is_session_keyed_so_one_line_does_not_light_another(self):
+        from _vault_walk import mark_vault_write
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["TMPDIR"] = tmp
+            try:
+                mark_vault_write("sess-a")
+                self.assertTrue(self._marker(tmp, "sess-a").is_file())
+                self.assertFalse(self._marker(tmp, "sess-b").is_file())
+            finally:
+                os.environ.pop("TMPDIR", None)
+
+    def test_an_unwritable_tmpdir_is_silent_not_an_error(self):
+        # The guard. A statusline nicety must never be able to fail a vault
+        # write that already landed.
+        from _vault_walk import mark_vault_write
+        os.environ["TMPDIR"] = "/nonexistent-dir-for-the-marker"
+        try:
+            mark_vault_write("sess-x")      # must not raise
+        finally:
+            os.environ.pop("TMPDIR", None)
+
+    def test_the_documenting_paths_mark(self):
+        # Each site imports lazily and swallows everything, so assert the call
+        # is present rather than reaching through three layers of hook payload.
+        root = Path(__file__).resolve().parent.parent
+        for rel in ("hooks/scripts/posttooluse-vault-log.py",
+                    "hooks/scripts/posttooluse-commit-log.py"):
+            text = (root / rel).read_text()
+            self.assertIn("_mark_vault_write(", text, rel)
+            self.assertIn("from _vault_walk import mark_vault_write", text, rel)
+        self.assertIn("mark_vault_write(", (root / "scripts" / "status.py").read_text())
+
+    def test_marking_never_reaches_the_beans_binary(self):
+        # It is a file touch, not a tracker query. A subprocess here would put
+        # 50ms on every ambient write.
+        import inspect
+        from _vault_walk import mark_vault_write
+        src = inspect.getsource(mark_vault_write)
+        self.assertNotIn("subprocess", src)
+        self.assertNotIn("beans", src)

@@ -105,6 +105,19 @@ def _bootstrap() -> None:
                 c in "abcdefghijklmnopqrstuvwxyz0123456789-" for c in slug)
 
 
+def _mark_vault_write(session_id: str = "") -> None:
+    """Tell the statusline adjudant just documented something. Never raises.
+
+    Imported lazily and swallowed whole: this is a cosmetic signal and it must
+    not be able to fail a hook that has already done its real work.
+    """
+    try:
+        from _vault_walk import mark_vault_write
+        mark_vault_write(session_id)
+    except Exception:
+        pass
+
+
 def read_breadcrumb(project_dir: Path) -> dict:
     """Read `.claude/adjudant` breadcrumb (`key: value` per line, YAML-ish).
 
@@ -304,6 +317,7 @@ def main() -> int:
     try:
         with session_file.open("a") as f:
             f.write(f"- {ts} · {label}: {entry}\n")
+        _mark_vault_write(session_id)
     except OSError:
         pass  # log-write failure must not block job 2
 

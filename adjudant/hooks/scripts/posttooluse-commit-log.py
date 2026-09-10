@@ -34,6 +34,15 @@ try:
 except Exception:  # pragma: no cover - defensive
     pass
 
+def _mark_vault_write(session_id: str = "") -> None:
+    """Cosmetic signal for the statusline. Never raises, never blocks."""
+    try:
+        from _vault_walk import mark_vault_write
+        mark_vault_write(session_id)
+    except Exception:
+        pass
+
+
 try:
     from _render import render
     _RENDERER = True
@@ -366,6 +375,7 @@ def main() -> int:
                 break
     if session_file.exists():
         try:
+            _mark_vault_write(payload.get("session_id") or "")
             with session_file.open("a") as f:
                 f.write(f"- {ts} · commit: {log_safe(subject)}\n")
         except OSError:

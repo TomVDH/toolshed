@@ -800,6 +800,16 @@ def make_current(
             else:
                 warnings.append(f"beans mirror not refreshed: {res.reason}")
 
+    # The sync phase is the one place `status` writes into the vault, so it is
+    # where the vault-operation light belongs. Cosmetic and lazily imported: it
+    # must never be able to fail a sync that already landed.
+    if steps:
+        try:
+            from _vault_walk import mark_vault_write
+            mark_vault_write(os.environ.get("CLAUDE_SESSION_ID", ""))
+        except Exception:
+            pass
+
     return {"today": today, "slug": slug, "steps": steps, "warnings": warnings}
 
 
