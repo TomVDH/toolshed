@@ -206,6 +206,14 @@
     transition:color .15s var(--ease),border-color .15s var(--ease),opacity .15s var(--ease)
   }
   .legend .k i{width:8px;height:8px;background:var(--c)}
+  /* A tag key has no hue to key, so it carries a count instead: the rail says
+     how much of the deck each tag is worth before you spend a click on it. */
+  .legend .k b{font-weight:500;color:var(--text-faint);font-variant-numeric:tabular-nums}
+  .legend .k.on b{color:var(--text-dim)}
+  .legend.tags{margin-top:var(--s2)}
+  .legend .rail-more{
+    align-self:center;font-size:var(--fs-micro);color:var(--text-faint)
+  }
   .legend .k:hover{color:var(--text);border-color:var(--border-strong)}
   .legend .k.off{opacity:.5}
   .legend .k.on{color:var(--text);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -335,6 +343,17 @@
      palette hue measures 1.65:1 to 2.28:1 as text on --surface. */
   .t-cat{font-size:var(--fs-micro);font-weight:600;color:color-mix(in oklch,var(--c) 52%,var(--text))}
   .t-id{font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-faint);letter-spacing:.02em}
+  /* The same chip the sheet draws, one step quieter, because on the face it is
+     scanned past rather than read. Three, then a count: a tracker puts no
+     ceiling on how many tags a card may carry, and the face must not grow with
+     them. */
+  .t-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:var(--s1)}
+  .t-tags span{
+    font-size:var(--fs-micro);color:var(--text-faint);
+    border:1px solid var(--border);border-radius:var(--r-chip);padding:1px 6px;
+    white-space:nowrap;max-width:16ch;overflow:hidden;text-overflow:ellipsis
+  }
+  .t-tags span.more{border-color:transparent;padding-left:1px}
   /* A tracker writes `priority` only when it is worth showing, so the key's
      presence is the signal. Quiet priorities must not shout in the same red as
      the urgent ones. */
@@ -555,6 +574,7 @@
     <span>updated <b id="rev">—</b></span>
   </div>
   <div class="legend" id="legend"></div>
+  <div class="legend tags" id="tagRail" hidden></div>
 </header>
 <div class="notice" id="notice" role="alert" hidden>
   <span id="noticeText"></span>
@@ -673,10 +693,22 @@ let baseJson=null, baseCols=[], moves={};
    it was opened, so a deck replaced under the sheet is detectable. */
 let sheetKey=null, sheetId=null;
 /* view-state only (never persisted): text filter + toggled legend category */
-let filterText="", filterCat=null;
+let filterText="", filterCat=null, filterTag=null;
+/* The deck's ordinary tags, recomputed each render. Suppressed on the face for
+   the reason the category chip was deleted: board.py defaults `category` to
+   `task`, so a vault board painted an identical `task` chip on every card it
+   had. The threshold is the one the ordinary category already uses — carried by
+   more cards than not — because the two marks answer the same question and a
+   board that suppressed one at a majority and the other only at unanimity
+   would be arbitrary. Measured on a real beans deck: `adjudant` sat on 71 of 92
+   cards, so the informative cards were the 21 without it, and absence is the
+   one thing a chip cannot show. It stays in the rail, where it is a control,
+   and in the sheet, where it is a fact about the one card you opened. */
+let ordinaryTags=new Set();
 function errText(e){ return String((e&&e.message)||e||"unknown error"); }
 function cardMatches(c){
   if(filterCat && c.category!==filterCat) return false;
+  if(filterTag && !(c.tags||[]).some(t=>String(t)===filterTag)) return false;
   if(!filterText) return true;
   // default every field: undefined must not leak "undefined" into the haystack
   return [c.id,c.title,c.category,c.notes,c.parent,
@@ -1318,6 +1350,27 @@ function renderSheet(){
   if(mv&&mv.to===card.column) fact("Moved here from",colName(mv.from),false);
 }
 
+/* Every tag in the deck with the number of cards carrying it. The rail is
+   ordered by that count, so the tag worth filtering by is the one nearest the
+   left, and a tag on two cards does not sit above a tag on sixty. */
+function deckTagCounts(){
+  const n=new Map();
+  (state.cards||[]).forEach(c=>(c.tags||[]).forEach(t=>{
+    const k=String(t).trim();
+    if(k) n.set(k,(n.get(k)||0)+1);
+  }));
+  return n;
+}
+/* Every tag on more than half the deck. A two-card deck suppresses nothing:
+   there is no ordinary in a pair, only two cards. */
+function deckOrdinaryTags(counts){
+  const total=(state.cards||[]).length;
+  const out=new Set();
+  if(total<3) return out;
+  counts.forEach((n,tag)=>{ if(n*2>total) out.add(tag); });
+  return out;
+}
+
 function ticketNode(card,key){
   const t=el("div","ticket"); t.draggable=true; t.dataset.id=card.id; t.dataset.key=String(key);
   t.setAttribute("role","listitem");
@@ -1328,7 +1381,14 @@ function ticketNode(card,key){
   const face=el("button","ticket-face"); face.type="button";
   face.setAttribute("aria-haspopup","dialog");
   face.setAttribute("aria-keyshortcuts","[ ]");
+  /* Computed before the label, because the label has to say them. An aria-label
+     REPLACES the button's contents for a screen reader, so a tag rendered
+     inside the face and left out of the label is a tag only sighted people
+     get. */
+  const shownTags=(card.tags||[]).map(t=>String(t).trim())
+    .filter(t=>t&&!ordinaryTags.has(t));
   face.setAttribute("aria-label",cardLabel(card)+(card.category?", "+card.category:"")
+    +(shownTags.length?", tagged "+shownTags.join(", "):"")
     +", in "+colName(card.column));
   /* Title first. The sentence is what a person reads to decide; the id is what
      they quote back afterwards, so it sits at the foot of the card. */
@@ -1337,6 +1397,19 @@ function ticketNode(card,key){
      what stops a long one from making its card three times taller than its
      neighbours and pushing the rest of the lane out of view. */
   if(card.notes) face.appendChild(el("div","t-note",mdText(card.notes)));
+  /* Between the note and the id: the id is what you quote back afterwards, so
+     it stays last. Three, then a count, so a heavily tagged card is the same
+     height as a bare one. */
+  if(shownTags.length){
+    const tw=el("div","t-tags");
+    shownTags.slice(0,3).forEach(t=>tw.appendChild(el("span",null,t)));
+    if(shownTags.length>3){
+      const more=el("span","more","+"+(shownTags.length-3));
+      more.setAttribute("aria-hidden","true");
+      tw.appendChild(more);
+    }
+    face.appendChild(tw);
+  }
   const foot=el("div","t-foot");
   /* Marked only when this card is not of the deck's ordinary type: a swatch in
      its hue and the type's own name, so an epic or a bug is visible at a glance
@@ -1409,7 +1482,48 @@ function render(){
     k.addEventListener("click",()=>{ filterCat = (filterCat===cat) ? null : cat; render(); });
     lg.appendChild(k);
   });
-  const filtering = !!(filterText || filterCat);
+
+  /* ── The tag rail ───────────────────────────────────────────────────────
+     A tracker's tags are the one classification the board used to throw away:
+     `_beans.py` carried them into every card and only the sheet ever read
+     them. The rail renders nothing on a deck with no tags, so a board that
+     never had them pays no chrome for the ones it does not have. */
+  const counts=deckTagCounts();
+  ordinaryTags=deckOrdinaryTags(counts);
+  /* A deck swap can retire the tag being filtered by, and a filter matching
+     nothing reads as an empty board rather than as a stale filter. */
+  if(filterTag && !counts.has(filterTag)) filterTag=null;
+  const rail=document.getElementById("tagRail"); rail.innerHTML="";
+  rail.hidden=(counts.size===0);
+  if(counts.size){
+    const RAIL_MAX=12;
+    const ordered=Array.from(counts.entries())
+      .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+    /* The tag being filtered by is always in the rail, even when its count puts
+       it past the cap: the control that turned the filter on has to be the one
+       that turns it off. */
+    let head=ordered.slice(0,RAIL_MAX);
+    if(filterTag && !head.some(e=>e[0]===filterTag)){
+      const hit=ordered.find(e=>e[0]===filterTag);
+      if(hit) head=head.slice(0,RAIL_MAX-1).concat([hit]);
+    }
+    head.forEach(([tag,count])=>{
+      const k=el("button","k"+(filterTag===tag?" on":(filterTag?" off":"")));
+      k.type="button";
+      k.setAttribute("aria-pressed",filterTag===tag?"true":"false");
+      k.setAttribute("aria-label",tag+", "+count+(count===1?" card":" cards"));
+      k.appendChild(document.createTextNode(tag));
+      k.appendChild(el("b",null,String(count)));
+      k.addEventListener("click",()=>{ filterTag = (filterTag===tag) ? null : tag; render(); });
+      rail.appendChild(k);
+    });
+    /* Said rather than hidden. A rail that silently drops the tag you were
+       looking for teaches you the tag does not exist. */
+    const rest=ordered.length-head.length;
+    if(rest>0) rail.appendChild(el("span","rail-more","+"+rest+" more, use the filter box"));
+  }
+
+  const filtering = !!(filterText || filterCat || filterTag);
   const board=document.getElementById("board"); board.innerHTML="";
   let laneSeq=0;
   const laneNode=(col, entries, opts)=>{
@@ -1527,7 +1641,7 @@ document.getElementById("noticeClose").addEventListener("click",clearNotice);
 const q=document.getElementById("q");
 q.addEventListener("input",()=>{ filterText=q.value.trim().toLowerCase(); render(); });
 q.addEventListener("keydown",ev=>{
-  if(ev.key==="Escape"){ q.value=""; filterText=""; filterCat=null; render(); q.blur(); }
+  if(ev.key==="Escape"){ q.value=""; filterText=""; filterCat=null; filterTag=null; render(); q.blur(); }
 });
 document.getElementById("sheetClose").addEventListener("click",closeSheet);
 paintMark();

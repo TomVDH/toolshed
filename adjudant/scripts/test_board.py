@@ -1669,6 +1669,76 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn('el("button","k"', body.replace(", ", ","))
         self.assertIn('setAttribute("aria-pressed"', body.replace(", ", ","))
 
+    def test_the_tag_filter_is_a_real_toggle_beside_the_legend(self):
+        # Tags were the one tracker classification the board threw away:
+        # _beans.py carried them into every card and only the sheet read them.
+        body = _js_function(self.src, "render")
+        flat = body.replace(", ", ",")
+        self.assertIn('id="tagRail"', self.src)
+        self.assertIn('getElementById("tagRail")', flat)
+        self.assertIn('setAttribute("aria-pressed"', flat)
+        # a control, not a colour key: it must survive keyboard use
+        self.assertIn('el("button","k"+(filterTag===tag', flat)
+        # and it must actually narrow the deck
+        self.assertIn("filterTag", _js_function(self.src, "cardMatches"))
+
+    def test_the_decks_ordinary_tag_is_not_printed_on_every_card(self):
+        # The same rule that deleted .t-cat: board.py defaults `category` to
+        # `task`, so a vault board painted an identical `task` chip on every
+        # card it had. The threshold is the one the ordinary category already
+        # uses -- carried by more cards than not -- because the two marks answer
+        # the same question. On a real beans deck `adjudant` sat on 71 of 92
+        # cards; the informative cards were the 21 without it.
+        fn = _js_function(self.src, "deckOrdinaryTags")
+        self.assertTrue(fn.strip(), "deckOrdinaryTags missing")
+        self.assertIn("n*2>total", fn.replace(" ", ""))
+        # a deck too small to have an ordinary anything suppresses nothing
+        self.assertIn("total<3", fn.replace(" ", ""))
+        ticket = _js_function(self.src, "ticketNode")
+        self.assertIn("ordinaryTags.has(t)", ticket.replace(", ", ","))
+
+    def test_the_face_caps_its_tags_so_a_card_cannot_grow_unbounded(self):
+        # A tracker puts no ceiling on how many tags a card carries. The note
+        # is clamped to two lines for the same reason.
+        ticket = _js_function(self.src, "ticketNode").replace(", ", ",")
+        self.assertIn("shownTags.slice(0,3)", ticket)
+        self.assertIn("shownTags.length>3", ticket)
+
+    def test_tags_on_the_face_are_also_in_the_accessible_name(self):
+        # aria-label REPLACES a button's contents for a screen reader, so a tag
+        # rendered inside the face and left out of the label is a tag only
+        # sighted people get.
+        # `ticket` is comma-normalised, so the expected text is written that way.
+        # The label expression spans three lines, so the whole body is searched
+        # for the one fragment that can only occur inside it.
+        ticket = _js_function(self.src, "ticketNode").replace(", ", ",")
+        self.assertIn('setAttribute("aria-label"', ticket)
+        self.assertIn('+(shownTags.length?",tagged "+shownTags.join(","):"")', ticket)
+
+    def test_a_deck_swap_cannot_strand_the_tag_filter(self):
+        # refreshFromDisk and the cross-tab storage handler replace state
+        # wholesale. A filter on a tag the new deck retired matches nothing,
+        # which reads as an empty board rather than as a stale filter.
+        body = _js_function(self.src, "render").replace(", ", ",")
+        self.assertIn("if(filterTag && !counts.has(filterTag)) filterTag=null;".replace(", ", ","),
+                      body.replace("&& !", "&& !"))
+
+    def test_escape_clears_every_filter_not_some_of_them(self):
+        # Three filters compose; one Escape has to clear all three or the board
+        # stays narrowed by a control the user believes they just reset.
+        line = [ln for ln in self.src.splitlines()
+                if 'ev.key==="Escape"' in ln and "filterText" in ln]
+        self.assertTrue(line, "Escape filter-clear handler missing")
+        for var in ("filterText", "filterCat", "filterTag"):
+            self.assertIn(var, line[0], f"Escape does not clear {var}")
+
+    def test_the_tag_rail_says_what_it_left_out(self):
+        # A rail that silently drops the tag you were looking for teaches you
+        # the tag does not exist.
+        body = _js_function(self.src, "render")
+        self.assertIn("RAIL_MAX", body)
+        self.assertIn("rail-more", body)
+
     def test_the_focus_ring_never_uses_the_category_hue(self):
         # The eight palette hues measure 1.65:1 to 2.28:1 on --surface, under
         # the 3:1 that SC 1.4.11 requires of a focus indicator.

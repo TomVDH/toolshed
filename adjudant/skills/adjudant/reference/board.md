@@ -64,7 +64,7 @@ page. For the same reason a link is made clickable only for `http`, `https`,
 no library is loaded: the board is one offline file and validator 24 keeps it
 that way.
 
-Two marks reach the face, and only when they carry something:
+Three marks reach the face, and only when they carry something:
 
 - **Category**, as a coloured swatch and its name, on a card whose category is
   not the deck's ordinary one. A category is the ordinary one when it covers
@@ -76,6 +76,17 @@ Two marks reach the face, and only when they carry something:
   when it is worth showing (`_beans.to_card` drops `normal`), so the key's
   presence is the whole signal. `low`, `deferred` and their kin are drawn quiet;
   the rest are drawn in the alert colour.
+- **Tags**, as quiet chips between the note and the id, minus the deck's
+  ordinary ones. A tag is ordinary when more cards carry it than not, which is
+  the same threshold that keeps the ordinary category off the face: both marks
+  answer the same question, so suppressing one at a majority and the other only
+  at unanimity would be arbitrary. On a real beans deck `adjudant` sat on 71 of
+  92 cards, so the informative cards were the 21 without it, and absence is the
+  one thing a chip cannot show. Three chips, then
+  a `+N`: a tracker sets no ceiling on how many tags a card may hold and the
+  face must not grow with them. The full set is in the sheet, and every shown
+  tag is in the card's accessible name, because an `aria-label` replaces a
+  button's contents rather than adding to them.
 
 The sheet is a native `<dialog>` opened with `showModal()`, so the focus trap,
 `Esc`, the inert background and the top layer all come from the platform. The
@@ -197,9 +208,15 @@ the background, open the URL, and close with one next step: drag cards, or hit
   fetch (`url(...)`) falls back to the palette hue: the board is served from
   disk and makes no outbound request.
 - In-browser view tools (never persisted): a **filter** box narrows by
-  id/title/category/ref/note (`Esc` clears), legend keys are buttons that
-  toggle a category filter, and a focused card moves one lane left/right with
+  id/title/category/ref/note/tag (`Esc` clears all three filters), legend keys
+  are buttons that toggle a category filter, a **tag rail** under the legend
+  toggles a tag filter, and a focused card moves one lane left/right with
   `[` / `]`. A card with no lane of its own is moved from its sheet's lane row.
+  The tag rail renders nothing on a deck with no tags, orders tags by how many
+  cards carry each one, shows the twelve commonest plus a count of what it left
+  out, and always keeps the tag being filtered by within reach. A deck swap that
+  retires that tag clears the filter rather than leaving the board looking
+  empty.
 - The browser persists **only the moves you made by hand**, as
   `{cardId: {from, to}}`. Everything else re-renders from the deck on every
   load, so a re-scaffold that re-seeds a title, category or ref is visible
