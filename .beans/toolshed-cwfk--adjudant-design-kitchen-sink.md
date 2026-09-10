@@ -5,7 +5,8 @@ status: todo
 type: feature
 priority: normal
 created_at: 2026-09-10T09:05:21Z
-updated_at: 2026-09-10T09:14:36Z
+updated_at: 2026-09-10T09:25:27Z
+parent: toolshed-2z4w
 ---
 
 One page that renders every piece of the Adjudant Classic design system at once, in both schemes, in every state. The board is currently the only place the system exists, which means the only way to check a token change is to scaffold a board and hunt for the affected component.

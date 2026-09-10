@@ -5,7 +5,8 @@ status: todo
 type: feature
 priority: high
 created_at: 2026-09-10T09:00:14Z
-updated_at: 2026-09-10T09:14:36Z
+updated_at: 2026-09-10T09:25:27Z
+parent: toolshed-2z4w
 ---
 
 The two logo SVGs are single, fixed-colour assets. They only work on the light scheme.
