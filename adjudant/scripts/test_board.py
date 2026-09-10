@@ -199,7 +199,11 @@ class TestDeckFields(unittest.TestCase):
             deck = build_deck(Path(tmp) / "my-proj", from_tasks=False, title="My Proj")
             self.assertEqual(deck["version"], DECK_VERSION)
             self.assertEqual(deck["boardId"], "my-proj")  # defaults to dir name
-            self.assertEqual(deck["subtitle"], "Work-order board")
+            # No default subtitle: it used to be "Work-order board", which is
+            # also what the template's title fell back to, so a board with no
+            # title of its own printed the same sentence twice, one under the
+            # other.
+            self.assertEqual(deck["subtitle"], "")
             self.assertTrue(deck["updated"])  # stamped with a date
             self.assertEqual(deck["title"], "My Proj")
 
@@ -1687,13 +1691,20 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
                     f"({'dark' if dark else 'light'}), under WCAG 1.4.3")
 
     def test_a_touch_only_device_has_a_way_to_move_a_card(self):
-        # HTML5 drag events do not fire from touch, and the bracket keys need a
-        # keyboard: without this the board is silently read-only on a phone.
-        body = _js_function(self.src, "tapToMove")
-        self.assertIn("(pointer: coarse)", body)
-        self.assertIn("(hover: hover)", body)
-        self.assertIn("tapToMove()", _js_function(self.src, "render"))
-        self.assertIn("tapToMove()", _js_function(self.src, "ticketNode"))
+        # HTML5 drag events do not fire from touch and the bracket keys need a
+        # keyboard, so without a third way the board is silently read-only on a
+        # phone. That third way used to be a tap-then-tap mode registered only
+        # where matchMedia said (pointer: coarse), which nothing on the page
+        # showed the existence of. It is now the lane row inside an opened card:
+        # present on every device, and visible on all of them.
+        sheet = _js_function(self.src, "renderSheet")
+        self.assertIn("state.columns.forEach", sheet)
+        self.assertIn('el("button"', sheet.replace(", ", ","))
+        self.assertIn("applyMove(sheetKey", sheet)
+        self.assertIn('setAttribute("aria-current"', sheet.replace(", ", ","))
+        # and the card opens by tap, because its face is a real button
+        ticket = _js_function(self.src, "ticketNode")
+        self.assertIn("openSheet(key)", ticket)
 
 
 class TestTemplateRendersOnlyWhatItCanVouchFor(unittest.TestCase):
@@ -1721,8 +1732,7 @@ class TestTemplateRendersOnlyWhatItCanVouchFor(unittest.TestCase):
         self.assertIn("fatal(e)", _js_function(self.src, "boot"))
         self.assertIn("<noscript>", self.src)
         # an unrendered page must not read as an empty one
-        self.assertIn('<b id="orderCount">—</b>', self.src)
-        self.assertIn('<b id="stageCount">—</b>', self.src)
+        self.assertIn('<b id="cardCount">—</b>', self.src)
 
     def test_the_unfiled_lane_never_paints_a_drop_it_will_refuse(self):
         body = _js_function(self.src, "render")
@@ -1749,6 +1759,75 @@ class TestTemplateRendersOnlyWhatItCanVouchFor(unittest.TestCase):
         self.assertIn("Number(ev.dataTransfer.getData", render)
         self.assertIn("Number.isInteger(key)", render)
         self.assertIn("duplicateIds", _js_function(self.src, "normalize"))
+
+
+class TestTemplateOpensACardHonestly(unittest.TestCase):
+    """Structural guards for the card sheet. Behaviour verified in Chromium;
+    see the module comment above."""
+
+    def setUp(self):
+        self.src = _template_text()
+
+    def test_the_sheet_addresses_the_card_by_position_not_by_id(self):
+        # Same reason the drag does: a deck may legitimately carry two cards
+        # with one id, and resolving by id opens, and then moves, the wrong one.
+        for fn in ("openSheet", "renderSheet", "syncSheet"):
+            self.assertNotIn(".find(c=>c.id===",
+                             _js_function(self.src, fn).replace(" ", ""))
+        self.assertIn("state.cards[key]", _js_function(self.src, "openSheet"))
+        self.assertIn("state.cards[sheetKey]", _js_function(self.src, "renderSheet"))
+
+    def test_a_deck_swapped_under_an_open_sheet_closes_it(self):
+        # refreshFromDisk and the cross-tab storage handler both replace `state`
+        # wholesale, so the card at that position may now be a different card.
+        # An open sheet quietly relabelling itself as something else is the
+        # failure mode; it closes and says so instead.
+        body = _js_function(self.src, "syncSheet")
+        self.assertIn("card.id!==sheetId", body.replace(" ", ""))
+        self.assertIn("announce(", body)
+        # and it runs at the end of every render, which is the one path all of
+        # those routes go through
+        self.assertIn("syncSheet()", _js_function(self.src, "render"))
+
+    def test_the_sheet_is_a_real_dialog_not_a_positioned_div(self):
+        # The lane body is overflow-y:auto, so anything positioned inside it is
+        # clipped. The top layer is the whole reason this is a <dialog>, and
+        # showModal is what puts it there, along with the focus trap and Esc.
+        self.assertIn('<dialog class="sheet" id="sheet"', self.src)
+        self.assertIn("showModal()", _js_function(self.src, "openSheet"))
+        self.assertIn(".close()", _js_function(self.src, "closeSheet"))
+
+    def test_the_card_face_is_a_button_not_a_div_with_a_click_handler(self):
+        # The legend key was already fixed away from that pattern once; the card
+        # must not reintroduce it. One node cannot be both a listitem and a
+        # button, so the wrapper keeps the list semantics and the drag.
+        ticket = _js_function(self.src, "ticketNode").replace(", ", ",")
+        self.assertIn('el("button","ticket-face")', ticket)
+        self.assertIn('setAttribute("aria-haspopup","dialog")', ticket)
+        self.assertIn('setAttribute("role","listitem")', ticket)
+
+    def test_the_terminal_marker_is_drawn_once_per_lane_not_once_per_card(self):
+        # BUILT/PARKED used to be stamped on every card in the lane, restating
+        # the heading those cards were already sitting under, in a marker that
+        # aria-hidden told screen readers to skip.
+        self.assertNotIn("laneStamp", _js_function(self.src, "ticketNode"))
+        self.assertIn("laneStamp(col)", _js_function(self.src, "render"))
+
+    def test_priority_reaches_the_card_instead_of_being_dropped(self):
+        # _beans.to_card writes `priority` only when it is not `normal`, so the
+        # key's presence is the signal. The template rendered it nowhere at all:
+        # on a real board, 39 of 72 cards carried a mark the page threw away.
+        self.assertIn("card.priority", _js_function(self.src, "priorityOf"))
+        self.assertIn("priorityMark(card)", _js_function(self.src, "ticketNode"))
+        # a `low` or `deferred` bean must not shout in the same red as a `high`
+        self.assertIn("QUIET_PRIORITY", self.src)
+
+    def test_the_ordinary_category_is_not_printed_on_every_card(self):
+        # A vault deck is all `task` and a beans deck is mostly `task`, so
+        # naming the category on every card prints one word N times. What has to
+        # be visible is the exception: the epics among the tasks.
+        self.assertIn("d.baseCategory", _js_function(self.src, "normalize"))
+        self.assertIn("state.baseCategory", _js_function(self.src, "ticketNode"))
 
 
 class TestDeckToTaskWriteBack(unittest.TestCase):

@@ -26,6 +26,16 @@ connect is three phases; the card in the middle is the only thing the user must 
    safe: a repo already set to `vault` is never switched behind the user's back.
    `contract.tracker.beans_installed` is false when this machine has no binary — still a
    valid choice, the repo just cannot be driven from here until it does.
+
+   **When the answer is `beans`, run `beans prime` and follow it before tracking any
+   work.** That command is the tracker's own guide for agents, and adjudant never
+   restates it: `beans prime` is generated from the repo's own `.beans.yml`, so the
+   types, statuses and priorities it lists are that project's. A copy pasted in here
+   would go stale the first time beans changed, and would already be wrong for any
+   project configured differently. The short version, which the SessionStart banner
+   carries every session in a beans-owned repo: work items live in beans, not in the
+   vault and not in a todo list. Find or create a bean before starting, keep its
+   checklist current, and commit the bean file with the code.
 3. **Apply + receipt.** Run connect.py with the confirmed values (`--purpose`,
    `--initial-status`, plus the usual flags). Render `summary.receipt` back as the same
    card with per-artifact marks: created / already-present / updated. A re-run on a

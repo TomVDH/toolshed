@@ -3,72 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Work-Order Board</title>
+<title>Board</title>
 <style>
-  /* ── Tokens ───────────────────────────────────────────────────────────────
-     Cool bone paper with a faint green cast, green-black ink, and one accent:
-     a slate teal spent on exactly three things — the focus ring, the connected
-     save state, and the lane a card is about to land in. Never decoration.
+  /* ── Tokens: ZenaSoft ──────────────────────────────────────────────────
+     The Adjudant Classic skin. A 70s corporate-paper memo: warm cream stock,
+     brown-black ink, a warm orange accent, and no rounded corner anywhere.
+     Its references are IBM annual reports c.1973, Container Corp of America,
+     Mobil corporate guidelines and Knoll spec sheets, so it is corporate
+     modernism rather than anything nostalgic.
+
+     Ported from the ZenaSoft DESIGN.md that governs the ops surfaces. Hue,
+     chroma and the whole light neutral scale are that document's, unchanged.
+     Four slots had to move, and each one is a fact about THIS surface rather
+     than a disagreement with that one:
+
+       --text-faint  58% -> 48% light. A form sets its faint slot at label
+                     size; this board sets 11.5px counts, ids and field labels
+                     in it, so the 4.5:1 body floor applies. 58% measured
+                     2.99:1 on the well.
+       dark scale    ZenaSoft's dark is a secondary opt-in and puts surface-2
+                     ABOVE surface (32% over 28%), inverting its own light
+                     order. A lane well has to stay recessive under a card in
+                     both schemes, so this reads page 22 / well 24 / card 28.
+       dark ink      Its dark text-dim and text-faint measured 3.93 and 2.12
+                     against that scale. Lifted until both clear 4.5.
+       dark accent   ZenaSoft locks the accent across themes, which is right
+                     for a light-first identity. Here the accent is also the
+                     focus ring, and 2.13:1 fails SC 1.4.11, so dark lifts it.
 
      --bg, --surface, --surface-2 and --text-faint MUST stay literal
      oklch(L% C H) triples, and the dark block must keep its closing shape
      (`    }` then `  }`). test_board reads this text to compute real contrast
      ratios; a color-mix() or a var() in those four makes it unreadable.
 
-     --text-faint carries the lane counts, the empty-lane markers, the save
-     status and the footer, all at 11.5px, so the 4.5:1 floor applies rather
-     than the large-text one. Measured against bg / surface / surface-2:
-     5.27, 5.74, 4.75 light and 5.91, 4.75, 5.32 dark. ── */
+     --text-faint carries the lane counts, the empty-lane markers, the card
+     ids and the sheet's field labels, all at 11.5px, so the 4.5:1 floor
+     applies rather than the large-text one. Measured against bg / surface / surface-2:
+     4.75, 5.05, 4.56 light and 6.13, 5.07, 5.66 dark. ── */
   :root{
     color-scheme: light dark;
-    --bg:oklch(97% 0.004 150);
-    --surface:oklch(100% 0 0);
-    --surface-2:oklch(93.5% 0.005 150);
-    --text-faint:oklch(51% 0.008 160);
-    --text:oklch(24% 0.012 160);
-    --text-dim:oklch(46% 0.01 160);
-    --border:oklch(88.5% 0.006 150);
-    --border-strong:oklch(78% 0.008 150);
-    --accent:oklch(45% 0.075 225);
-    --accent-wash:oklch(94.5% 0.02 225);
-    --ok:oklch(52% 0.13 155);
-    --bad:oklch(50% 0.18 25);
-    --park:oklch(60% 0.01 150);
-    --lift:0 10px 24px -14px oklch(24% 0.012 160 / 0.5);
+    --bg:oklch(91% 0.012 75);
+    --surface:oklch(93% 0.012 75);
+    --surface-2:oklch(88% 0.014 75);
+    --text-faint:oklch(48% 0.015 65);
+    --text:oklch(22% 0.012 60);
+    --text-dim:oklch(40% 0.014 60);
+    --border:oklch(78% 0.016 75);
+    --border-strong:oklch(62% 0.020 75);
+    --accent:oklch(52% 0.17 38);
+    --accent-wash:oklch(90% 0.045 38);
+    --ok:oklch(48% 0.14 145);
+    --bad:oklch(48% 0.20 25);
+    --park:oklch(48% 0.010 70);
+    /* The memo has no shadow vocabulary. The one raised surface, the card
+       sheet, is separated by a NeXT-style inset bevel instead (see .sheet). */
+    --lift:none;
 
-    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
-    /* three radii by role, not one radius everywhere: the well holds, the
-       card sits in it, the chip is a label */
-    --r-well:14px; --r-card:10px; --r-chip:4px;
-    --fs-micro:11.5px; --fs-small:12.5px; --fs-body:14px; --fs-lead:22px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:20px; --s5:32px; --s6:48px;
+    /* Zero everywhere. Square wells, square cards, square chips: the sharp
+       corner is the memo's voice, not a setting. */
+    --r-well:0px; --r-card:0px; --r-chip:0px;
+    --fs-micro:11.5px; --fs-small:12.5px; --fs-body:14px; --fs-lead:26px;
     --ease:cubic-bezier(0.22, 1, 0.36, 1);
-    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    /* Named, never fetched. This page is served off a disk and validator 24
+       fails the build on any off-machine href, so the display face resolves
+       through ZenaSoft's own declared fallbacks; Georgia is everywhere. */
+    --serif:"Mozilla Headline","Iowan Old Style",Georgia,"Times New Roman",serif;
+    --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,ui-monospace,monospace;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:oklch(20% 0.006 160);
-      --surface:oklch(28% 0.008 160);
-      --surface-2:oklch(24% 0.007 160);
-      --text-faint:oklch(67% 0.008 160);
-      --text:oklch(94% 0.003 160);
-      --text-dim:oklch(74% 0.006 160);
-      --border:oklch(33% 0.008 160);
-      --border-strong:oklch(45% 0.01 160);
-      --accent:oklch(80% 0.08 225);
-      --accent-wash:oklch(31% 0.03 225);
-      --ok:oklch(78% 0.13 155);
-      --bad:oklch(72% 0.16 25);
-      --park:oklch(52% 0.008 160);
-      --lift:0 10px 24px -14px oklch(0% 0 0 / 0.75);
+      --bg:oklch(22% 0.014 70);
+      --surface:oklch(28% 0.014 70);
+      --surface-2:oklch(24% 0.014 70);
+      --text-faint:oklch(68% 0.012 70);
+      --text:oklch(90% 0.010 75);
+      --text-dim:oklch(78% 0.012 72);
+      --border:oklch(38% 0.014 70);
+      --border-strong:oklch(50% 0.016 70);
+      --accent:oklch(68% 0.15 38);
+      --accent-wash:oklch(30% 0.05 38);
+      --ok:oklch(62% 0.14 145);
+      --bad:oklch(65% 0.19 25);
+      --park:oklch(68% 0.010 70);
+      --lift:none;
     }
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
+  ::selection{background:var(--accent-wash);color:var(--text)}
   body{
     background:var(--bg);color:var(--text);
-    font-family:var(--sans);font-size:var(--fs-body);line-height:1.45;
+    font-family:var(--sans);font-size:var(--fs-body);line-height:1.5;
     -webkit-font-smoothing:antialiased;
+    /* Paper stock. Two offset dot grids, straight from the ZenaSoft body
+       rule: pure CSS, so nothing is fetched. */
+    background-image:
+      radial-gradient(oklch(35% 0.02 60 / 0.025) 1px, transparent 1px),
+      radial-gradient(oklch(35% 0.02 60 / 0.020) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
   }
 
   /* ── Masthead ── */
@@ -79,8 +113,12 @@
   }
   .head-row{display:flex;align-items:flex-start;gap:var(--s5);flex-wrap:wrap}
   .ident{min-width:0}
-  .title{margin:0;font-size:var(--fs-lead);font-weight:500;letter-spacing:-0.015em;line-height:1.2}
+  .title{
+    margin:0;font-family:var(--serif);font-size:var(--fs-lead);
+    font-weight:600;letter-spacing:normal;line-height:1.1
+  }
   .sub{margin:2px 0 0;font-size:var(--fs-small);color:var(--text-dim)}
+  .sub[hidden]{display:none}
   .controls{display:flex;align-items:center;gap:var(--s3);margin-left:auto;flex-wrap:wrap}
   .controls input#q{
     font:inherit;font-size:var(--fs-small);
@@ -98,15 +136,20 @@
     transition:color .15s var(--ease),border-color .15s var(--ease)
   }
   .controls button:hover{color:var(--text);border-color:var(--border-strong)}
-  .conn{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:var(--fs-micro);color:var(--text-faint)
-  }
-  .conn::before{content:"";width:7px;height:7px;border-radius:50%;border:1.5px solid currentColor}
-  .conn.on{color:var(--accent)}
+  /* The save state IS the control. It used to be a badge reading "local" next
+     to a button reading "Connect file": two things saying one thing in two
+     vocabularies. Now the button names the action while there is one to take,
+     and names the state once there is not. */
+  .conn{display:inline-flex;align-items:center;gap:7px}
+  .conn::before{content:"";width:7px;height:7px;border:1.5px solid currentColor;flex:none}
+  .conn.on,.conn.on:hover{color:var(--accent);border-color:var(--accent)}
   .conn.on::before{background:currentColor;border-color:currentColor}
-  .conn.bad{color:var(--bad);font-weight:600}
+  .conn.bad,.conn.bad:hover{color:var(--bad);border-color:var(--bad);font-weight:600}
   .conn.bad::before{background:currentColor;border-color:currentColor}
+  /* an escape hatch, not a peer of the save control */
+  .controls .link,.controls .link:hover{border-color:transparent;background:none}
+  .controls .link{padding:5px 0;color:var(--text-faint);text-decoration:underline;text-underline-offset:3px}
+  .controls .link:hover{color:var(--text)}
 
   /* counts as a sentence, not a slash-separated ledger strip */
   .meta{
@@ -125,7 +168,7 @@
     border-radius:var(--r-chip);padding:3px 9px 3px 7px;
     transition:color .15s var(--ease),border-color .15s var(--ease),opacity .15s var(--ease)
   }
-  .legend .k i{width:8px;height:8px;border-radius:2px;background:var(--c)}
+  .legend .k i{width:8px;height:8px;background:var(--c)}
   .legend .k:hover{color:var(--text);border-color:var(--border-strong)}
   .legend .k.off{opacity:.5}
   .legend .k.on{color:var(--text);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -174,7 +217,10 @@
     background:var(--surface-2);border-radius:var(--r-well);padding:var(--s4);
     transition:background .18s var(--ease),box-shadow .18s var(--ease),opacity .18s var(--ease)
   }
-  .lane.muted{background:color-mix(in oklch,var(--surface-2) 55%,var(--bg))}
+  /* A terminal lane is told by its stamp and a quieter heading. It used to be
+     told by a third grey mixed a shade off the other two, which read as a
+     rendering artefact rather than as a state. */
+  .lane.muted .lane-head .nm{color:var(--text-dim);font-weight:500}
   .lane.unfiled{box-shadow:inset 0 0 0 1px var(--border-strong)}
   /* the one orchestrated moment: picking a card up lights every lane that can
      take it and quiets the rest. Motion answering an action, nothing on load. */
@@ -182,7 +228,19 @@
   body.dragging-now .lane:not(.drop){opacity:.6}
 
   .lane-head{display:flex;align-items:baseline;gap:var(--s2);padding:0 var(--s1) var(--s3)}
-  .lane-head .nm{font-size:var(--fs-body);font-weight:600;letter-spacing:-0.006em}
+  .lane-head .nm{
+    font-family:var(--serif);font-size:13.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.04em
+  }
+  /* Said once, in the heading. It used to be printed on every card in the lane,
+     which restated the heading those cards were already sitting under, once per
+     card, in a marker the accessibility tree was told to ignore. */
+  .lane-head .stamp{
+    font-family:var(--serif);font-size:var(--fs-micro);font-weight:600;
+    letter-spacing:.06em;padding:1px 6px;border:1px solid currentColor
+  }
+  .lane-head .stamp.built{color:var(--ok)}
+  .lane-head .stamp.parked{color:var(--park)}
   .lane-head .ct{margin-left:auto;font-size:var(--fs-small);color:var(--text-faint);font-variant-numeric:tabular-nums}
   .lane-head .ct.over{color:var(--bad);font-weight:600}
   .lane-body{
@@ -200,78 +258,218 @@
     font-size:var(--fs-micro);color:var(--text-faint);text-align:center
   }
 
-  /* ── Card: title first, codes underneath ── */
+  /* ── Card: the two lines you scan by, and the id you quote ── */
   .ticket{
-    position:relative;display:flex;flex-direction:column;gap:var(--s2);
     background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);
-    padding:var(--s3);cursor:grab;
-    transition:border-color .15s var(--ease),box-shadow .15s var(--ease),opacity .15s var(--ease)
+    transition:border-color .15s var(--ease),opacity .15s var(--ease)
   }
-  .ticket:hover{border-color:var(--border-strong);box-shadow:var(--lift)}
-  .ticket:active{cursor:grabbing}
-  /* the source of a drag steps back; the target lane is what lights up */
-  .ticket.dragging{opacity:.4;box-shadow:none;border-color:var(--border-strong)}
+  .ticket:hover{border-color:var(--border-strong)}
   /* focus ring uses --text, never the category hue: the eight palette hues
      measure 1.65:1 to 2.28:1 on --surface, under the 3:1 SC 1.4.11 floor, so
      the documented keyboard alternative to dragging had no visible focus. */
   .ticket:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-  /* touch: picked up, waiting for a stage. --accent measures 7.28:1 on
-     --surface light and 8.72:1 dark, well over the 3:1 SC 1.4.11 floor. */
-  .ticket.sel{outline:2px solid var(--accent);outline-offset:2px;box-shadow:var(--lift)}
+  /* The face is the button and the wrapper carries the drag, because one node
+     cannot be both a listitem and a button. The ring is drawn on the wrapper so
+     it surrounds the card rather than the button's padding box inside it. */
+  .ticket:has(.ticket-face:focus-visible){outline:2px solid var(--text);outline-offset:2px}
+  .ticket-face:focus-visible{outline:none}
+  /* the source of a drag steps back; the target lane is what lights up */
+  .ticket.dragging{opacity:.4;border-color:var(--border-strong)}
+  .ticket-face{
+    display:flex;flex-direction:column;gap:var(--s2);width:100%;
+    font:inherit;color:inherit;text-align:left;background:none;border:0;
+    padding:var(--s3);border-radius:inherit;cursor:grab
+  }
+  .ticket-face:active{cursor:grabbing}
 
   .t-title{font-size:var(--fs-body);line-height:1.42;color:var(--text);text-wrap:pretty}
-  .t-note{font-size:var(--fs-small);line-height:1.45;color:var(--text-dim)}
-  /* wraps rather than truncates: half a reference code is worse than two lines */
-  .t-refs{
-    display:flex;flex-wrap:wrap;gap:var(--s2);
-    font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-dim);
-    letter-spacing:.02em
+  /* Two lines, then the sheet. An unclamped note made one card three times
+     taller than its neighbours and pushed the rest of the lane out of view. */
+  .t-note{
+    font-size:var(--fs-small);line-height:1.45;color:var(--text-dim);
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden
   }
-  .t-refs .lead{color:var(--text-faint)}
-  .t-meta{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s1)}
+  .t-foot{display:flex;align-items:center;gap:7px;margin-top:var(--s1)}
+  /* The same swatch the legend keys carry, so a card and its legend key read as
+     one vocabulary. It classifies the card without printing the category name on
+     every card in the deck. */
+  .t-swatch{width:8px;height:8px;background:var(--c);flex:none}
+  /* The exception names itself. The hue is mixed toward --text because the raw
+     palette hue measures 1.65:1 to 2.28:1 as text on --surface. */
+  .t-cat{font-size:var(--fs-micro);font-weight:600;color:color-mix(in oklch,var(--c) 52%,var(--text))}
   .t-id{font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-faint);letter-spacing:.02em}
-  /* category = a small tinted label. The mix ratios are measured: the raw hue
-     fails contrast as text on --surface, so it is darkened toward --text. */
-  .t-cat{
-    margin-left:auto;font-size:var(--fs-micro);font-weight:500;
-    padding:2px 7px;border-radius:var(--r-chip);
-    color:color-mix(in oklch,var(--c) 52%,var(--text));
-    background:color-mix(in oklch,var(--c) 13%,var(--surface));
-    border:1px solid color-mix(in oklch,var(--c) 38%,var(--border))
-  }
-  /* terminal-lane marker, flat rather than a rotated rubber stamp */
-  .stamp{
-    align-self:flex-start;font-size:var(--fs-micro);font-weight:600;letter-spacing:.06em;
-    padding:1px 6px;border-radius:var(--r-chip);border:1px solid currentColor;
-    opacity:.75;pointer-events:none
-  }
-  .stamp.built{color:var(--ok)}
-  .stamp.parked{color:var(--park)}
+  /* A tracker writes `priority` only when it is worth showing, so the key's
+     presence is the signal. Quiet priorities must not shout in the same red as
+     the urgent ones. */
+  .prio{margin-left:auto;font-size:var(--fs-micro);font-weight:600;color:var(--bad)}
+  .prio.quiet{color:var(--text-faint);font-weight:500}
 
-  .foot{
-    font-size:var(--fs-micro);color:var(--text-faint);line-height:1.9;
-    padding:0 var(--s6) var(--s6);max-width:78ch
+  /* ── The card, opened ─────────────────────────────────────────────────────
+     A native <dialog>. The focus trap, Esc, the inert background and the top
+     layer all come from the platform, and the top layer is what puts the panel
+     clear of the lane's own overflow-y:auto, which clips anything positioned
+     inside it. Styled as a sheet against the right edge, not as a box dropped
+     over the middle of the board. */
+  .sheet{
+    margin:0 0 0 auto;width:min(430px,100%);max-width:100%;
+    height:100%;max-height:100%;
+    padding:0;border:0;border-radius:0;
+    background:var(--surface);color:var(--text)
   }
-  .foot kbd{
-    font-family:var(--mono);font-size:inherit;background:var(--surface-2);
-    border:1px solid var(--border);border-radius:var(--r-chip);padding:1px 5px
+  /* The memo has no shadow vocabulary, so the sheet is separated the way the
+     ZenaSoft shell separates its rail: a four-pixel NeXT inset channel, struck
+     down the edge where the panel meets the board. */
+  .sheet::before{
+    content:"";position:absolute;inset:0 auto 0 0;width:4px;
+    background:linear-gradient(90deg,
+      var(--border-strong) 0 25%, var(--surface) 25% 50%,
+      var(--border-strong) 50% 75%, var(--surface) 75% 100%)
   }
-  .foot code{font-family:var(--mono);font-size:inherit}
+  .sheet::backdrop{background:oklch(24% 0.012 160 / 0.42)}
+  .sheet-wrap{display:flex;flex-direction:column;height:100%}
+  .sheet-head{
+    display:flex;align-items:flex-start;gap:var(--s4);
+    padding:var(--s5) var(--s5) var(--s4);border-bottom:1px solid var(--border)
+  }
+  .sheet-title{
+    margin:0;font-family:var(--serif);font-size:20px;font-weight:500;
+    line-height:1.3;letter-spacing:normal;text-wrap:pretty
+  }
+  .sheet-close{
+    flex:none;margin-left:auto;font:inherit;font-size:var(--fs-small);
+    background:var(--surface);color:var(--text-dim);cursor:pointer;
+    border:1px solid var(--border);border-radius:var(--r-chip);padding:4px 10px;
+    transition:color .15s var(--ease),border-color .15s var(--ease)
+  }
+  .sheet-close:hover{color:var(--text);border-color:var(--border-strong)}
+  /* The inline padding sits on the sections, not on the body, so a section's
+     rule runs the full width of the sheet the way the head's rule does. Inset
+     rules would have read as a second, weaker kind of line. */
+  .sheet-body{flex:1 1 auto;overflow-y:auto;padding:var(--s5) 0}
+  .sheet-sec{margin:0;padding:0 var(--s5)}
+  /* A rule belongs to the section BELOW it, so the space is asymmetric: more
+     above the line than below, and more above a label than under it. Whitespace
+     alone was carrying every boundary in here, which left the sheet reading as
+     one undifferentiated column of label, content, label, content. */
+  .sheet-sec + .sheet-sec{
+    margin-top:var(--s5);padding-top:var(--s4);
+    border-top:1px solid var(--border)
+  }
+  .sheet-lbl{
+    margin:0 0 var(--s2);font-family:var(--serif);font-size:var(--fs-micro);
+    font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-faint)
+  }
+  .sheet-lbl-row{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s2)}
+  .sheet-lbl-row .sheet-lbl{margin:0}
+  /* One control shape for both the lane rail and the note toggle. They are the
+     same idea, a set of states with one of them live, and drawing them two ways
+     made one sheet speak two vocabularies. A track with the live segment lifted
+     out of it, which also means the live state costs no accent: the surface
+     change carries it, and the accent stays spent on the three things the token
+     block names. It scrolls rather than wraps, because a segmented control
+     folded onto a second row reads as broken, and a vault board has seven
+     lanes to fit. */
+  .rail{
+    display:flex;gap:2px;padding:3px;
+    background:var(--surface-2);
+    overflow-x:auto;overscroll-behavior-x:contain
+  }
+  .rail button{
+    flex:0 0 auto;white-space:nowrap;
+    font:inherit;font-size:var(--fs-micro);cursor:pointer;
+    background:none;color:var(--text-dim);border:0;
+    padding:5px 10px;
+    transition:background .15s var(--ease),color .15s var(--ease)
+  }
+  .rail button:hover{color:var(--text)}
+  .rail button[aria-current="true"],.rail button[aria-pressed="true"]{
+    background:var(--surface);color:var(--text);font-weight:600;
+    box-shadow:inset 0 -2px 0 var(--accent)
+  }
+  /* drawn inside the track, so its own overflow cannot clip the ring */
+  .rail button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+  .sheet-lbl-row .rail{margin-left:auto}
+
+  /* The note, read rather than shown as source. Raw keeps every character the
+     tracker wrote, which is the point of having the toggle at all. */
+  .sheet-note{margin:0;font-size:var(--fs-small);line-height:1.6}
+  .sheet-note.raw{
+    white-space:pre-wrap;font-family:var(--mono);
+    font-size:var(--fs-micro);color:var(--text-dim)
+  }
+  .sheet-note>*:first-child{margin-top:0}
+  .sheet-note>*:last-child{margin-bottom:0}
+  .sheet-note p{margin:0 0 var(--s3)}
+  /* a body's own `#` is not this page's h1: the sheet title already holds that
+     level, so a body heading starts two steps down */
+  .sheet-note h3,.sheet-note h4{
+    margin:var(--s4) 0 var(--s2);font-size:var(--fs-body);
+    font-weight:600;letter-spacing:-0.008em
+  }
+  .sheet-note h5,.sheet-note h6{
+    margin:var(--s4) 0 var(--s2);font-size:var(--fs-small);
+    font-weight:600;color:var(--text-dim)
+  }
+  .sheet-note ul,.sheet-note ol{margin:0 0 var(--s3);padding-left:1.35em}
+  .sheet-note li{margin:0 0 3px}
+  .sheet-note blockquote{
+    margin:0 0 var(--s3);padding-left:var(--s3);
+    border-left:1px solid var(--border-strong);color:var(--text-dim)
+  }
+  .sheet-note code{
+    font-family:var(--mono);font-size:var(--fs-micro);
+    background:var(--surface-2);border-radius:var(--r-chip);padding:1px 4px
+  }
+  .sheet-note pre{
+    margin:0 0 var(--s3);padding:var(--s3);overflow-x:auto;
+    background:var(--surface-2);border-radius:var(--r-chip)
+  }
+  .sheet-note pre code{background:none;padding:0}
+  .sheet-note hr{border:0;border-top:1px solid var(--border);margin:var(--s4) 0}
+  .sheet-note a{color:var(--accent)}
+  .sheet-facts{
+    margin:0;display:grid;grid-template-columns:auto 1fr;
+    gap:var(--s2) var(--s4);font-size:var(--fs-small);align-items:baseline
+  }
+  .sheet-facts dt{color:var(--text-faint);font-size:var(--fs-micro)}
+  .sheet-facts dd{margin:0;color:var(--text)}
+  .sheet-facts dd.mono{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.02em}
+  .sheet-cat{display:inline-flex;align-items:center;gap:7px}
+  .sheet-cat i{width:8px;height:8px;background:var(--c);flex:none}
+  .sheet-tags{display:flex;flex-wrap:wrap;gap:var(--s2)}
+  .sheet-tags span{
+    font-size:var(--fs-micro);color:var(--text-dim);
+    border:1px solid var(--border);border-radius:var(--r-chip);padding:2px 8px
+  }
+  /* the relation rows stack inside one section, so they space themselves */
+  #sheetLinks .sheet-lbl{margin-top:var(--s4)}
+  #sheetLinks .sheet-lbl:first-child{margin-top:0}
+  .sheet-refs{
+    display:flex;flex-wrap:wrap;gap:var(--s2);
+    font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-dim);letter-spacing:.02em
+  }
+  .sheet [hidden]{display:none}
+  .sheet-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   @media (max-width: 640px){
     header.masthead{padding:var(--s4) var(--s4) var(--s3)}
     .controls{width:100%;margin-left:0;margin-top:var(--s3)}
     .controls input#q{flex:1 1 100%;width:auto}
-    .foot{padding:0 var(--s4) var(--s5)}
     .notice{margin:var(--s3) var(--s4) 0}
     .board{padding:var(--s4);grid-auto-columns:minmax(84vw,1fr);align-items:start}
     /* One lane is in view at a time here, so matching every well to the tallest
        turns an empty lane into a screen-high grey rectangle. Let each well end
        where its cards do, and let the page scroll instead of the lane. */
     .lane-body{flex:0 1 auto;max-height:none}
+    /* a 430px rail on a 375px screen is a rail with no room to read in */
+    .sheet{width:100%}
+    .sheet-head{padding-left:var(--s4);padding-right:var(--s4)}
+    .sheet-sec{padding-left:var(--s4);padding-right:var(--s4)}
   }
   @media (prefers-reduced-motion: reduce){
-    .ticket,.lane,.legend .k,.controls button,.controls input#q{transition:none}
+    .ticket,.lane,.legend .k,.controls button,.controls input#q,
+    .rail button,.sheet-close{transition:none}
   }
 </style>
 </head>
@@ -279,18 +477,17 @@
 <header class="masthead">
   <div class="head-row">
     <div class="ident">
-      <h1 class="title" id="boardTitle">Work-order board</h1>
-      <p class="sub" id="boardSub">Work-order board</p>
+      <h1 class="title" id="boardTitle">Board</h1>
+      <p class="sub" id="boardSub" hidden></p>
     </div>
     <div class="controls">
-      <input id="q" type="search" placeholder="Filter orders" spellcheck="false" autocomplete="off" aria-label="Filter orders">
-      <span class="conn" id="conn" aria-label="save target: local">local</span>
-      <button id="connectBtn" type="button">Connect file</button>
-      <button id="downloadBtn" type="button">Download</button>
+      <input id="q" type="search" placeholder="Filter cards" spellcheck="false" autocomplete="off" aria-label="Filter cards">
+      <button class="conn" id="connectBtn" type="button">Connect file</button>
+      <button class="link" id="downloadBtn" type="button">Download</button>
     </div>
   </div>
   <div class="meta">
-    <span><b id="orderCount">—</b> orders across <b id="stageCount">—</b> stages</span>
+    <span><b id="cardCount">—</b> cards</span>
     <span class="rule" aria-hidden="true"></span>
     <span>updated <b id="rev">—</b></span>
   </div>
@@ -302,34 +499,56 @@
 </div>
 <div id="live" class="sr-only" role="status" aria-live="polite"></div>
 <noscript>
-  <p class="notice bad">This board is a JavaScript page. With scripting off it shows no orders and no
-  stages, which is not the same as an empty board. Read <code>board-data.json</code> next to this file
-  for the deck itself.</p>
+  <p class="notice bad">This board needs JavaScript. An empty page here is not an empty board:
+  the deck is in <code>board-data.json</code>, next to this file.</p>
 </noscript>
-<main class="board" id="board" aria-label="Work-order stages"></main>
-<p class="foot">
-  Drag an order to another stage. It saves to this browser at once.
-  On a touch screen, tap an order to pick it up, then tap a stage to put it down.
-  Focus an order with <kbd>Tab</kbd> and press <kbd>[</kbd> or <kbd>]</kbd> to move it one stage.<br>
-  Hit <kbd>Connect file</kbd> and pick <code>board-data.json</code> to save to disk as well, which
-  needs a Chromium browser. Until then the badge above reads <kbd>local</kbd>.<br>
-  Filter narrows the board and a category chip narrows it further; <kbd>Esc</kbd> clears both.
-  A lane with <code>"wip": N</code> in <code>board-data.json</code> turns its count red when it is over;
-  <code>"stamp"</code>, <code>"stampTone"</code> and <code>"muted"</code> set a lane's terminal treatment.
-</p>
-
+<main class="board" id="board" aria-label="Board lanes"></main>
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
+  <div class="sheet-wrap">
+    <div class="sheet-head">
+      <h2 class="sheet-title" id="sheetTitle"></h2>
+      <button class="sheet-close" id="sheetClose" type="button">Close</button>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-sec">
+        <p class="sheet-lbl" id="sheetLaneLbl">Lane</p>
+        <div class="rail" id="sheetLanes" role="group" aria-labelledby="sheetLaneLbl"></div>
+      </div>
+      <div class="sheet-sec" id="sheetNoteSec" hidden>
+        <div class="sheet-lbl-row">
+          <p class="sheet-lbl" id="sheetNoteLbl">Note</p>
+          <div class="rail" id="noteView" role="group" aria-labelledby="sheetNoteLbl">
+            <button type="button" data-view="pretty">Pretty</button>
+            <button type="button" data-view="raw">Raw</button>
+          </div>
+        </div>
+        <div class="sheet-note" id="sheetNote"></div>
+      </div>
+      <div class="sheet-sec" id="sheetTagSec" hidden>
+        <p class="sheet-lbl">Tags</p>
+        <div class="sheet-tags" id="sheetTags"></div>
+      </div>
+      <div class="sheet-sec" id="sheetLinkSec" hidden>
+        <div id="sheetLinks"></div>
+      </div>
+      <div class="sheet-sec">
+        <dl class="sheet-facts" id="sheetFacts"></dl>
+      </div>
+    </div>
+  </div>
+</dialog>
 <script>
 "use strict";
 
 /* ── Board data. The scaffolder replaces this block with the project deck. ── */
 const SEED = /*BOARD_DATA_START*/{
-  "version":1,"boardId":"example","title":"Work-Order Board","subtitle":"Work-order board","updated":"",
+  "version":1,"boardId":"example","title":"Board","subtitle":"","updated":"",
   "columns":[{"id":"backlog","name":"Backlog"},{"id":"next","name":"Next"},{"id":"doing","name":"Doing"},{"id":"review","name":"Review"},{"id":"done","name":"Done"},{"id":"icebox","name":"Icebox"}],
   "categories":["build","docs","infra","chore"],
   "cards":[
-    {"id":"EX-01","title":"Drag this order to another stage","column":"backlog","category":"build","related":["SPEC-000"],"notes":"Run /adjudant board to replace this deck with your own, or edit board-data.json by hand."},
-    {"id":"EX-02","title":"A lane can carry a work-in-progress limit, and turns its count red when it is over","column":"doing","category":"infra","related":["SPEC-000","HANDOFF-1"],"notes":""},
-    {"id":"EX-03","title":"Finished orders carry a BUILT marker, and the icebox carries PARKED","column":"done","category":"docs","related":[],"notes":""}
+    {"id":"EX-01","title":"Open this card to read everything it carries","column":"backlog","category":"build","related":["SPEC-000"],"notes":"The face of a card shows its title, the first two lines of its note, and its id. Everything else is in here. Run /adjudant board to replace this deck with your own, or edit board-data.json by hand."},
+    {"id":"EX-02","title":"Drag a card to another lane, or pick a lane inside it","column":"doing","category":"infra","related":["SPEC-000","HANDOFF-1"],"notes":"The lane row above moves a card without a drag, so a phone and a screen reader get the control a mouse already had."},
+    {"id":"EX-03","title":"A lane can carry a work-in-progress limit and a terminal marker","column":"done","category":"docs","related":[],"notes":"This lane is stamped BUILT once, in its heading. A lane with a wip limit turns its count red when it is over."}
   ]
 }/*BOARD_DATA_END*/;
 
@@ -347,7 +566,11 @@ const MOVES_VERSION=2;
 let state=null, fileHandle=null, catColors={};
 /* baseDeck = the deck exactly as loaded (disk or SEED), before any override.
    moves    = the ONLY thing this page persists (see readMoves). */
-let baseJson=null, baseCols=[], moves={}, selectedKey=null;
+let baseJson=null, baseCols=[], moves={};
+/* The open card, held by POSITION in state.cards for the same reason a drag is
+   (a deck may legitimately carry two cards with one id), plus the id it had when
+   it was opened, so a deck replaced under the sheet is detectable. */
+let sheetKey=null, sheetId=null;
 /* view-state only (never persisted): text filter + toggled legend category */
 let filterText="", filterCat=null;
 function errText(e){ return String((e&&e.message)||e||"unknown error"); }
@@ -355,7 +578,9 @@ function cardMatches(c){
   if(filterCat && c.category!==filterCat) return false;
   if(!filterText) return true;
   // default every field: undefined must not leak "undefined" into the haystack
-  return [c.id,c.title,c.category,(c.related||[]).join(" "),c.notes]
+  return [c.id,c.title,c.category,c.notes,c.parent,
+          (c.related||[]).join(" "),(c.tags||[]).join(" "),
+          (c.blockedBy||[]).join(" "),(c.blocking||[]).join(" ")]
     .map(v=>v==null?"":String(v)).join(" ").toLowerCase().includes(filterText);
 }
 
@@ -417,9 +642,9 @@ function readMoves(){
   }catch(e){ console.warn("board: saved moves unreadable, starting from the deck",e); return {}; }
 }
 /* Returns {ok,reason}. A storage failure (private mode, a blocked or full
-   origin, an enterprise policy) must be reported, never swallowed: the footer
-   promises "saved to this browser instantly" and the caller rolls the move
-   back when no store confirmed it. */
+   origin, an enterprise policy) must be reported, never swallowed: the save
+   button says where a move landed, and the caller rolls the move back when no
+   store confirmed it. */
 function writeMoves(){
   try{
     localStorage.setItem(LS_KEY,JSON.stringify({v:MOVES_VERSION,moves:moves}));
@@ -509,13 +734,22 @@ async function refreshFromDisk(){
   }catch(e){ console.warn("board: disk refresh failed",e); }
 }
 
-const CONN_TEXT={disk:"disk",reconnect:"reconnect",local:"local",unsaved:"unsaved"};
+/* One control, not a badge beside a button repeating it. The label names the
+   action while there is one to take and the state once there is not; the dot
+   carries the same thing without the words. */
+const CONN={
+  disk:["Saving to disk","Moves are saved to board-data.json and to this browser."],
+  reconnect:["Reconnect file","Moves are saved in this browser only. Reconnect board-data.json to save to disk."],
+  local:["Connect file","Moves are saved in this browser only. Connect board-data.json to save to disk."],
+  unsaved:["Not saved","Nothing could be saved. Connect board-data.json to save to disk."]
+};
 function setConn(mode){
-  const el=document.getElementById("conn");
-  el.classList.toggle("on",mode==="disk");
-  el.classList.toggle("bad",mode==="unsaved");
-  el.textContent=CONN_TEXT[mode]||"local";
-  el.setAttribute("aria-label","save target: "+(CONN_TEXT[mode]||"local"));
+  const b=document.getElementById("connectBtn");
+  const pair=CONN[mode]||CONN.local;
+  b.classList.toggle("on",mode==="disk");
+  b.classList.toggle("bad",mode==="unsaved");
+  b.textContent=pair[0];
+  b.setAttribute("aria-label",pair[1]);
 }
 function download(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
@@ -552,6 +786,16 @@ function normalize(d){
   catColors={};
   names.forEach((n,i)=>{ catColors[n]=safeColor(colors[n],PALETTE[i%PALETTE.length]); });
   d.categoryNames=names;
+  /* The type most of a deck shares is the ordinary one, and ordinary needs no
+     mark: on a board of 78 tasks and 9 epics, the thing you need to see is
+     which nine are epics. A category qualifies as the baseline only when it
+     covers more cards than every other category put together, so an evenly
+     split deck marks all of them rather than picking a winner. */
+  const tally={};
+  d.cards.forEach(c=>{ if(c.category) tally[c.category]=(tally[c.category]||0)+1; });
+  let top=null, topN=0;
+  Object.keys(tally).forEach(k=>{ if(tally[k]>topN){ top=k; topN=tally[k]; } });
+  d.baseCategory=(names.length>1 && topN*2>d.cards.length) ? top : null;
   const seen=new Set(), dup=new Set();
   d.cards.forEach(c=>{ if(seen.has(c.id)) dup.add(c.id); seen.add(c.id); });
   d.duplicateIds=Array.from(dup);
@@ -560,7 +804,7 @@ function normalize(d){
 function catColor(cat){ return catColors[cat] || "var(--border-strong)"; }
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function colName(id){ const c=state.columns.find(c=>String(c.id)===String(id)); return c?c.name:String(id); }
-function cardLabel(c){ return (c.id?c.id+", ":"")+(c.title||"untitled order"); }
+function cardLabel(c){ return (c.id?c.id+", ":"")+(c.title||"untitled card"); }
 
 /* ── Telling the truth about what happened ── */
 function announce(msg){
@@ -586,8 +830,7 @@ function fatal(e){
   box.appendChild(el("p",null,"board-data.json (or the deck built into this page) is not a usable deck: "+errText(e)));
   box.appendChild(el("p",null,"Re-run /adjudant board to rebuild it, or fix board-data.json by hand."));
   board.appendChild(box);
-  document.getElementById("orderCount").textContent="—";
-  document.getElementById("stageCount").textContent="—";
+  document.getElementById("cardCount").textContent="—";
 }
 
 /* Cards are addressed by their position in state.cards, never by id: a deck may
@@ -595,7 +838,7 @@ function fatal(e){
    the tasks path), and resolving a drag with .find(c=>c.id===id) moves the
    first match rather than the card the user actually dragged. */
 function focusKey(key){
-  const node=document.querySelector('.ticket[data-key="'+key+'"]');
+  const node=document.querySelector('.ticket[data-key="'+key+'"] .ticket-face');
   if(node) node.focus();
 }
 /* The single mutation path. A move renders optimistically, then rolls back and
@@ -614,13 +857,15 @@ async function applyMove(key,toCol){
     card.column=from; moves=JSON.parse(undo); render();
     notice("Not saved: "+res.reason+". "+label+" was put back in "+colName(from)+".",true);
     announce("Save failed. "+label+" was put back in "+colName(from)+".");
-    focusKey(key);
+    /* render() re-renders the open sheet in place, and the card behind it is
+       inert while it is open, so focus stays where the person is working. */
+    if(sheetKey===null) focusKey(key);
     return false;
   }
   if(res.refreshed) render();
   if(res.reason) notice("Saved in this browser, but not to disk: "+res.reason,true); else clearNotice();
   announce(label+" moved to "+colName(toCol)+".");
-  focusKey(key);
+  if(sheetKey===null) focusKey(key);
   return true;
 }
 /* keyboard capacity: focused ticket + [ / ] moves it one lane left / right */
@@ -634,74 +879,389 @@ function moveByKey(key,delta){
   if(j<0||j>=cols.length){ announce(cardLabel(card)+" is already in the "+(delta<0?"first":"last")+" stage."); return; }
   applyMove(key,cols[j]);
 }
-/* Touch has no HTML5 drag events at all, so on a touch-primary device the
-   board would be silently read-only. Tap an order to pick it up, tap a stage
-   to put it down. Registered only where dragging cannot work, so pointer and
-   keyboard behaviour on a desktop is unchanged. */
-function tapToMove(){
-  if(!window.matchMedia) return false;
-  return matchMedia("(pointer: coarse)").matches || !matchMedia("(hover: hover)").matches;
+/* ── The card, opened ─────────────────────────────────────────────────────
+   Everything the face no longer carries lives here: the whole note, every ref,
+   the id, the category, the priority, where the card came from, and the lane
+   row that moves it.
+
+   The lane row is why the board no longer needs an invisible tap-then-tap mode
+   on touch. That mode was the only way to move a card without a mouse or a
+   keyboard, it was registered only on devices matching (pointer: coarse), and
+   nothing on the page showed it existed. A row of lane buttons does the same
+   job on every device, in the open. */
+function sheetEl(){ return document.getElementById("sheet"); }
+const QUIET_PRIORITY={low:1,lowest:1,deferred:1,someday:1,minor:1};
+function priorityOf(card){
+  const v=(card.priority==null?"":String(card.priority)).trim().toLowerCase();
+  return (!v||v==="normal") ? "" : v;
 }
-function select(key){
-  selectedKey=key;
-  document.querySelectorAll(".ticket").forEach(n=>{
-    const on=Number(n.dataset.key)===key;
-    n.classList.toggle("sel",on);
-    if(on) n.setAttribute("aria-current","true"); else n.removeAttribute("aria-current");
+/* A tracker writes `priority` into the deck only when it is worth showing (see
+   _beans.to_card), so the key's presence is the whole signal. */
+function priorityMark(card){
+  const v=priorityOf(card);
+  if(!v) return null;
+  return el("span","prio"+(QUIET_PRIORITY[v]?" quiet":""),v);
+}
+/* An ISO instant reads as machine output. The date and the minute are what a
+   person needs from it; the seconds and the Z are not information here.
+   Anything that is not an ISO instant is shown exactly as the tracker wrote
+   it, rather than guessed at. */
+function stamp(v){
+  const s=(v==null?"":String(v)).trim();
+  const m=/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(s);
+  return m ? m[1]+" "+m[2] : s;
+}
+/* ── A small Markdown reader ───────────────────────────────────────────────
+   A bean's body is Markdown. Shown as one flat run with the syntax still in
+   it, a note is source rather than a note: two lines of a card preview spent
+   on "## " is two lines of punctuation. This reads the subset bodies actually
+   use - headings, emphasis, code, fences, lists, quotes, rules, links.
+
+   It builds DOM nodes and never assembles an HTML string. board-data.json is
+   documented as hand-editable and a body is written by whoever writes beans,
+   so a renderer that went through innerHTML would hand either of them this
+   page. Same reasoning as safeColor(): take the shape, never the markup.
+
+   Raw is one click away and keeps every character, because a reader that
+   quietly drops something a person wrote is worse than no reader. */
+/* Every branch matches through a NEGATED class, never `[\s\S]+?` closed by a
+   backreference. That first shape backtracks catastrophically the moment a
+   delimiter is unpaired, and snake_case is exactly that: one `_` in
+   `created_at` sent the lazy run to the end of the note and failed back, at
+   every start position, on every call. Measured on 92 real bodies it did not
+   finish. Negated classes cannot backtrack, so this is linear.
+
+   The `_` forms also refuse to fire between word characters, so `created_at`
+   and `blocked_by` stay the identifiers they are while `_emphasis_` still
+   reads. `*` needs no such rule; it does not appear inside identifiers. */
+const MD_INLINE_SRC="(`+)([^`]*)\\1"
+  +"|\\[([^\\]]*)\\]\\(([^)\\s]+)\\)"
+  +"|\\*\\*([^*\\n]+)\\*\\*"
+  +"|(?<![A-Za-z0-9])__([^_\\n]+)__(?![A-Za-z0-9])"
+  +"|\\*([^*\\n]+)\\*"
+  +"|(?<![A-Za-z0-9])_([^_\\n]+)_(?![A-Za-z0-9])";
+const MD_LIST=/^\s*([-*+]|\d+[.)])\s+(.*)$/;
+const MD_QUOTE=/^\s*>\s?(.*)$/;
+/* A relative path or an unknown scheme is shown, never made clickable: this
+   page is opened off a disk and a target it cannot vouch for is text. */
+const MD_SAFE_HREF=/^(?:https?:|mailto:|obsidian:)/i;
+function mdLink(label,href){
+  if(MD_SAFE_HREF.test(href)){
+    const a=document.createElement("a");
+    a.href=href; a.textContent=label||href;
+    a.target="_blank"; a.rel="noopener noreferrer";
+    return a;
+  }
+  return document.createTextNode(label?label+" ("+href+")":href);
+}
+function mdInline(text,into){
+  const s=String(text==null?"":text);
+  /* Walked with lastIndex rather than by slicing off each match, because the
+     `_` rules look at the character BEFORE the delimiter. Slicing throws that
+     character away and `created_at` becomes emphasis again at the seam.
+     Built per call: mdInline recurses, and a shared global regex carries its
+     lastIndex into the nested call. */
+  const rx=new RegExp(MD_INLINE_SRC,"g");
+  let pos=0, guard=0, m;
+  while((m=rx.exec(s))!==null&&guard++<4000){
+    if(m.index>pos) into.appendChild(document.createTextNode(s.slice(pos,m.index)));
+    if(m[1]!==undefined){ const c=document.createElement("code"); c.textContent=m[2]; into.appendChild(c); }
+    else if(m[4]!==undefined){ into.appendChild(mdLink(m[3],m[4])); }
+    else if(m[5]!==undefined||m[6]!==undefined){
+      const b=document.createElement("strong");
+      mdInline(m[5]!==undefined?m[5]:m[6],b); into.appendChild(b);
+    }
+    else {
+      const i=document.createElement("em");
+      mdInline(m[7]!==undefined?m[7]:m[8],i); into.appendChild(i);
+    }
+    pos=m.index+m[0].length;
+    rx.lastIndex=pos;
+  }
+  if(pos<s.length) into.appendChild(document.createTextNode(s.slice(pos)));
+}
+function mdNodes(source){
+  const frag=document.createDocumentFragment();
+  const lines=String(source==null?"":source).replace(/\r\n?/g,"\n").split("\n");
+  const para=[];
+  const flush=()=>{
+    if(!para.length) return;
+    const p=document.createElement("p");
+    mdInline(para.join(" ").trim(),p);
+    frag.appendChild(p); para.length=0;
+  };
+  let i=0;
+  while(i<lines.length){
+    const line=lines[i];
+    const fence=/^\s*(```|~~~)/.exec(line);
+    if(fence){
+      flush(); i++;
+      const buf=[];
+      while(i<lines.length&&!(new RegExp("^\\s*"+fence[1])).test(lines[i])){ buf.push(lines[i]); i++; }
+      i++;                                   /* the closing fence, or the end */
+      const pre=document.createElement("pre"), code=document.createElement("code");
+      code.textContent=buf.join("\n"); pre.appendChild(code); frag.appendChild(pre);
+      continue;
+    }
+    const head=/^\s{0,3}(#{1,6})\s+(.*)$/.exec(line);
+    if(head){
+      flush();
+      const h=document.createElement("h"+Math.min(head[1].length+2,6));
+      mdInline(head[2],h); frag.appendChild(h); i++; continue;
+    }
+    if(/^\s{0,3}([-*_])\s*(?:\1\s*){2,}$/.test(line)){
+      flush(); frag.appendChild(document.createElement("hr")); i++; continue;
+    }
+    const item=MD_LIST.exec(line);
+    if(item){
+      flush();
+      const ordered=/\d/.test(item[1]);
+      const list=document.createElement(ordered?"ol":"ul");
+      while(i<lines.length){
+        const m=MD_LIST.exec(lines[i]);
+        if(!m||/\d/.test(m[1])!==ordered) break;
+        const li=document.createElement("li");
+        mdInline(m[2],li); list.appendChild(li); i++;
+      }
+      frag.appendChild(list); continue;
+    }
+    if(MD_QUOTE.test(line)){
+      flush();
+      const quote=document.createElement("blockquote"), buf=[];
+      while(i<lines.length){
+        const m=MD_QUOTE.exec(lines[i]);
+        if(!m) break;
+        buf.push(m[1]); i++;
+      }
+      mdInline(buf.join(" ").trim(),quote); frag.appendChild(quote); continue;
+    }
+    if(!line.trim()){ flush(); i++; continue; }
+    para.push(line.trim()); i++;
+  }
+  flush();
+  return frag;
+}
+/* The card face wants the note's text, not its shape, and it runs once per
+   card on every render - so this strips rather than parses. */
+function mdText(source){
+  return String(source==null?"":source)
+    .replace(/```[\s\S]*?```/g," ")
+    .replace(/`([^`]*)`/g,"$1")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g,"$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm,"")
+    .replace(/^\s*>\s?/gm,"")
+    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm,"")
+    .replace(/\*\*([^*\n]+)\*\*/g,"$1")
+    .replace(/(?<![A-Za-z0-9])__([^_\n]+)__(?![A-Za-z0-9])/g,"$1")
+    .replace(/\*([^*\n]+)\*/g,"$1")
+    .replace(/(?<![A-Za-z0-9])_([^_\n]+)_(?![A-Za-z0-9])/g,"$1")
+    .replace(/\s+/g," ")
+    .trim();
+}
+/* One preference for every board this browser opens, not one per board: it is
+   how a person likes to read, not a fact about a deck. */
+const NOTE_VIEW_KEY="adjudant-board:notes";
+let noteView="pretty";
+function readNoteView(){
+  try{ return localStorage.getItem(NOTE_VIEW_KEY)==="raw"?"raw":"pretty"; }
+  catch(e){ console.warn("board: note view preference unreadable",e); return "pretty"; }
+}
+function writeNoteView(v){
+  try{ localStorage.setItem(NOTE_VIEW_KEY,v); }
+  catch(e){ console.warn("board: note view preference not saved",e); }
+}
+/* Painted at boot as well as on every sheet, so the pair never sits in the
+   accessibility tree as two unpressed buttons before the first card opens. */
+function paintNoteToggle(){
+  document.querySelectorAll("#noteView button").forEach(b=>{
+    b.setAttribute("aria-pressed",b.dataset.view===noteView?"true":"false");
   });
-  const card=state.cards[key];
-  if(card) announce(cardLabel(card)+" picked up. Tap a stage to move it there.");
 }
-function deselect(quiet){
-  if(selectedKey===null) return;
-  selectedKey=null;
-  document.querySelectorAll(".ticket.sel").forEach(n=>{ n.classList.remove("sel"); n.removeAttribute("aria-current"); });
-  if(!quiet) announce("Put back down.");
+function sourceName(card){
+  if(card.source==="beans") return "beans";
+  if(card.source==="task") return "a task note";
+  return card.source ? String(card.source) : "";
+}
+function openSheet(key){
+  const card=state.cards[key];
+  if(!card) return;
+  const d=sheetEl();
+  if(!d.showModal){ notice("This browser cannot open a card. It has no dialog support.",true); return; }
+  sheetKey=key; sheetId=card.id;
+  /* Opened before it is filled, not after: a dialog that is still display:none
+     measures every width as zero, and the rail's scroll-into-view was doing its
+     arithmetic against that. Both calls are in one task, so nothing paints in
+     between and there is no flash of an empty sheet. */
+  if(!d.open) d.showModal();
+  renderSheet();
+}
+/* Every close converges here, and the bookkeeping happens here rather than on
+   the dialog's `close` event, because that event is a queued element task: a
+   throttled or hidden page may never deliver it, which leaves sheetKey stale
+   and drops focus inside a dialog that is no longer on screen. Measured, not
+   assumed - in an embedded browser a brand-new dialog did not fire `close` at
+   all. The `close` listener below stays as a net for any other route. */
+function closeSheet(){
+  const key=sheetKey;
+  sheetKey=null; sheetId=null;
+  const d=sheetEl();
+  if(d.open) d.close();
+  if(key!==null) focusKey(key);
+}
+/* Called at the end of every render, so it covers a move, a disk refresh and
+   another tab alike. A refresh or another tab replaces state wholesale, and the
+   card at that position may now be a different card: the sheet closes rather
+   than quietly relabelling itself as something else. */
+function syncSheet(){
+  if(sheetKey===null) return;
+  const card=(state&&state.cards)?state.cards[sheetKey]:null;
+  if(!card||card.id!==sheetId){
+    sheetKey=null; sheetId=null;
+    const d=sheetEl(); if(d.open) d.close();
+    announce("The card that was open is no longer on the board. It was closed.");
+    return;
+  }
+  renderSheet();
+}
+function renderSheet(){
+  const card=state.cards[sheetKey];
+  if(!card) return;
+  document.getElementById("sheetTitle").textContent=card.title||"Untitled card";
+
+  const lanes=document.getElementById("sheetLanes");
+  /* the move that just happened was made from one of these buttons, and render()
+     is about to destroy it, so put focus back on the lane the card now sits in */
+  const hadFocus=lanes.contains(document.activeElement);
+  lanes.innerHTML="";
+  state.columns.forEach(col=>{
+    const here=String(col.id)===String(card.column);
+    const b=el("button",null,col.name); b.type="button";
+    if(here) b.setAttribute("aria-current","true");
+    b.setAttribute("aria-label",here?col.name+", the lane this card is in":"Move to "+col.name);
+    b.addEventListener("click",()=>{ if(sheetKey!==null) applyMove(sheetKey,String(col.id)); });
+    lanes.appendChild(b);
+  });
+  const here=lanes.querySelector('[aria-current="true"]');
+  if(here){
+    /* The rail scrolls, so the lane a card is actually in must not sit off the
+       end of it. Left to the browser rather than computed here: the arithmetic
+       version needed a laid-out clientWidth, and the first render of a sheet
+       does not always have one. `nearest` on both axes moves the minimum, so it
+       will not drag the sheet body around underneath it. */
+    if(here.scrollIntoView) here.scrollIntoView({block:"nearest",inline:"nearest"});
+    if(hadFocus) here.focus();
+  }
+
+  const noteBox=document.getElementById("sheetNote");
+  noteBox.innerHTML="";
+  noteBox.classList.toggle("raw",noteView==="raw");
+  if(card.notes){
+    noteBox.appendChild(noteView==="raw"
+      ? document.createTextNode(card.notes)
+      : mdNodes(card.notes));
+  }
+  document.getElementById("sheetNoteSec").hidden=!card.notes;
+  paintNoteToggle();
+
+  const tags=document.getElementById("sheetTags"); tags.innerHTML="";
+  (card.tags||[]).forEach(t=>tags.appendChild(el("span",null,String(t))));
+  document.getElementById("sheetTagSec").hidden=!(card.tags&&card.tags.length);
+
+  /* Every relation this card has, each under its own name. A parent, a
+     blocker and a plain cross-link are different facts, and one undifferentiated
+     list of ids made them look like the same one. */
+  const links=document.getElementById("sheetLinks"); links.innerHTML="";
+  const linkRow=(label,ids)=>{
+    const list=(ids||[]).map(v=>String(v).trim()).filter(Boolean);
+    if(!list.length) return;
+    links.appendChild(el("p","sheet-lbl",label));
+    const row=el("div","sheet-refs");
+    list.forEach(v=>row.appendChild(el("span",null,v)));
+    links.appendChild(row);
+  };
+  linkRow("Parent",card.parent?[card.parent]:[]);
+  linkRow("Blocked by",card.blockedBy);
+  linkRow("Blocking",card.blocking);
+  linkRow("References",card.related);
+  document.getElementById("sheetLinkSec").hidden=!links.childNodes.length;
+
+  const facts=document.getElementById("sheetFacts"); facts.innerHTML="";
+  const fact=(label,value,mono)=>{
+    if(value==null||value==="") return;
+    facts.appendChild(el("dt",null,label));
+    facts.appendChild(el("dd",mono?"mono":null,String(value)));
+  };
+  fact("Id",card.id,true);
+  if(card.category){
+    facts.appendChild(el("dt",null,"Category"));
+    const dd=el("dd","sheet-cat");
+    dd.style.setProperty("--c",catColor(card.category));
+    const swatch=el("i"); swatch.setAttribute("aria-hidden","true");
+    dd.appendChild(swatch); dd.appendChild(document.createTextNode(card.category));
+    facts.appendChild(dd);
+  }
+  fact("Priority",priorityOf(card),false);
+  fact("From",sourceName(card),false);
+  fact("Created",stamp(card.createdAt),false);
+  fact("Updated",stamp(card.updatedAt),false);
+  fact("Slug",card.slug,true);
+  fact("File",card.beanPath,true);
+  /* the compare-and-swap token. Plumbing, but it is what a refused write will
+     name, so it is worth being able to read off the card rather than out of
+     the JSON. */
+  fact("Etag",card.beansEtag,true);
+  fact("Task status",card.taskStatus,false);
+  /* The one thing about this card that is true in the browser and not yet on
+     disk. Saying it here beats making someone diff the file to find it. */
+  const mv=moves[card.id];
+  if(mv&&mv.to===card.column) fact("Moved here from",colName(mv.from),false);
 }
 
 function ticketNode(card,key){
-  const t=el("div","ticket"); t.draggable=true; t.tabIndex=0; t.dataset.id=card.id; t.dataset.key=String(key);
+  const t=el("div","ticket"); t.draggable=true; t.dataset.id=card.id; t.dataset.key=String(key);
   t.setAttribute("role","listitem");
-  t.setAttribute("aria-keyshortcuts","[ ]");
-  t.setAttribute("aria-label",cardLabel(card)+(card.category?", "+card.category:"")+", in "+colName(card.column));
-  if(selectedKey===key){ t.classList.add("sel"); t.setAttribute("aria-current","true"); }
   t.style.setProperty("--c",catColor(card.category));
+  /* One node cannot be both a listitem and a button, so the wrapper keeps the
+     list semantics and the drag while the face takes the activation. Still one
+     tab stop per card. */
+  const face=el("button","ticket-face"); face.type="button";
+  face.setAttribute("aria-haspopup","dialog");
+  face.setAttribute("aria-keyshortcuts","[ ]");
+  face.setAttribute("aria-label",cardLabel(card)+(card.category?", "+card.category:"")
+    +", in "+colName(card.column));
   /* Title first. The sentence is what a person reads to decide; the id is what
-     they quote back afterwards, so it sits under the title with the rest of the
-     codes rather than above it. */
-  t.appendChild(el("div","t-title",card.title));
-  if(card.notes) t.appendChild(el("div","t-note",card.notes));
-  if(card.related&&card.related.length){
-    const r=el("div","t-refs");
-    r.appendChild(el("span","lead","ref"));
-    /* one span per code, spaced by the layout: a separator character between
-       codes reads as part of the code it is next to. */
-    card.related.forEach(ref=>r.appendChild(el("span",null,String(ref))));
-    t.appendChild(r);
+     they quote back afterwards, so it sits at the foot of the card. */
+  face.appendChild(el("div","t-title",card.title));
+  /* clamped to two lines in CSS. The whole note is one click away, which is
+     what stops a long one from making its card three times taller than its
+     neighbours and pushing the rest of the lane out of view. */
+  if(card.notes) face.appendChild(el("div","t-note",mdText(card.notes)));
+  const foot=el("div","t-foot");
+  /* Marked only when this card is not of the deck's ordinary type: a swatch in
+     its hue and the type's own name, so an epic or a bug is visible at a glance
+     among the tasks. A single-type deck marks nothing at all rather than
+     printing the same word on every card in it. The name is in the card's
+     label, the legend and the sheet either way. */
+  if(card.category&&(state.categoryNames||[]).length>1&&card.category!==state.baseCategory){
+    const sw=el("span","t-swatch"); sw.setAttribute("aria-hidden","true");
+    foot.appendChild(sw);
+    foot.appendChild(el("span","t-cat",card.category));
   }
-  const meta=el("div","t-meta");
-  meta.appendChild(el("span","t-id",card.id));
-  const stamp=laneStamp(columnById(card.column));
-  /* decorative marker: the lane it sits in already carries this in text */
-  if(stamp){ const s=el("span","stamp "+stamp[0],stamp[1]); s.setAttribute("aria-hidden","true"); meta.appendChild(s); }
-  if(card.category) meta.appendChild(el("span","t-cat",card.category));
-  t.appendChild(meta);
+  foot.appendChild(el("span","t-id",card.id));
+  const prio=priorityMark(card);
+  if(prio) foot.appendChild(prio);
+  face.appendChild(foot);
+  t.appendChild(face);
+  face.addEventListener("click",()=>openSheet(key));
+  face.addEventListener("keydown",ev=>{
+    if(ev.key==="[") { ev.preventDefault(); moveByKey(key,-1); }
+    else if(ev.key==="]") { ev.preventDefault(); moveByKey(key,1); }
+  });
   /* body class, not just the ticket's: the lanes that can take this card light
      up and the rest step back, which is the whole of the drag feedback. render()
      clears it too, because a dropped node is detached before dragend fires. */
   t.addEventListener("dragstart",ev=>{ev.dataTransfer.setData("text/plain",String(key));ev.dataTransfer.effectAllowed="move";t.classList.add("dragging");document.body.classList.add("dragging-now");});
   t.addEventListener("dragend",()=>{t.classList.remove("dragging");document.body.classList.remove("dragging-now");});
-  t.addEventListener("keydown",ev=>{
-    if(ev.key==="[") { ev.preventDefault(); moveByKey(key,-1); }
-    else if(ev.key==="]") { ev.preventDefault(); moveByKey(key,1); }
-  });
-  if(tapToMove()){
-    t.addEventListener("click",ev=>{
-      if(selectedKey===null){ ev.stopPropagation(); select(key); }
-      else if(selectedKey===key){ ev.stopPropagation(); deselect(); }
-      /* otherwise fall through: the lane this card sits in takes the drop */
-    });
-  }
   return t;
 }
 
@@ -724,15 +1284,22 @@ function render(){
   /* A dropped ticket is detached before its dragend fires, so the body class
      would survive the drag that ended. Every render clears it. */
   document.body.classList.remove("dragging-now");
-  document.getElementById("boardTitle").textContent=state.title||"Work-order board";
-  document.getElementById("boardSub").textContent=state.subtitle||"Work-order board";
-  document.getElementById("orderCount").textContent=state.cards.length;
+  const titleTxt=state.title||"Board";
+  document.getElementById("boardTitle").textContent=titleTxt;
+  /* the tab is how you find this board among a portfolio of them */
+  document.title=titleTxt;
+  /* A subtitle that repeats the title is not a subtitle. The default deck used
+     to carry "Work-order board" in both fields and print it twice. */
+  const sub=document.getElementById("boardSub");
+  const subTxt=(state.subtitle==null?"":String(state.subtitle)).trim();
+  sub.textContent=subTxt;
+  sub.hidden=(!subTxt||subTxt.toLowerCase()===titleTxt.toLowerCase());
+  document.getElementById("cardCount").textContent=state.cards.length;
   document.getElementById("rev").textContent=state.updated||"—";
-  document.getElementById("stageCount").textContent=state.columns.length;
   const lg=document.getElementById("legend"); lg.innerHTML="";
   (state.categoryNames||[]).forEach(cat=>{
     /* a real button: a bare span with a click handler is unreachable by
-       keyboard, and the footer tells people to use it */
+       keyboard, and this is a control, not a colour key */
     const k=el("button","k"+(filterCat===cat?" on":(filterCat?" off":"")));
     k.type="button";
     k.setAttribute("aria-pressed",filterCat===cat?"true":"false");
@@ -755,6 +1322,10 @@ function render(){
     const nm=el("span","nm",col.name);
     nm.id=headId; nm.setAttribute("role","heading"); nm.setAttribute("aria-level","2");
     head.appendChild(nm);
+    /* Said once for the lane. It used to be printed on every card sitting in
+       the lane, restating the heading above them. */
+    const st=laneStamp(col);
+    if(st) head.appendChild(el("span","stamp "+st[0],st[1]));
     lane.setAttribute("aria-labelledby",headId);
     // count: `shown of total` while filtering; over-limit (col.wip) shown in red
     const over = Number.isFinite(col.wip) && entries.length>col.wip;
@@ -762,7 +1333,7 @@ function render(){
       ? shown.length+" of "+entries.length
       : String(entries.length) + (Number.isFinite(col.wip)?(" / "+col.wip):"");
     const ct=el("span","ct"+(over?" over":""),ctTxt);
-    ct.setAttribute("aria-label",(filtering?shown.length+" of "+entries.length+" orders shown":entries.length+" orders")
+    ct.setAttribute("aria-label",(filtering?shown.length+" of "+entries.length+" cards shown":entries.length+" cards")
       +(Number.isFinite(col.wip)?(over?", over the limit of "+col.wip:", limit "+col.wip):""));
     head.appendChild(ct);
     lane.appendChild(head);
@@ -774,7 +1345,7 @@ function render(){
        says so rather than inviting one. */
     if(!shown.length) body.appendChild(el("div","lane-empty",
       filtering&&entries.length ? "Nothing matches the filter"
-        : droppable ? "Drop an order here" : "Nothing here"));
+        : droppable ? "Drop a card here" : "Nothing here"));
     shown.forEach(e=>body.appendChild(ticketNode(e.card,e.key)));
     lane.appendChild(body);
     if(droppable){
@@ -784,10 +1355,6 @@ function render(){
         ev.preventDefault(); lane.classList.remove("drop");
         const key=Number(ev.dataTransfer.getData("text/plain"));
         if(Number.isInteger(key)) applyMove(key,col.id);
-      });
-      if(tapToMove()) lane.addEventListener("click",()=>{
-        if(selectedKey===null) return;
-        const key=selectedKey; deselect(true); applyMove(key,col.id);
       });
     }
     board.appendChild(lane);
@@ -805,6 +1372,8 @@ function render(){
   // registers no dragover: painting an accept outline over a target that then
   // refuses the drop is a lie about being live.
   if(orphans.length) laneNode({id:"__unfiled",name:"Unfiled",muted:false,stamp:false},orphans,{droppable:false,cls:" unfiled"});
+  /* last, so the sheet reflects the deck that was just drawn */
+  syncSheet();
 }
 
 async function boot(){
@@ -844,7 +1413,32 @@ q.addEventListener("input",()=>{ filterText=q.value.trim().toLowerCase(); render
 q.addEventListener("keydown",ev=>{
   if(ev.key==="Escape"){ q.value=""; filterText=""; filterCat=null; render(); q.blur(); }
 });
-document.addEventListener("keydown",ev=>{ if(ev.key==="Escape") deselect(true); });
+document.getElementById("sheetClose").addEventListener("click",closeSheet);
+noteView=readNoteView();
+paintNoteToggle();
+document.getElementById("noteView").addEventListener("click",ev=>{
+  const b=ev.target.closest("button[data-view]");
+  if(!b) return;
+  noteView=(b.dataset.view==="raw")?"raw":"pretty";
+  writeNoteView(noteView);
+  if(sheetKey!==null) renderSheet();
+});
+/* Esc, routed through closeSheet rather than left to the dialog's own cancel.
+   A keydown is delivered as user input, so it lands even where a queued task
+   would not. */
+sheetEl().addEventListener("keydown",ev=>{
+  if(ev.key==="Escape"){ ev.preventDefault(); closeSheet(); }
+});
+/* The net: a close by any other route still clears the bookkeeping. */
+sheetEl().addEventListener("close",()=>{
+  if(sheetKey===null) return;
+  const key=sheetKey;
+  sheetKey=null; sheetId=null;
+  focusKey(key);
+});
+/* the backdrop belongs to the dialog element itself, so a click that lands on
+   the dialog rather than on the panel inside it is a click outside */
+sheetEl().addEventListener("click",ev=>{ if(ev.target===sheetEl()) closeSheet(); });
 /* Another tab on the same board is another writer. Adopt its moves instead of
    letting whichever tab saves last silently win. */
 window.addEventListener("storage",ev=>{

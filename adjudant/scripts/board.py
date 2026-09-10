@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adjudant board — scaffold a self-hosted work-order kanban board for a project.
+"""Adjudant board — scaffold a self-hosted kanban board for a project.
 
 Generates `board-data.json` (the deck) + a self-contained `board.html`
 (drag-to-move, auto-saves to disk via the File System Access API). The deck can
@@ -69,7 +69,15 @@ BACKUP_DIR_NAME = ".bak"
 BACKUP_KEEP = 5
 from _template_schema import load_schema
 
-DEFAULT_SUBTITLE = "Work-order board"
+# No default subtitle. It used to be "Work-order board", which the template's
+# own title fell back to as well, so a board with no title of its own printed
+# the same sentence twice, one under the other. A project that wants a subtitle
+# sets one; the rest get a heading and nothing under it.
+DEFAULT_SUBTITLE = ""
+# The retired default, still sitting in every deck written before this. It is
+# treated as absent on re-seed rather than preserved, so an old board stops
+# repeating itself the first time it is refreshed.
+LEGACY_SUBTITLE = "Work-order board"
 DEFAULT_CATEGORIES = ["build", "docs", "infra", "chore"]
 
 # One status per lane, and the lanes come from the task template. Nothing here
@@ -523,7 +531,11 @@ def merge_deck(existing: dict[str, Any], fresh: dict[str, Any]) -> dict[str, Any
             ancestor = ec.get("taskStatus")
             if ancestor is None or ancestor == fc.get("taskStatus"):
                 fc["column"] = ec.get("column", fc.get("column"))
-            if ec.get("notes"):
+            # A beans-seeded card's note IS the bean's body, and Beans owns
+            # it. Preserving the on-disk copy would pin an edited body to
+            # whatever the board last saw. A task-seeded card keeps its
+            # board-local note, which no other writer supplies.
+            if ec.get("notes") and fc.get("source") != "beans":
                 fc["notes"] = ec["notes"]
         merged.append(fc)
     for cid, ec in ex_ordered:
@@ -553,7 +565,7 @@ def merge_deck(existing: dict[str, Any], fresh: dict[str, Any]) -> dict[str, Any
     out["categories"] = categories
     if existing.get("title"):
         out["title"] = existing["title"]
-    if existing.get("subtitle"):
+    if existing.get("subtitle") and existing["subtitle"] != LEGACY_SUBTITLE:
         out["subtitle"] = existing["subtitle"]
     if existing.get("columns"):
         # Columns are user-ownable deck data (added/renamed lanes) — a re-seed
@@ -965,7 +977,7 @@ def scaffold_one(
                           f"&file={quote(str(rel), safe='')}", file=sys.stderr)
                 except ValueError:
                     pass
-    print(f"[board] {dest}/board.html  ({len(deck.get('cards', []))} cards, {len(deck.get('columns', []))} stages)", file=sys.stderr)
+    print(f"[board] {dest}/board.html  ({len(deck.get('cards', []))} cards, {len(deck.get('columns', []))} lanes)", file=sys.stderr)
     print(str(dest / "board.html"))
     return 0
 
@@ -1328,7 +1340,7 @@ def cli_main(argv: Optional[list[str]] = None) -> int:
     args_in = sys.argv[1:] if argv is None else argv
     if "--ensure" in args_in:
         return cmd_ensure(args_in)
-    parser = argparse.ArgumentParser(prog="board.py", description="Adjudant board — scaffold/serve a work-order kanban board.")
+    parser = argparse.ArgumentParser(prog="board.py", description="Adjudant board — scaffold/serve a kanban board.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sc = sub.add_parser("scaffold", help="write board-data.json + a self-contained board.html")

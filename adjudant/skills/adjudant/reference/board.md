@@ -1,16 +1,92 @@
 # /adjudant board
 
-Scaffold a self-hosted **work-order kanban board** — a *standard project
+Scaffold a self-hosted **kanban board** — a *standard project
 surface* any adjudant project can have, not a one-off. The board is a single,
-dependency-free `board.html` (drag a card between stages; it auto-saves to disk
+dependency-free `board.html` (drag a card between lanes; it auto-saves to disk
 via the File System Access API on Chromium, with a localStorage mirror) driven
 by a sibling `board-data.json`. Each board namespaces its own browser + disk
 state by `boardId`, so a portfolio of project boards served from the same
 localhost never clobber one another.
 
-It is a *view*: cards carry short ids and mono `ref ·` tags that cross-link your
-own codes (specs, handoffs, commits). Category colour is data-driven — names get
-OKLCH palette hues by index, or supply explicit `{ "name": "oklch(...)" }`.
+The board wears **Adjudant Classic**: a 70s corporate-paper memo in warm cream
+OKLCH stock, brown-black ink, one warm orange accent and no rounded corner
+anywhere. It is ported from the ZenaSoft design system, whose own references are
+IBM annual reports c.1973, Container Corp of America, Mobil corporate guidelines
+and Knoll spec sheets. Fonts are named, never fetched: the board is served off a
+disk and validator 24 fails the build on any off-machine `href`, so the display
+serif resolves through its declared fallbacks.
+
+It is a *view*. A card's face carries its title, the first two lines of its
+note, and its id; open the card for everything else. Category colour is
+data-driven — names get OKLCH palette hues by index, or supply explicit
+`{ "name": "oklch(...)" }`.
+
+## The card, and the card opened
+
+The face is a `<button>` inside the draggable card, so there is still one tab
+stop per card: click it, or focus it and press `Enter`. Its sheet opens against
+the right edge of the board and carries **every field the card holds**, because
+the opened card is where a person goes to see the whole item and a field that
+reaches nowhere else is a field they cannot see at all:
+
+| Section | Carries |
+|---|---|
+| Lane | the lane rail (below) |
+| Note | the whole note, `Pretty` or `Raw` (below) |
+| Tags | one chip per tag |
+| Relations | `Parent`, `Blocked by`, `Blocking` and `References`, each under its own name |
+| Details | `Id`, `Category`, `Priority`, `From`, `Created`, `Updated`, `Slug`, `File`, `Etag`, `Task status`, and the lane a card was dragged out of while that move has not reached the deck yet |
+
+A row appears only when the card actually carries that field, so the sheet never
+shows an empty one.
+
+The **lane rail** is one button per lane in a scrolling track, the current lane
+lifted out of it, one press to move the card. It is the move control for a phone
+and for a screen reader, and it replaced a tap-then-tap mode that existed only on
+devices matching `(pointer: coarse)` and that nothing on the page announced. It
+scrolls rather than wraps: a segmented control folded onto a second row reads as
+broken, and a vault board has seven lanes. The note toggle is drawn as the same
+control, because it is the same idea.
+
+**The note is Markdown, and is read as Markdown.** A bean's body is Markdown, and
+a note shown as one flat run with the syntax still in it is source rather than a
+note. The sheet renders the subset bodies use: headings, emphasis, code, fenced
+blocks, lists, quotes, rules and links. `Raw` is one click away and keeps every
+character, and the choice is remembered for every board this browser opens. The
+card face always shows the note's text with the syntax stripped, because two
+lines of card preview spent on `## ` is two lines of punctuation.
+
+The reader builds DOM nodes and never assembles an HTML string. `board-data.json`
+is documented as hand-editable and a bean body is written by whoever writes
+beans, so a renderer that went through `innerHTML` would hand either of them the
+page. For the same reason a link is made clickable only for `http`, `https`,
+`mailto` and `obsidian`; anything else is shown as text. Nothing is fetched, and
+no library is loaded: the board is one offline file and validator 24 keeps it
+that way.
+
+Two marks reach the face, and only when they carry something:
+
+- **Category**, as a coloured swatch and its name, on a card whose category is
+  not the deck's ordinary one. A category is the ordinary one when it covers
+  more cards than every other category put together. So a beans board of 78
+  tasks and 9 epics marks the nine epics and leaves the tasks unmarked, an
+  evenly split deck marks all of them, and a deck with one category marks
+  nothing. The name is in the card's label, the legend and the sheet regardless.
+- **Priority**, whenever the deck carries one. A tracker writes `priority` only
+  when it is worth showing (`_beans.to_card` drops `normal`), so the key's
+  presence is the whole signal. `low`, `deferred` and their kin are drawn quiet;
+  the rest are drawn in the alert colour.
+
+The sheet is a native `<dialog>` opened with `showModal()`, so the focus trap,
+`Esc`, the inert background and the top layer all come from the platform. The
+top layer is the reason it is a dialog at all: the lane body is
+`overflow-y: auto`, and a panel positioned inside it would be clipped.
+
+A card is addressed by its **position** in `cards`, never by its id, for the
+same reason a drag is: a deck may legitimately carry two cards with one id. When
+a disk refresh or another tab replaces the deck under an open sheet, the card at
+that position may no longer be the card that was opened, so the sheet closes and
+says so rather than relabelling itself as something else.
 
 ## Targeting (which project's board)
 
@@ -95,6 +171,8 @@ the background, open the URL, and close with one next step: drag cards, or hit
   "cards": [{ "id": "X-01", "title": "...", "column": "backlog",
               "category": "build", "related": ["SPEC-001"], "notes": "",
               "source": "task", "taskStatus": "todo" }]
+  // a beans-seeded card adds, when the bean carries them: priority, tags,
+  // parent, blockedBy, blocking, slug, beanPath, createdAt, updatedAt, beansEtag
 }
 ```
 
@@ -104,21 +182,24 @@ the background, open the URL, and close with one next step: drag cards, or hit
 
 - `boardId` (defaults to the project slug) namespaces the board's browser
   `localStorage` + IndexedDB file-handle, keeping multiple boards independent.
-- `done` and `icebox` columns get `BUILT` / `PARKED` rubber-stamp overprints by
-  default. A renamed or added lane sets its own: `"stamp": "SHIPPED"` (or
-  `false` for none), `"stampTone": "built"|"parked"`, `"muted": true|false`.
-- A column may carry `"wip": N` — the lane head then shows `count/N wip` and
+- `done` and `icebox` lanes are marked `BUILT` / `PARKED` in the **lane
+  heading**, once for the lane rather than once on every card sitting in it. A
+  renamed or added lane sets its own: `"stamp": "SHIPPED"` (or `false` for
+  none), `"stampTone": "built"|"parked"`, `"muted": true|false`. A muted lane
+  keeps the same well colour as every other lane and quiets its heading.
+- A column may carry `"wip": N` — the lane head then shows `count / N` and
   turns red when over the limit.
 - Cards whose `column` matches no lane (hand-edited deck, removed column) are
   never invisible — they render in a synthetic **UNFILED** lane you can drag
-  them out of. That lane takes no drops, and shows no drop affordance.
+  them out of. That lane is named **Unfiled**, takes no drops, and shows no
+  drop affordance.
 - A category colour must be a colour the browser accepts. Anything that could
   fetch (`url(...)`) falls back to the palette hue: the board is served from
   disk and makes no outbound request.
 - In-browser view tools (never persisted): a **filter** box narrows by
   id/title/category/ref/note (`Esc` clears), legend keys are buttons that
-  toggle a category filter, a focused ticket moves one lane left/right with
-  `[` / `]`, and on a touch screen you tap an order then tap a stage.
+  toggle a category filter, and a focused card moves one lane left/right with
+  `[` / `]`. A card with no lane of its own is moved from its sheet's lane row.
 - The browser persists **only the moves you made by hand**, as
   `{cardId: {from, to}}`. Everything else re-renders from the deck on every
   load, so a re-scaffold that re-seeds a title, category or ref is visible
@@ -257,6 +338,53 @@ only when someone asks for one — `/adjudant status --capture-task`, or your ow
 hand. The ledger still lives in `$TMPDIR` for the statusline; nothing reads it
 into the vault.
 
+## Beans-owned repos
+
+A repo whose `.claude/adjudant` carries `tracker: beans` is seeded from the
+Beans CLI instead of from `tasks/`. `_beans.py` is the only module that runs the
+binary, and `board.py` absorbs the answer into the ordinary deck shape before
+the page sees it, so `board.html` carries no reference to beans at all.
+
+- Lanes come from `_beans.COLUMNS`: `draft`, `todo`, `in-progress`, `completed`
+  (marked BUILT, muted) and `scrapped` (marked DROPPED, muted). The deck carries
+  `"tracker": "beans"`.
+- Every property a bean can carry reaches the card:
+
+  | Card | Bean | | Card | Bean |
+  |---|---|---|---|---|
+  | `column` | `status` | | `tags` | `tags` |
+  | `category` | `type` | | `parent` | `parent` |
+  | `notes` | `body` | | `blockedBy` | `blocked_by` |
+  | `priority` | `priority`, when not `normal` | | `blocking` | `blocking` |
+  | `slug` | `slug` | | `createdAt` | `created_at` |
+  | `beanPath` | `path` | | `updatedAt` | `updated_at` |
+  | `beansEtag` | `etag` | | `source` | `"beans"` |
+
+  An optional key is written only when the bean carries it, the rule `priority`
+  already followed, so the opened card never grows an empty row.
+- `notes` comes from the body, which means `list_beans` asks for `--full`.
+  Without it every bean arrived with no description and the board rendered a
+  deck of empty notes while every bean had one. It is not a second pass and not
+  slower in any way that matters: over 89 beans, `list --json` measured 0.03s
+  and `list --full --json` measured 0.02s.
+- A beans card's `notes` **re-seeds** on merge rather than being preserved.
+  Beans owns the body; keeping the on-disk copy would pin an edited body to
+  whatever the board last saw. A task-seeded card still keeps its board-local
+  note, which no other writer supplies.
+- `parent` is its own field, not folded into `related`. The opened card labels a
+  parent, and a labelled relation plus an unlabelled copy of the same id in a
+  reference list is one fact said twice.
+- Write-back is `beans update --if-match`, real compare-and-swap, so this path
+  needs no `taskStatus` ancestor to tell a drag from a hand edit.
+- Working in a beans-owned repo is beans' own contract, not adjudant's: run
+  `beans prime` and follow it. SessionStart prints a one-line banner saying so
+  in any repo whose breadcrumb carries `tracker: beans`, read straight from the
+  breadcrumb so no hook ever runs the binary (validator 27).
+- A beans-owned repo whose CLI is unreachable **refuses and reports**. It never
+  falls back to `tasks/`, which is empty by design there: a fallback would
+  reseed the board from an empty folder and replace a deck of real beans with an
+  empty board.
+
 ## Merge provenance (refresh-without-clobber)
 
 Task-seeded cards carry `source: task`. On re-seed, a `source: task` card whose
@@ -280,4 +408,7 @@ pre-provenance deck) keep their current column untouched.
 
 - No live sync to GitHub issues / Jira / a database — the JSON is the source of truth.
 - No multi-user/server backend — single-file, local, disk-or-browser persistence.
-- No auto-status-writeback to `tasks/` notes (seeding is one-way: `tasks/` → board).
+- No card creation in the browser. A card comes from a task note or from a bean:
+  write the note yourself, or use `/adjudant status --capture-task`. (This
+  section used to claim there was no status write-back to `tasks/` either, which
+  the "The board writes back" section above has contradicted since v1.0.0.)

@@ -277,9 +277,17 @@ def list_beans(code_root: Path) -> Result:
     """Every bean in the repo, as the CLI's own flat records.
 
     Result.value is a list of dicts carrying id, slug, path, title, status,
-    type, priority, created_at, updated_at and etag.
+    type, priority, tags, parent, blocked_by, blocking, body, created_at,
+    updated_at and etag.
+
+    `--full` is what adds `body`. Without it every bean arrived with no
+    description at all, and the board rendered 89 cards with an empty note
+    while all 89 beans had one. It is not a second pass and it is not slower in
+    any way that matters: measured over 89 beans, `list --json` took 0.03s and
+    `list --full --json` took 0.02s. Reading the bodies one at a time with
+    `beans show` would have been the N+1 this avoids.
     """
-    res = _run_json(code_root, ["list", "--json"])
+    res = _run_json(code_root, ["list", "--full", "--json"])
     if not res.ok:
         return res
     rows = res.value
@@ -321,19 +329,40 @@ def create(code_root: Path, title: str, body: str = "") -> Result:
 def to_card(bean: dict[str, Any]) -> dict[str, Any]:
     """One bean as the card shape `board.py` already renders.
 
-    The mapping is direct and lossless because the lanes are Beans' own:
+    Every property a bean can carry reaches the card, because the board's
+    opened card is where a person goes to see the whole item and a field that
+    stops here is a field they cannot see anywhere:
 
         id        <- id            title     <- title
-        column    <- status        category  <- type (bug|feature|task|epic)
-        related   <- parent        priority  <- priority, when not `normal`
+        column    <- status        category  <- type
+        notes     <- body          priority  <- priority, when not `normal`
+        tags      <- tags          parent    <- parent
+        blockedBy <- blocked_by    blocking  <- blocking
+        slug      <- slug          beanPath  <- path
+        createdAt <- created_at    updatedAt <- updated_at
         beansEtag <- etag
+
+    Optional keys are written only when the bean actually carries them, so a
+    card never grows an empty row and the sheet has nothing to hide. `priority`
+    is the pattern: Beans has always had one, and omitting `normal` is what
+    lets the board treat the key's presence as the whole signal.
+
+    `parent` used to be folded into `related` and is now its own field. The
+    opened card labels it, and a labelled relation plus an unlabelled copy of
+    the same id in a generic reference list is the same thing said twice.
+    `related` stays for the vault's own cross-links.
 
     `source: "beans"` is provenance, matching the `source: "task"` that
     `merge_deck` reads: a beans-seeded card must never be iceboxed as though a
     task note had vanished.
     """
+    def _ids(key: str) -> list[str]:
+        raw = bean.get(key)
+        if not isinstance(raw, list):
+            return []
+        return [str(v).strip() for v in raw if str(v).strip()]
+
     status = str(bean.get("status") or "").strip().lower()
-    parent = str(bean.get("parent") or "").strip()
     priority = str(bean.get("priority") or "").strip().lower()
     card: dict[str, Any] = {
         "id": str(bean.get("id") or ""),
@@ -343,13 +372,25 @@ def to_card(bean: dict[str, Any]) -> dict[str, Any]:
         # which is visible, rather than under planned work, which is not.
         "column": status if status in STATUSES else status,
         "category": str(bean.get("type") or "task"),
-        "related": [parent] if parent else [],
-        "notes": "",
+        "related": [],
+        "notes": str(bean.get("body") or "").strip(),
         "source": "beans",
         "beansEtag": str(bean.get("etag") or ""),
     }
-    if priority and priority != _UNREMARKABLE_PRIORITY:
-        card["priority"] = priority
+    optional: dict[str, Any] = {
+        "priority": priority if priority != _UNREMARKABLE_PRIORITY else "",
+        "tags": _ids("tags"),
+        "parent": str(bean.get("parent") or "").strip(),
+        "blockedBy": _ids("blocked_by"),
+        "blocking": _ids("blocking"),
+        "slug": str(bean.get("slug") or "").strip(),
+        "beanPath": str(bean.get("path") or "").strip(),
+        "createdAt": str(bean.get("created_at") or "").strip(),
+        "updatedAt": str(bean.get("updated_at") or "").strip(),
+    }
+    for key, value in optional.items():
+        if value:
+            card[key] = value
     return card
 
 

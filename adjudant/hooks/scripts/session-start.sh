@@ -124,9 +124,10 @@ except Exception:
   # not leak \r into paths/slugs (it used to create phantom `slug\r/` dirs).
   vault_path=$(sed -n 's/^vault_path[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
   slug=$(sed -n 's/^slug[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
-  local voice_knob advisor_knob
+  local voice_knob advisor_knob tracker_knob
   voice_knob=$(sed -n 's/^voice[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
   advisor_knob=$(sed -n 's/^advisor[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
+  tracker_knob=$(sed -n 's/^tracker[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
 
   [ -z "$slug" ] && return 0
   # The breadcrumb is a REPO-COMMITTED file: a cloned repo can carry any slug.
@@ -207,6 +208,21 @@ print(v or "")' "$CLAUDE_PLUGIN_ROOT/scripts" "$project_dir" 2>/dev/null || true
   case "${advisor_knob:-off}" in
     on|true|1|yes)
       printf -- '- Advisor: on. Load `reference/advisor.md` now and follow it: notice tasks, gaps, gaffes, and stale context while working. Urgent findings surface inline; the rest go to the board or the next status report. Run a context pulse at resume.\n'
+      ;;
+    *) : ;;
+  esac
+
+  # Beans banner. `tracker: beans` is a fact about the REPO, read straight out
+  # of the breadcrumb: no `_beans` import and no subprocess, because validator
+  # 27 keeps the binary off every hook path and a fact this cheap does not need
+  # one. The banner routes to `beans prime` rather than restating it: that
+  # command is the tracker's own guide AND it is generated from the project's
+  # own .beans.yml, so the types, statuses and priorities it lists are this
+  # repo's. A copy pasted into adjudant would be stale for beans and wrong for
+  # any project configured differently. Same 120-token budget as the others.
+  case "${tracker_knob:-vault}" in
+    beans)
+      printf -- '- Beans: this repo tracks work items in beans, not in the vault and not in a todo list. Run `beans prime` now and follow it. Find or create a bean before starting work, keep its checklist current as you go, and commit the bean file alongside the code.\n'
       ;;
     *) : ;;
   esac

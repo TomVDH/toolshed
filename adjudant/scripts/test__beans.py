@@ -217,10 +217,51 @@ class TestTheCardMapping(unittest.TestCase):
         plain = dict(BEAN, priority="normal")
         self.assertNotIn("priority", _beans.to_card(plain))
 
-    def test_parent_becomes_the_related_link(self):
-        self.assertEqual(_beans.to_card(dict(BEAN, parent="beans-zz"))["related"],
-                         ["beans-zz"])
-        self.assertEqual(_beans.to_card(BEAN)["related"], [])
+    def test_parent_is_its_own_field_not_a_generic_reference(self):
+        # It used to be folded into `related`. The opened card labels a parent,
+        # and a labelled relation plus an unlabelled copy of the same id in a
+        # reference list is one fact said twice.
+        card = _beans.to_card(dict(BEAN, parent="beans-zz"))
+        self.assertEqual(card["parent"], "beans-zz")
+        self.assertEqual(card["related"], [])
+        self.assertNotIn("parent", _beans.to_card(BEAN))
+
+    def test_every_property_a_bean_carries_reaches_the_card(self):
+        # The opened card is where a person goes to see the whole item, so a
+        # field that stops at this adapter is a field they cannot see anywhere.
+        # `body` was the worst of them: every bean had one and every card
+        # showed an empty note.
+        loaded = dict(
+            BEAN, body="  A body.  ", tags=["frontend", "regression"],
+            parent="beans-p1", blocked_by=["beans-b1"], blocking=["beans-b2"],
+            created_at="2026-09-10T03:01:09Z", updated_at="2026-09-10T04:00:00Z",
+        )
+        card = _beans.to_card(loaded)
+        self.assertEqual(card["notes"], "A body.")
+        self.assertEqual(card["tags"], ["frontend", "regression"])
+        self.assertEqual(card["parent"], "beans-p1")
+        self.assertEqual(card["blockedBy"], ["beans-b1"])
+        self.assertEqual(card["blocking"], ["beans-b2"])
+        self.assertEqual(card["slug"], BEAN["slug"])
+        self.assertEqual(card["beanPath"], BEAN["path"])
+        self.assertEqual(card["createdAt"], "2026-09-10T03:01:09Z")
+        self.assertEqual(card["updatedAt"], "2026-09-10T04:00:00Z")
+
+    def test_an_absent_property_writes_no_key(self):
+        # Same rule `priority` already followed: the key's presence is the
+        # signal, so the opened card never grows a row with nothing in it.
+        card = _beans.to_card(BEAN)
+        for key in ("tags", "parent", "blockedBy", "blocking"):
+            self.assertNotIn(key, card, key)
+        # a non-list where a list belongs is ignored, not crashed on
+        self.assertNotIn("tags", _beans.to_card(dict(BEAN, tags="not-a-list")))
+
+    def test_the_body_is_asked_for(self):
+        # `beans list --json` omits bodies. Without --full every card arrived
+        # with an empty note while every bean had one, and reading them back
+        # with `beans show` per bean would have been an N+1.
+        import inspect
+        self.assertIn('"--full"', inspect.getsource(_beans.list_beans))
 
     def test_lanes_are_beans_own_vocabulary(self):
         self.assertEqual(_beans.STATUSES,

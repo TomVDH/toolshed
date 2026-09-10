@@ -156,6 +156,52 @@ class TestSessionStartHook(unittest.TestCase):
             self.assertLess(len(line) // 4, 120,
                             f"advisor banner is ~{len(line) // 4} tok, budget 120")
 
+    def test_beans_banner_appears_when_the_repo_tracks_in_beans(self):
+        # `tracker: beans` is a fact about the repo, so an agent that starts a
+        # session in one must be told before it reaches for a todo list.
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            out = _run("session-start.sh", project, home).stdout
+            self.assertIn("Beans:", out)
+            # It routes to the tracker's own guide rather than restating it.
+            # `beans prime` is generated from the project's .beans.yml, so a
+            # copy pasted into adjudant would be stale for beans and wrong for
+            # any project configured differently.
+            self.assertIn("beans prime", out)
+
+    def test_beans_banner_silent_for_a_vault_tracked_repo(self):
+        for crumb in ("vault_path: {vault}\nslug: demo\n",
+                      "vault_path: {vault}\nslug: demo\ntracker: vault\n"):
+            with tempfile.TemporaryDirectory() as tmp:
+                project, home = self._project(Path(tmp), crumb)
+                out = _run("session-start.sh", project, home).stdout
+                self.assertNotIn("Beans:", out)
+
+    def test_beans_banner_runs_no_subprocess(self):
+        # Validator 27 keeps the binary off every hook path. The banner reads
+        # the breadcrumb it already reads and nothing else, so it costs the
+        # same whether beans is installed, missing, or slow.
+        text = (Path(__file__).resolve().parents[1]
+                / "hooks" / "scripts" / "session-start.sh").read_text()
+        self.assertNotIn("import _beans", text)
+        # `beans prime` reaches the session as printed text for the agent to
+        # run. It is never a command this hook runs itself.
+        banner = next(l for l in text.splitlines() if "- Beans:" in l)
+        self.assertTrue(banner.strip().startswith("printf"), banner)
+        # and the knob is read from the breadcrumb, not from the tracker
+        i = text.index("tracker_knob=$(sed")
+        self.assertIn('"$breadcrumb"', text[i:i + 200])
+
+    def test_beans_banner_stays_within_its_token_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            out = _run("session-start.sh", project, home).stdout
+            line = next(l for l in out.splitlines() if "Beans:" in l)
+            self.assertLess(len(line) // 4, 120,
+                            f"beans banner is ~{len(line) // 4} tok, budget 120")
+
     def test_colon_breadcrumb_resolves(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")

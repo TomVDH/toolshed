@@ -1,7 +1,7 @@
 ---
 name: adjudant
 description: Operate an Obsidian vault from a code project. `/adjudant {connect|status|clean|dream|draw|board}` — connect onboards a project and asks where it lives; status reports where you are, what is wrong, and what is stale; clean removes what the vault does not need; dream reads the prose and reports what only judgement finds; draw builds diagrams, canvases, and bases; board runs a self-hosted kanban. Also fires whenever decisions, sessions, or notes are written into a linked vault.
-version: 3.3.0
+version: 4.0.0
 user-invocable: true
 argument-hint: "[connect|status|clean|dream|draw|board] [args]"
 license: MIT
@@ -25,7 +25,7 @@ Pairs with hookify for universal drift-defense hooks.
 | `clean` | `reference/clean.md` | Cleanup sweep: indexes, wikilink form, updated dates, off-schema frontmatter. Previews then applies, and never creates a vault file. --deep adds the structural pass. [vault\|repo\|all] adds repo symlinks. |
 | `dream` | `reference/dream.md` | Semantic refresh, the deepest tier: surfaces stale, superseded, redundant, or orphaned content as scored candidates you judge before anything changes. --folder scopes the walk to one subtree. |
 | `draw` | `reference/draw.md` | Create a canvas, base, or mermaid diagram, either hand-authored or generated from vault data. |
-| `board` | `reference/board.md` | Scaffold a self-hosted kanban seeded from tasks/: drag to move, saved to disk. Re-seeding keeps your dragged cards. Use --project SLUG or --all. |
+| `board` | `reference/board.md` | Scaffold a self-hosted kanban seeded from tasks/ or beans: drag to move, open a card for the rest. Re-seeding keeps your dragged cards. |
 | _(internals)_ | `reference/internals.md` | Not a verb. Hook wiring, verb-to-helper map, environment probes. Load only when the question is about adjudant's own machinery |
 <!-- VERBS:ROUTER:END -->
 
