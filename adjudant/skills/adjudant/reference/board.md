@@ -105,12 +105,15 @@ it. Only that fill: the figure is a fourteen-colour illustration, not a
 silhouette, so `filter:invert()` would take the plume to cyan and the skin to
 blue, and recolouring the cool near-blacks as well takes the pupil with them.
 
-Two fills follow the scheme, not one. On light the eye is a cool near-black
-sitting on the head's warm near-black, which reads as modelling rather than as a
-mark. Swap only the head and that whisper becomes a shout: a hard dark blob on a
-pale cheek. Swap the eye to the same cream and it disappears instead. So both
-swap, mirrored, `--mark-ink` warm and `--mark-eye` cool, and the relationship
-survives rather than the value.
+Two fills follow the scheme, not one: `--mark-ink` for the head and `--mark-eye`
+for the eye. The eye is not the head's mirror, and assuming it was is what 4.1.5
+got wrong. The two figures are not symmetric about it: rendering each eye alone
+and reading its bounding box gives his at 50px wide and 0.54% of the mark, and
+HERS at 215px and 1.21%. A whisper-level step works on a 50px pupil and leaves a
+215px feature as a pale patch merging into a pale cheek, which is a blank stare.
+So on dark the eye is an iris, cool and dark enough against the cream to hold an
+edge, picked off a rendered ladder at 52px, the size the board actually uses,
+rather than at inspection size where every rung looks fine.
 
 Path data is rounded to one decimal on a 100-unit grid. Measured against the
 original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.

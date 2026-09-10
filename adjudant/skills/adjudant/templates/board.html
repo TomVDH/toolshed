@@ -100,11 +100,19 @@
       --text-faint:oklch(68% 0.012 70);
       /* the mark's head, so it reads the way body text reads */
       --mark-ink:#e2ddd7;
-      /* and the eye, mirrored: on light a COOL near-black sits on a WARM one and
-         reads as modelling. Swapping only the face turns that whisper into a
-         hard dark blob on a pale cheek, so the eye swaps with it -- the same two
-         values, reversed -- and keeps the relationship rather than the number. */
-      --mark-eye:#d7dde2;
+      /* The eye. This was #d7dde2 in 4.1.5, the exact mirror of --mark-ink, on
+         the theory that preserving the light scheme's tiny warm/cool step was
+         enough. It is not, and the figures are not symmetric about it. Measured
+         by rendering each eye alone and reading its bounding box: his is 50px
+         wide and 0.54% of the mark; HERS IS 215px AND 1.21%. A whisper-level
+         step works on a 50px pupil and leaves a 215px feature as a pale patch
+         merging into a pale cheek, which is a blank stare rather than an eye.
+
+         So the eye is not the head's mirror, it is an iris: cool, and dark
+         enough against the cream to have an edge. Picked off a rendered ladder
+         at the size the board actually uses, 52px, not at inspection size where
+         everything looks fine. */
+      --mark-eye:#949ca7;
       --text:oklch(90% 0.010 75);
       --text-dim:oklch(78% 0.012 72);
       --border:oklch(38% 0.014 70);

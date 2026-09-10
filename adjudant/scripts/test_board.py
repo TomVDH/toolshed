@@ -1696,9 +1696,11 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         dark = self.src[self.src.index("prefers-color-scheme: dark"):]
         block = dark[:dark.index("}\n  }")]
         self.assertIn("--mark-eye:", block)
-        # the two inks are each other reversed; if one moves the other must
+        # The eye is NOT the head's mirror. 4.1.5 made it #d7dde2, the exact
+        # reverse of the ink, and her 215px eye washed out into the cheek. It is
+        # an iris now: cool, and dark enough against the cream to hold an edge.
         self.assertIn("--mark-ink:#e2ddd7", block.replace(" ", ""))
-        self.assertIn("--mark-eye:#d7dde2", block.replace(" ", ""))
+        self.assertIn("--mark-eye:#949ca7", block.replace(" ", ""))
 
     def test_the_wipe_is_one_timeline_so_it_is_actually_a_reveal(self):
         # A wipe is one constraint: the width of wordmark showing must EQUAL the
