@@ -105,15 +105,23 @@ it. Only that fill: the figure is a fourteen-colour illustration, not a
 silhouette, so `filter:invert()` would take the plume to cyan and the skin to
 blue, and recolouring the cool near-blacks as well takes the pupil with them.
 
-Two fills follow the scheme, not one: `--mark-ink` for the head and `--mark-eye`
-for the eye. The eye is not the head's mirror, and assuming it was is what 4.1.5
-got wrong. The two figures are not symmetric about it: rendering each eye alone
-and reading its bounding box gives his at 50px wide and 0.54% of the mark, and
-HERS at 215px and 1.21%. A whisper-level step works on a 50px pupil and leaves a
-215px feature as a pale patch merging into a pale cheek, which is a blank stare.
-So on dark the eye is an iris, cool and dark enough against the cream to hold an
-edge, picked off a rendered ladder at 52px, the size the board actually uses,
-rather than at inspection size where every rung looks fine.
+Three fills follow the scheme, not one, because the details do different jobs.
+`--mark-ink` is the head. `--mark-shade` is the ear. `--mark-eye` is the eye, and
+only Adjudante has one as a path at all: his is negative space in the silhouette.
+Which path is which was settled by rendering each alone and reading its bounding
+box off the alpha channel, not by reading the fill names.
+
+An ear is skin. It shades with the face and must not read as another material,
+which is exactly what a grey ear on a cream cheek does. On light it is a cool
+near-black a step off the head's warm one, so on dark it is a cool cream a step
+off the head's warm one: the mirror, which is right here.
+
+An eye is not skin, and it is the one place the mirror fails. Hers is 215px wide
+and 1.21% of the mark; a whisper-level step leaves a feature that size as a pale
+patch merging into a pale cheek, which is a blank stare. So it is an iris, cool
+and dark enough against the cream to hold an edge, picked off a rendered ladder
+at 52px, the size the board actually uses, rather than at inspection size where
+every rung looks fine.
 
 Path data is rounded to one decimal on a 100-unit grid. Measured against the
 original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.
