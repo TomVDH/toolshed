@@ -390,6 +390,21 @@ def sync_deck_to_beans(code_root: Path, deck: dict[str, Any]) -> list[dict[str, 
     """
     import _beans
 
+    # What Beans says RIGHT NOW, read once. Without this the loop below called
+    # `beans update --status` on every card on every run, whether or not the
+    # lane had moved, which rewrote every bean file and bumped every
+    # `updated_at`. On a repo of 89 beans that is 89 subprocesses and 89 dirty
+    # files per session end, for nothing, and it destroys `updated_at` as a
+    # signal. One `list` is cheaper than one `update`, let alone N of them.
+    # A read that fails leaves `current` empty, and an empty map skips nothing,
+    # so the worst case is the old behaviour rather than a lost move.
+    current: dict[str, str] = {}
+    listing = _beans.list_beans(code_root)
+    if listing.ok:
+        for row in listing.value or []:
+            if isinstance(row, dict) and row.get("id"):
+                current[str(row["id"])] = str(row.get("status") or "").strip().lower()
+
     moved: list[dict[str, Any]] = []
     for card in deck.get("cards", []) or []:
         if not isinstance(card, dict) or card.get("source") != "beans":
@@ -398,6 +413,9 @@ def sync_deck_to_beans(code_root: Path, deck: dict[str, Any]) -> list[dict[str, 
         etag = str(card.get("beansEtag") or "").strip()
         target = str(card.get("column") or "").strip().lower()
         if not bid or not etag or target not in _beans.STATUSES:
+            continue
+        # Already there. Writing it again would only churn the file.
+        if current.get(bid) == target:
             continue
         res = _beans.set_status(code_root, bid, target, etag)
         if res.ok:

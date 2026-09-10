@@ -1761,6 +1761,34 @@ class TestTemplateRendersOnlyWhatItCanVouchFor(unittest.TestCase):
         self.assertIn("duplicateIds", _js_function(self.src, "normalize"))
 
 
+class TestBeansWriteBackDoesNotChurn(unittest.TestCase):
+    """A run that moved nothing must write nothing."""
+
+    def test_a_lane_that_did_not_move_is_not_written_back(self):
+        # sync_deck_to_beans called `beans update --status` on EVERY beans card
+        # on every run, moved or not. That rewrote every bean file and bumped
+        # every `updated_at`: on a repo of 89 beans, 89 subprocesses and 89
+        # dirty files per session end, for nothing, and `updated_at` stopped
+        # meaning anything. The function's own docstring says "push dragged
+        # lanes back"; it was pushing every lane.
+        import inspect, board
+        body = inspect.getsource(board.sync_deck_to_beans)
+        # it reads the current state once...
+        self.assertIn("list_beans", body)
+        # ...and skips a card already sitting where the deck says it is
+        self.assertIn("current.get(bid) == target", body)
+        # and the skip must come before the write
+        self.assertLess(body.index("current.get(bid) == target"),
+                        body.index("_beans.set_status"))
+
+    def test_a_failed_listing_falls_back_to_writing_rather_than_skipping(self):
+        # A read that fails must not silently swallow a real move. An empty
+        # map skips nothing, so the worst case is the old behaviour.
+        import inspect, board
+        body = inspect.getsource(board.sync_deck_to_beans)
+        self.assertIn("if listing.ok:", body)
+
+
 class TestTemplateOpensACardHonestly(unittest.TestCase):
     """Structural guards for the card sheet. Behaviour verified in Chromium;
     see the module comment above."""
