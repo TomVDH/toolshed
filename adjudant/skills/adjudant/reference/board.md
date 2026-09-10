@@ -115,6 +115,24 @@ survives rather than the value.
 Path data is rounded to one decimal on a 100-unit grid. Measured against the
 original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.
 
+### Task lists
+
+`- [ ]` and `- [x]` render as state, not as syntax. A tracker's loop is keeping
+those markers current, so a board that printed the brackets and drew no
+difference between done and open was showing the one thing you did not need and
+hiding the one you did. `[x]` and `[X]` are both done; only a space is open.
+
+The box is drawn, never an `<input>`. This board does not write bean bodies, so a
+control that cannot be operated would misrepresent what the page can do. It is
+`aria-hidden` decoration with a visually hidden "done, " or "to do, " beside it,
+because otherwise the distinction would exist only in pixels. Done steps back to
+`--text-faint` rather than striking through: a finished item is still read, and
+struck text is slower to read when you need to. An ordinary list is untouched,
+and inline markdown still parses inside a task's text.
+
+The card face strips the marker along with the bullet, after it rather than
+before, since the marker only starts the line once the bullet is gone.
+
 ### The display face
 
 Mozilla Headline Condensed SemiBold is embedded as a Latin-1 woff2 subset, 12 KB.

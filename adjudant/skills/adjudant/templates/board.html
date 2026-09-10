@@ -503,6 +503,19 @@
   }
   .sheet-note ul,.sheet-note ol{margin:0 0 var(--s3);padding-left:1.35em}
   .sheet-note li{margin:0 0 3px}
+  /* A checklist is a status column, so it loses the bullet and hangs its boxes
+     on one edge. `--ok` is already this board's done: the BUILT stamp wears it. */
+  .sheet-note ul.tasks{list-style:none;padding-left:0}
+  .sheet-note li.task{display:flex;gap:8px;align-items:baseline;margin:0 0 5px}
+  .sheet-note li.task .box{
+    flex:none;width:12px;height:12px;line-height:11px;text-align:center;
+    font-size:10px;border:1px solid var(--border-strong);color:var(--ok);
+    position:relative;top:1px
+  }
+  .sheet-note li.task.done .box{border-color:var(--ok)}
+  /* Done steps back rather than striking through: a finished item is still read,
+     and struck text is measurably slower to read when you need to. */
+  .sheet-note li.task.done .txt{color:var(--text-faint)}
   .sheet-note blockquote{
     margin:0 0 var(--s3);padding-left:var(--s3);
     border-left:1px solid var(--border-strong);color:var(--text-dim)
@@ -1123,6 +1136,11 @@ const MD_INLINE_SRC="(`+)([^`]*)\\1"
   +"|(?<![A-Za-z0-9])_([^_\\n]+)_(?![A-Za-z0-9])";
 const MD_LIST=/^\s*([-*+]|\d+[.)])\s+(.*)$/;
 const MD_QUOTE=/^\s*>\s?(.*)$/;
+/* A task item, which is what a tracker actually writes. Beans' whole loop is
+   "keep the bean's todo items current, `- [ ]` -> `- [x]`", so a board that
+   prints the syntax and shows no state is showing the one thing you did not
+   need and hiding the one you did. */
+const MD_TASK=/^\[([ xX])\]\s+(.*)$/;
 /* A relative path or an unknown scheme is shown, never made clickable: this
    page is opened off a disk and a target it cannot vouch for is text. */
 const MD_SAFE_HREF=/^(?:https?:|mailto:|obsidian:)/i;
@@ -1202,7 +1220,25 @@ function mdNodes(source){
         const m=MD_LIST.exec(lines[i]);
         if(!m||/\d/.test(m[1])!==ordered) break;
         const li=document.createElement("li");
-        mdInline(m[2],li); list.appendChild(li); i++;
+        const task=ordered?null:MD_TASK.exec(m[2]);
+        if(task){
+          const done=task[1]!==" ";
+          list.classList.add("tasks");
+          li.className="task"+(done?" done":"");
+          /* Drawn, never an <input>. This board does not write bean bodies, so
+             a control that cannot be operated would be a lie about what the
+             page can do. The box is a status light. */
+          const box=el("span","box"); box.setAttribute("aria-hidden","true");
+          box.textContent=done?"\u2713":"";
+          li.appendChild(box);
+          /* the state has to reach the accessibility tree, not just the pixels */
+          li.appendChild(el("span","sr-only",done?"done, ":"to do, "));
+          const body=el("span","txt");
+          mdInline(task[2],body); li.appendChild(body);
+        }else{
+          mdInline(m[2],li);
+        }
+        list.appendChild(li); i++;
       }
       frag.appendChild(list); continue;
     }
@@ -1232,6 +1268,9 @@ function mdText(source){
     .replace(/^\s{0,3}#{1,6}\s+/gm,"")
     .replace(/^\s*>\s?/gm,"")
     .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm,"")
+    /* after the bullet, never before it: the marker only starts the line once
+       the bullet in front of it is gone */
+    .replace(/^\[[ xX]\]\s*/gm,"")
     .replace(/\*\*([^*\n]+)\*\*/g,"$1")
     .replace(/(?<![A-Za-z0-9])__([^_\n]+)__(?![A-Za-z0-9])/g,"$1")
     .replace(/\*([^*\n]+)\*/g,"$1")
