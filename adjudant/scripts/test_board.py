@@ -1701,12 +1701,12 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("var(--mark-eye,#272b2e)", self.src)     # her eye
         dark = self.src[self.src.index("prefers-color-scheme: dark"):]
         block = dark[:dark.index("}\n  }")].replace(" ", "")
+        # On dark the face is one cream: head, both ears and her eye island.
+        # The tokens stay separate because LIGHT keeps the artwork's own three
+        # cool near-blacks, which are not ours to flatten.
         self.assertIn("--mark-ink:#e2ddd7", block)
-        # skin mirrors the head, which is right for skin
-        self.assertIn("--mark-shade:#d7dde2", block)
-        # the eye does not, which is the whole point of it being separate
-        self.assertIn("--mark-eye:#949ca7", block)
-        self.assertNotIn("--mark-eye:#d7dde2", block)
+        self.assertIn("--mark-shade:#e2ddd7", block)
+        self.assertIn("--mark-eye:#e2ddd7", block)
 
     def test_the_two_filter_rails_say_which_axis_each_one_is(self):
         # They were two rows of identically shaped buttons, which read as one
