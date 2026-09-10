@@ -1669,6 +1669,28 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn('el("button","k"', body.replace(", ", ","))
         self.assertIn('setAttribute("aria-pressed"', body.replace(", ", ","))
 
+    def test_the_mark_carries_its_own_dark_ink_and_no_plaque(self):
+        # The head is filled #26211a, which is this theme's own dark --bg, so on
+        # the dark scheme the head WAS the background and vanished. It used to be
+        # given a paper plaque to sit on. The asset answers for itself now.
+        self.assertNotIn(".brand-mark{background:", self.src.replace(" ", ""))
+        # counted on the asset, not the key: the ternary in markFigure ends
+        # `markNow.imgDark:markNow.img`, which matches a bare "imgDark:" too
+        self.assertEqual(2, self.src.count('imgDark:"data:image/png'),
+                         "both figures need a dark-ink asset")
+        self.assertIn("markNow.imgDark", _js_function(self.src, "markFigure"))
+
+    def test_a_scheme_change_swaps_the_ink_and_never_the_figure(self):
+        # pickMark() rolls the easter egg. Re-running it when the scheme flips
+        # would swap the figure out from under whoever is reading the board.
+        self.assertIn("pickMark()", _js_function(self.src, "paintMark"))
+        self.assertNotIn("pickMark()", _js_function(self.src, "markFigure"))
+        line = [ln for ln in self.src.splitlines()
+                if "darkScheme.addEventListener" in ln]
+        self.assertTrue(line, "no scheme listener")
+        self.assertIn("markFigure", line[0])
+        self.assertNotIn("paintMark", line[0])
+
     def test_the_tag_filter_is_a_real_toggle_beside_the_legend(self):
         # Tags were the one tracker classification the board threw away:
         # _beans.py carried them into every card and only the sheet read them.

@@ -3,9 +3,9 @@
 title: Light and dark variants of the ADJUDANT and ADJUDANTE logo assets
 status: todo
 type: feature
-priority: high
+priority: normal
 created_at: 2026-09-10T09:00:14Z
-updated_at: 2026-09-10T09:25:27Z
+updated_at: 2026-09-10T18:05:35Z
 parent: toolshed-2z4w
 ---
 
@@ -27,3 +27,16 @@ The figure is filled `#26211a`. That is *exactly* ZenaSoft dark `--bg` (`oklch(2
 - `board.html` is offline-locked (validator 24), so any asset must be inline SVG or a `data:` URI, never a file reference
 - Raw SVG is 80 KB against a 71 KB template. Integer-rounded it is 36 KB; a 96px PNG data-URI is 6.4 KB
 - The plume colours (`#7c1b16`, `#bd281c`, `#dd4d25`) already work on both schemes and need no variant
+
+## Interim shipped in 4.1.3
+
+The paper plaque is gone. The head ink (`#26211a`, which is this theme's own dark `--bg`) is recoloured to the dark scheme's `--text` (`#e2ddd7`) in a second PNG per figure, swapped by `prefers-color-scheme`.
+
+Findings that outlive the interim:
+
+- **Nothing was ever baked into the assets.** Both source SVGs have zero `<rect>` and no background path. The white was a CSS rule the board painted: `.brand-mark{background:oklch(93% 0.012 75)}` under a dark media query.
+- **`filter:invert()` is not available here.** The figures are 14 and 16 colour illustrations, not silhouettes. Inverting takes the plume to cyan and the skin to blue.
+- **Recolour the warm near-black only.** Path 1 in both files, `#26211a`, is the head. The cool near-blacks (`#24292c`, `#272b2e`, `#262b2e`) must be left alone: recolouring those as well takes the pupil with them and the face reads blank. Verified side by side on the dark background.
+- **Cost: about 21 KB on every board.html.** A real dark asset, or an inline SVG whose ink binds to a CSS variable, would replace both PNGs and cut that.
+
+Still open: proper light/dark artwork drawn as such, rather than one asset with one ink swapped.
