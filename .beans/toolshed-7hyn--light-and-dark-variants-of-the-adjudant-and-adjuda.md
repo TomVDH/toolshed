@@ -1,11 +1,11 @@
 ---
 # toolshed-7hyn
 title: Light and dark variants of the ADJUDANT and ADJUDANTE logo assets
-status: todo
+status: completed
 type: feature
 priority: normal
 created_at: 2026-09-10T09:00:14Z
-updated_at: 2026-09-10T18:05:35Z
+updated_at: 2026-09-10T19:45:20Z
 parent: toolshed-2z4w
 ---
 
@@ -40,3 +40,26 @@ Findings that outlive the interim:
 - **Cost: about 21 KB on every board.html.** A real dark asset, or an inline SVG whose ink binds to a CSS variable, would replace both PNGs and cut that.
 
 Still open: proper light/dark artwork drawn as such, rather than one asset with one ink swapped.
+
+## Resolved in 4.1.4, and the 4.1.3 note above is superseded
+
+Tom pushed back on the raster interim: the originals are SVG, so the ink switch should not need a second asset. Correct, and the payload argument that justified PNG in 4.1.0 inverted once the PNG was priced at the resolution it actually needs.
+
+Measured, both figures, both inks, as characters in board.html:
+
+| | chars | crisp at 3x | ink switch |
+|---|---|---|---|
+| PNG 89px (what 4.1.3 shipped, only 1.7x) | 47,748 | no | second asset |
+| PNG 104px (2x) | 51,836 | no | second asset |
+| PNG 156px (3x) | 77,264 | yes | second asset |
+| inline SVG, 1dp on a 100 grid | 66,500 | yes, any size | one property |
+
+The vector is smaller than a genuinely sharp raster AND scales, which matters because this mark is meant to brand reports and exports.
+
+Shipped: inline `<svg>`, 14 and 16 paths, head fill emitted as `var(--mark-ink,#26211a)`, dark block sets the property. `markFigure()`, the `matchMedia` listener and all four PNGs are deleted; a custom property answers a media query on its own and does it before the first paint.
+
+Fidelity: mean channel error 1.0 to 1.3 of 255 against the original at 52px and 156px.
+
+One bug worth remembering. The first optimiser pass rendered EMPTY. Cause: the separator rule. A number may abut the previous one only when the join cannot be re-read as one number, so `5` then `.3` must be `5 .3`, never `5.3`, while `5.2` then `.3` may be `5.2.3`. Getting it wrong silently deletes geometry instead of raising.
+
+Still worth doing later: artwork drawn for dark rather than one ink swapped.

@@ -1669,27 +1669,32 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn('el("button","k"', body.replace(", ", ","))
         self.assertIn('setAttribute("aria-pressed"', body.replace(", ", ","))
 
-    def test_the_mark_carries_its_own_dark_ink_and_no_plaque(self):
+    def test_the_marks_ink_is_a_property_not_a_second_asset(self):
         # The head is filled #26211a, which is this theme's own dark --bg, so on
-        # the dark scheme the head WAS the background and vanished. It used to be
-        # given a paper plaque to sit on. The asset answers for itself now.
+        # the dark scheme the head WAS the background and vanished. It was given
+        # a paper plaque, then a second raster. It is one custom property now,
+        # which needs no plaque, no second asset and no scheme listener, and is
+        # right before the first paint rather than after it.
         self.assertNotIn(".brand-mark{background:", self.src.replace(" ", ""))
-        # counted on the asset, not the key: the ternary in markFigure ends
-        # `markNow.imgDark:markNow.img`, which matches a bare "imgDark:" too
-        self.assertEqual(2, self.src.count('imgDark:"data:image/png'),
-                         "both figures need a dark-ink asset")
-        self.assertIn("markNow.imgDark", _js_function(self.src, "markFigure"))
+        self.assertNotIn("imgDark", self.src)
+        self.assertNotIn("addEventListener(\"change\"", self.src)
+        # anchored on the array opening, so the prose above paintMark that
+        # names the property does not count as a third figure
+        self.assertEqual(2, self.src.count('[["var(--mark-ink,#26211a)"'),
+                         "each figure's head fill must be the property")
+        # and the dark scheme has to actually set it
+        dark = self.src[self.src.index("prefers-color-scheme: dark"):]
+        self.assertIn("--mark-ink:", dark[:dark.index("}\n  }")])
 
-    def test_a_scheme_change_swaps_the_ink_and_never_the_figure(self):
-        # pickMark() rolls the easter egg. Re-running it when the scheme flips
-        # would swap the figure out from under whoever is reading the board.
-        self.assertIn("pickMark()", _js_function(self.src, "paintMark"))
-        self.assertNotIn("pickMark()", _js_function(self.src, "markFigure"))
-        line = [ln for ln in self.src.splitlines()
-                if "darkScheme.addEventListener" in ln]
-        self.assertTrue(line, "no scheme listener")
-        self.assertIn("markFigure", line[0])
-        self.assertNotIn("paintMark", line[0])
+    def test_the_figure_is_inline_svg_because_a_data_uri_cannot_see_the_page(self):
+        # An external SVG document is a separate document: it does not inherit
+        # this page's custom properties, so the ink would never reach it.
+        self.assertIn('<svg class="brand-mark" id="brandMark"', self.src)
+        self.assertNotIn('<img class="brand-mark"', self.src)
+        body = _js_function(self.src, "paintMark")
+        self.assertIn('createElementNS(SVGNS,"path")', body.replace(", ", ","))
+        # no raster left anywhere in the mark
+        self.assertNotIn("data:image/png", self.src)
 
     def test_the_tag_filter_is_a_real_toggle_beside_the_legend(self):
         # Tags were the one tracker classification the board threw away:

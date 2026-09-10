@@ -88,6 +88,26 @@ Three marks reach the face, and only when they carry something:
   tag is in the card's accessible name, because an `aria-label` replaces a
   button's contents rather than adding to them.
 
+### The mark
+
+The figure is inline SVG, built at load from path data the template carries. Not
+a `data:` URI and not a raster, for one reason each. An external SVG document is
+a separate document and cannot see this page's custom properties, so the ink
+would never reach it. And a raster large enough to stay sharp on a 3x display,
+in both inks, costs more bytes than the vectors do while still being fixed at
+one size, which a mark destined for reports and exports cannot be.
+
+The head is filled `#26211a`, which is this theme's own dark `--bg`, so on the
+dark scheme the head IS the background colour. That one fill is emitted as
+`var(--mark-ink,#26211a)` and the dark block sets the property. No second asset,
+no scheme listener, and the right ink before the first paint rather than after
+it. Only that fill: the figure is a fourteen-colour illustration, not a
+silhouette, so `filter:invert()` would take the plume to cyan and the skin to
+blue, and recolouring the cool near-blacks as well takes the pupil with them.
+
+Path data is rounded to one decimal on a 100-unit grid. Measured against the
+original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.
+
 The sheet is a native `<dialog>` opened with `showModal()`, so the focus trap,
 `Esc`, the inert background and the top layer all come from the platform. The
 top layer is the reason it is a dialog at all: the lane body is
