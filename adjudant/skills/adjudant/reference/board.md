@@ -105,8 +105,25 @@ it. Only that fill: the figure is a fourteen-colour illustration, not a
 silhouette, so `filter:invert()` would take the plume to cyan and the skin to
 blue, and recolouring the cool near-blacks as well takes the pupil with them.
 
+Two fills follow the scheme, not one. On light the eye is a cool near-black
+sitting on the head's warm near-black, which reads as modelling rather than as a
+mark. Swap only the head and that whisper becomes a shout: a hard dark blob on a
+pale cheek. Swap the eye to the same cream and it disappears instead. So both
+swap, mirrored, `--mark-ink` warm and `--mark-eye` cool, and the relationship
+survives rather than the value.
+
 Path data is rounded to one decimal on a 100-unit grid. Measured against the
 original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.
+
+### The display face
+
+Mozilla Headline Condensed SemiBold is embedded as a Latin-1 woff2 subset, 12 KB.
+The board is offline-locked, so a face is either carried in the file or absent,
+and absent meant every lane heading, stamp and sheet title fell through to Iowan
+Old Style: a wide, soft book serif where the brand is a tight condensed slab. A
+data URI fetches nothing, which is what validator 24 guards; it bans a `url()`
+pointing off-machine, not `url()`. One cut, at 600, so a rule asking for a
+lighter weight renders at 600 and only matters if the embedded face fails.
 
 The sheet is a native `<dialog>` opened with `showModal()`, so the focus trap,
 `Esc`, the inert background and the top layer all come from the platform. The
@@ -228,9 +245,10 @@ the background, open the URL, and close with one next step: drag cards, or hit
   fetch (`url(...)`) falls back to the palette hue: the board is served from
   disk and makes no outbound request.
 - In-browser view tools (never persisted): a **filter** box narrows by
-  id/title/category/ref/note/tag (`Esc` clears all three filters), legend keys
-  are buttons that toggle a category filter, a **tag rail** under the legend
-  toggles a tag filter, and a focused card moves one lane left/right with
+  id/title/category/ref/note/tag (`Esc` clears all three filters), a **Type**
+  rail toggles a category filter, a **Tag** rail under it toggles a tag filter,
+  each labelled with the axis it narrows because two rows of identically shaped
+  buttons read as one block, and a focused card moves one lane left/right with
   `[` / `]`. A card with no lane of its own is moved from its sheet's lane row.
   The tag rail renders nothing on a deck with no tags, orders tags by how many
   cards carry each one, shows the twelve commonest plus a count of what it left

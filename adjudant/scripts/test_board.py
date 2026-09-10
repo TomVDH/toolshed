@@ -1686,6 +1686,45 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         dark = self.src[self.src.index("prefers-color-scheme: dark"):]
         self.assertIn("--mark-ink:", dark[:dark.index("}\n  }")])
 
+    def test_the_eye_swaps_with_the_head_and_keeps_its_relationship(self):
+        # On light the eye is a COOL near-black on the head's WARM one, so it
+        # reads as modelling. Swapping only the head turns that whisper into a
+        # hard dark blob on a pale cheek, and swapping the eye to the SAME cream
+        # deletes it. It swaps to the mirrored value instead.
+        self.assertEqual(3, self.src.count("var(--mark-eye,"),
+                         "one eye fill on him, two on her")
+        dark = self.src[self.src.index("prefers-color-scheme: dark"):]
+        block = dark[:dark.index("}\n  }")]
+        self.assertIn("--mark-eye:", block)
+        # the two inks are each other reversed; if one moves the other must
+        self.assertIn("--mark-ink:#e2ddd7", block.replace(" ", ""))
+        self.assertIn("--mark-eye:#d7dde2", block.replace(" ", ""))
+
+    def test_the_display_face_is_carried_in_the_file(self):
+        # The board is offline-locked, so a face is either embedded or absent,
+        # and absent meant every heading fell through to Iowan Old Style: a
+        # wide soft book serif where the brand is a tight condensed slab.
+        self.assertIn("@font-face{", self.src.replace(" ", "").replace("\n", ""))
+        self.assertIn('font-family:"Mozilla Headline Condensed"', self.src)
+        self.assertIn("src:url(data:font/woff2;base64,", self.src.replace(" ", ""))
+        # and it has to be the first name asked for, or it never gets used
+        serif = [ln for ln in self.src.splitlines() if ln.strip().startswith("--serif:")]
+        self.assertEqual(1, len(serif))
+        self.assertTrue(serif[0].strip().startswith('--serif:"Mozilla Headline Condensed"'),
+                        f"embedded face is not first in the stack: {serif[0].strip()}")
+        # a data URI fetches nothing, which is what validator 24 actually guards
+        self.assertNotIn("url(//", self.src)
+        self.assertNotIn("url(http", self.src)
+
+    def test_the_two_filter_rails_say_which_axis_each_one_is(self):
+        # They were two rows of identically shaped buttons, which read as one
+        # block and left the axis to be inferred from whether a key carried a
+        # swatch or a count.
+        self.assertIn('class="rail-lbl">Type<', self.src)
+        self.assertIn('class="rail-lbl">Tag<', self.src)
+        # the label sits beside the keys, so the ROW hides, not the rail
+        self.assertIn('getElementById("tagRow").hidden', _js_function(self.src, "render"))
+
     def test_the_figure_is_inline_svg_because_a_data_uri_cannot_see_the_page(self):
         # An external SVG document is a separate document: it does not inherit
         # this page's custom properties, so the ink would never reach it.
