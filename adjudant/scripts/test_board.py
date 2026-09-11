@@ -1759,6 +1759,56 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         # A tag has no hue to key, so a mark would be noise.
         self.assertIn("#tagRow .k i{display:none}", self.src.replace("  ", ""))
 
+    def test_a_type_key_is_a_word_on_a_rule_not_a_pill(self):
+        # Eight bordered pills in a row read as a toolbar and pulled the eye off
+        # the cards. The key is now a word standing on a rule in its own hue,
+        # picked from eight studies under live (square, symbol, knockout, symbol
+        # only, tinted, leading rule, stamp, underscored). The rule keys the
+        # colour and the mark keys the shape.
+        # anchored to the line start: `.rails #tagRow .legend .k{` is not this rule
+        m = re.search(r"\n\s*\.legend \.k\{(.*?)\}", self.src, re.S)
+        self.assertIsNotNone(m, ".legend .k rule missing")
+        rule = m.group(1).replace(" ", "").replace("\n", "")
+        self.assertIn("background:none", rule)
+        self.assertIn("border:0", rule)
+        self.assertIn("box-shadow:inset0-2px0var(--c)", rule)
+        self.assertNotIn("border:1pxsolid", rule)
+        # and the mark is large enough to be read as a shape, not a pip
+        self.assertIn(".legend .k i{width:18px;height:18px;background:var(--c)}",
+                      self.src.replace("  ", ""))
+        self.assertNotIn(".legend .k i{width:8px", self.src.replace("  ", ""))
+
+    def test_a_tag_key_rule_is_not_built_on_the_hue_it_does_not_have(self):
+        # A tag key sets no --c. A box-shadow built on an undefined custom
+        # property is not "no colour", it is an invalid declaration, and the
+        # whole shadow goes: the tag rail would lose its rules and its on-state.
+        # So the tag key states its own, in ink, never in var(--c).
+        flat = self.src.replace("  ", "")
+        self.assertIn("#tagRow .k{box-shadow:inset 0 -1px 0 var(--border-strong)}", flat)
+        self.assertIn("#tagRow .k.on{box-shadow:inset 0 -2px 0 var(--text)}", flat)
+        for rule in re.findall(r"#tagRow \.k(?:\.on)?\{([^}]*)\}", self.src):
+            self.assertNotIn("var(--c)", rule)
+
+    def test_every_palette_hue_clears_3_to_1_on_every_surface(self):
+        # The hue is now a 2px rule under the key and an 18px mark beside it:
+        # graphics, so SC 1.4.11's 3:1 floor, on every surface a key can sit on
+        # in either scheme. The 70s palette was chosen at 56-59% lightness
+        # because that band is the only one that clears both the paper and
+        # the dark ground; a pastel fails dark, a deep tone fails light.
+        m = re.search(r"const PALETTE=\[(.*?)\];", self.src)
+        self.assertIsNotNone(m, "PALETTE const missing")
+        hues = re.findall(r"oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)", m.group(1))
+        self.assertEqual(8, len(hues), "eight palette hues, one per symbol")
+        for lch in hues:
+            rgb = _oklch_to_srgb(float(lch[0]) / 100, float(lch[1]), float(lch[2]))
+            for dark in (False, True):
+                for surface in ("--bg", "--surface", "--surface-2"):
+                    ratio = _contrast(rgb, _token(self.src, surface, dark=dark))
+                    self.assertGreaterEqual(
+                        ratio, 3.0,
+                        f"oklch({lch[0]}% {lch[1]} {lch[2]}) on {surface} "
+                        f"({'dark' if dark else 'light'}) is {ratio:.2f}:1")
+
     def test_the_persist_control_asks_then_reports(self):
         # "Connect file" named a mechanism nobody had to care about, so it read
         # as an unexplained button and went unused. The label now names what you

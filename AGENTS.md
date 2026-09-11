@@ -84,7 +84,7 @@ python3 adjudant/scripts/validate.py
 python3 -m unittest discover -s adjudant/scripts -p 'test_*.py'
 ```
 
-Current gate: 28 validators, 1567 tests. Both must pass before a commit.
+Current gate: 28 validators, 1597 tests. Both must pass before a commit.
 
 ## The board template is offline-locked
 

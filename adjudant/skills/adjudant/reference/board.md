@@ -126,10 +126,33 @@ key and a mark there would be noise.
 
 Symbols are ColorSym, github.com/luisfrancisco/colorsym, CC BY-SA 4.0.
 
+### The key is a word on a rule, not a pill (4.1.17)
+
+Eight bordered pills in a row read as a toolbar and pulled the eye off the
+cards. The key is now a word standing on a 2px rule in its own hue, with the
+18px mark beside it: the rule keys the colour, the mark keys the shape, and the
+paper shows through. The filtered key darkens and its rule gains an ink line.
+
+Picked from eight studies under impeccable live: square, symbol, knockout,
+symbol only, tinted field, leading rule, stamp, underscored. Underscored won.
+
+A tag key has no hue, so its rule is the border colour and its on-state is ink.
+This is stated as its own rule on purpose: a `box-shadow` built on an undefined
+`--c` is not "no colour", it is an invalid declaration, and the whole shadow
+would go.
+
+The palette is eight 70s tones at 56 to 59 percent lightness: aubergine,
+avocado, burnt orange, petrol, rust rose, teal, harvest gold, brick. That band
+is the only one that clears 3:1 (SC 1.4.11, the floor for a rule and a mark) on
+every surface in both schemes. A pastel fails the dark ground; a deep tone fails
+the paper. A test computes all 48 ratios.
+
 ### One rail, not two
 
 Type and tag both answer "narrow this board", so they are one scrolling line
-split by a rule rather than two labelled rows. The labels go with the second
+rather than two labelled rows. The rule that divided the rails went with the
+chip boxes: keys that sit on the paper are already read as two groups by the
+gap, and the marks say which group is which. The labels go with the second
 row. The tags scroll rather than wrap: wrapping inside a one-line rail is the
 two-row layout again with the label removed, and it measured 59px against the
 type rail's 25px.
