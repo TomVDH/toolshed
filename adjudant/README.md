@@ -128,6 +128,22 @@ present tense, under twenty words. The full contract is in `reference/voice.md`.
 Turn it off for one project with `voice: off` in `.claude/adjudant`. Turn it off for
 the machine with `ADJUDANT_VOICE_DISABLE=1`.
 
+## Statusline
+
+Adjudant ships the Claude Code statusline it reads its own state into:
+`[git] │ [vault / work items] │ [model · effort · context] │ [agent bus] │ [24h cost]`.
+Install it once per machine:
+
+```
+bash "$(ls -d ~/.claude/plugins/cache/*/adjudant/* | sort -V | tail -1)/statusline/install.sh"
+```
+
+That writes a small shim to `~/.claude/statusline-v2.sh` and prints the
+`statusLine` block to add to `~/.claude/settings.json`. From then on every
+session start points the shim at the installed plugin copy, so a plugin update
+moves the bar with no other step. The git segment shows a red `!` in front of
+the branch when a beans-tracked repo breaks the branch rule above.
+
 ## Pairing
 
 - `hookify` — universal drift-defense hooks: git safety, secret scanning. Adjudant

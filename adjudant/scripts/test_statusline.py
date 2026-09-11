@@ -1,0 +1,319 @@
+"""The statusline shipped in adjudant/statusline/.
+
+Real repositories, real worktrees, a throwaway HOME. The bar is rendered by
+running the script the way Claude Code does (JSON on stdin) and reading the
+line back with its escapes stripped. Skipped cleanly when jq is missing,
+which is the one dependency the script has.
+
+What is pinned here is behaviour a person verified in a terminal: the
+worktree marker, the branch-rule glyph, the shim's resolution order, and the
+absence of any path into the iCloud suitcase the script used to live in.
+"""
+
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+SL_DIR = PLUGIN_ROOT / "statusline"
+STATUSLINE = SL_DIR / "statusline.sh"
+SHIM = SL_DIR / "shim.sh"
+INSTALL = SL_DIR / "install.sh"
+REFRESHER = SL_DIR / "statusline-tokens-24h.sh"
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m|\x1b\]8;;[^\x07\x1b]*(?:\x07|\x1b\\)")
+
+
+def _plain(text: str) -> str:
+    return _ANSI.sub("", text)
+
+
+def _render(cwd: Path, home: Path, *, script: Path = STATUSLINE,
+            extra_env: dict | None = None, sid: str = "test-sid") -> str:
+    payload = {
+        "cwd": str(cwd),
+        "workspace": {"current_dir": str(cwd), "project_dir": str(cwd)},
+        "session_id": sid,
+        "model": {"display_name": "Test", "id": "test"},
+        "effort": {"level": "medium"},
+        "context_window": {"used_percentage": 12},
+    }
+    env = dict(os.environ)
+    env["HOME"] = str(home)
+    env["TMPDIR"] = str(home)
+    env["ADJUDANT_STATUSLINE_NO_SPAWN"] = "1"
+    env.pop("ADJUDANT_STATUSLINE", None)
+    if extra_env:
+        env.update(extra_env)
+    r = subprocess.run(["bash", str(script)], input=json.dumps(payload),
+                       env=env, capture_output=True, text=True, timeout=20)
+    return _plain(r.stdout)
+
+
+class _Repo(unittest.TestCase):
+    """One temp HOME (with ~/.claude) and one git repo on main per test."""
+
+    def setUp(self):
+        if not shutil.which("jq"):
+            self.skipTest("jq not installed; the statusline cannot parse stdin")
+        self._tmp = tempfile.TemporaryDirectory()
+        tmp = Path(self._tmp.name)
+        self.home = tmp / "home"
+        (self.home / ".claude").mkdir(parents=True)
+        self.repo = tmp / "repo"
+        self.repo.mkdir()
+        self._git("init", "-q", "-b", "main")
+        self._git("config", "user.email", "t@t")
+        self._git("config", "user.name", "t")
+        self._git("config", "commit.gpgsign", "false")
+        (self.repo / "a.txt").write_text("one\n")
+        (self.repo / ".gitignore").write_text(".worktrees/\n.claude/adjudant\n")
+        self._git("add", "-A")
+        self._git("commit", "-qm", "first")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _git(self, *a, at=None):
+        return subprocess.run(["git", "-C", str(at or self.repo), *a],
+                              capture_output=True, text=True)
+
+    def _beans(self, *rows):
+        """rows: (id, type, status). Writes .beans.yml and one file per row."""
+        (self.repo / ".beans.yml").write_text("beans:\n  path: .beans\n")
+        d = self.repo / ".beans"
+        d.mkdir(exist_ok=True)
+        for bid, typ, st in rows:
+            (d / f"{bid}--{bid}-slug.md").write_text(
+                f"---\ntitle: {bid}\nstatus: {st}\ntype: {typ}\n---\n\nbody\n")
+        # Beans are tracked, so a worktree created afterwards sees them.
+        self._git("add", "-A")
+        self._git("commit", "-qm", "beans")
+
+    def _breadcrumb(self, tracker="beans"):
+        (self.repo / ".claude").mkdir(exist_ok=True)
+        (self.repo / ".claude" / "adjudant").write_text(
+            f"vault_path: {self.home}/nope\nslug: demo\ntracker: {tracker}\n")
+
+    def _worktree(self, bid):
+        wt = self.repo / ".worktrees" / bid
+        self._git("worktree", "add", "-q", str(wt), "-b", f"feature/{bid}")
+        # The breadcrumb is git-ignored, so the rule says: copy it in. Without
+        # it the gate stays shut and the worktree gets no glyph, ever.
+        crumb = self.repo / ".claude" / "adjudant"
+        if crumb.is_file():
+            (wt / ".claude").mkdir(exist_ok=True)
+            (wt / ".claude" / "adjudant").write_text(crumb.read_text())
+        return wt
+
+    def _bar(self, cwd=None, **kw):
+        return _render(cwd or self.repo, self.home, **kw)
+
+
+class TestShape(_Repo):
+
+    def test_scripts_parse(self):
+        for s in (STATUSLINE, SHIM, INSTALL, REFRESHER):
+            r = subprocess.run(["bash", "-n", str(s)], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, f"{s.name}: {r.stderr}")
+
+    def test_no_path_into_the_suitcase(self):
+        # The script used to live in iCloud and call its refresher by an
+        # absolute ~/.claude path. Both are gone: everything it needs sits
+        # next to it.
+        for s in (STATUSLINE, REFRESHER):
+            text = s.read_text()
+            self.assertNotIn("CloudDocs", text, s.name)
+            self.assertNotIn("Mobile Documents", text, s.name)
+            self.assertNotIn("$HOME/.claude/statusline-tokens", text, s.name)
+            self.assertNotIn("$HOME/.claude/statusline-v2", text, s.name)
+            self.assertNotIn("~/.claude/statusline-tokens", text, s.name)
+        self.assertIn('"$(dirname "${BASH_SOURCE[0]}")/statusline-tokens-24h.sh"',
+                      STATUSLINE.read_text())
+
+    def test_renders_outside_a_repo(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = self._bar(cwd=Path(d))
+        self.assertIn("no git", out)
+        self.assertIn("Test", out)
+
+    def test_renders_a_clean_main(self):
+        out = self._bar()
+        self.assertIn("main", out)
+        self.assertNotIn("no git", out)
+        self.assertFalse(TestDriftGlyph._drift(out))
+
+    def test_worktree_marker(self):
+        wt = self._worktree("demo-ab12")
+        self.assertIn("⑂", self._bar(cwd=wt))
+        self.assertNotIn("⑂", self._bar())
+
+
+class TestDriftGlyph(_Repo):
+    """One red `!` in front of the git segment when the repo breaks the
+    branch rule. Gated on `tracker: beans`; other repos are never nagged."""
+
+    @staticmethod
+    def _drift(out: str) -> bool:
+        # The glyph sits at the very front of the git segment, before ⑂ and
+        # the branch. The bar may open with an account badge segment, so find
+        # the segment that carries the branch rather than assuming position.
+        # The beans slot's own `!N` (critical count) carries a digit, so a
+        # bare "! " is unambiguous.
+        for seg in out.split("│"):
+            if "main" in seg or "feature/" in seg:
+                return seg.lstrip().startswith("! ")
+        return False
+
+    def test_main_checkout_off_main_is_drift(self):
+        self._breadcrumb()
+        self._beans(("demo-ab12", "task", "todo"))
+        self._git("switch", "-qc", "feature/demo-ab12")
+        self.assertTrue(self._drift(self._bar()))
+        self._git("switch", "-q", "main")
+        self.assertFalse(self._drift(self._bar()))
+
+    def test_worktree_on_a_feature_branch_is_not_drift(self):
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "in-progress"))
+        wt = self._worktree("demo-ab12")
+        out = self._bar(cwd=wt)
+        self.assertIn("⑂", out)
+        self.assertFalse(self._drift(out))
+        # and the main checkout, on main with the branch present, is clean
+        self.assertFalse(self._drift(self._bar()))
+
+    def test_worktree_on_a_completed_bean_is_drift(self):
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "completed"))
+        wt = self._worktree("demo-ab12")
+        self.assertTrue(self._drift(self._bar(cwd=wt)))
+
+    def test_worktree_on_a_scrapped_bean_is_drift(self):
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "scrapped"))
+        wt = self._worktree("demo-ab12")
+        self.assertTrue(self._drift(self._bar(cwd=wt)))
+
+    def test_in_progress_feature_without_a_branch_is_drift(self):
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "in-progress"))
+        self.assertTrue(self._drift(self._bar()))
+        self._git("branch", "feature/demo-ab12")
+        self.assertFalse(self._drift(self._bar()))
+
+    def test_in_progress_task_or_epic_asks_for_no_branch(self):
+        self._breadcrumb()
+        self._beans(("demo-t1", "task", "in-progress"), ("demo-e1", "epic", "in-progress"),
+                    ("demo-b1", "bug", "in-progress"))
+        self.assertFalse(self._drift(self._bar()))
+
+    def test_no_nag_without_the_beans_tracker(self):
+        self._beans(("demo-ab12", "feature", "in-progress"))
+        self._git("switch", "-qc", "feature/demo-ab12")
+        # no breadcrumb at all
+        self.assertFalse(self._drift(self._bar()))
+        # a vault-tracked repo
+        self._breadcrumb(tracker="vault")
+        self.assertFalse(self._drift(self._bar()))
+
+    def test_worktree_without_its_breadcrumb_is_silent(self):
+        # The documented gotcha: no breadcrumb in the worktree, no gate, no
+        # glyph. This is why repo-standards.md says to copy it in.
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "completed"))
+        wt = self._worktree("demo-ab12")
+        (wt / ".claude" / "adjudant").unlink()
+        self.assertFalse(self._drift(self._bar(cwd=wt)))
+
+    def test_no_nag_without_a_beans_project(self):
+        self._breadcrumb()
+        self._git("switch", "-qc", "feature/demo-ab12")
+        self.assertFalse(self._drift(self._bar()))
+
+
+class TestShim(_Repo):
+    """~/.claude/statusline-v2.sh is a shim that execs the plugin copy."""
+
+    def _fake_statusline(self, where: Path, tag: str) -> Path:
+        where.mkdir(parents=True, exist_ok=True)
+        f = where / "statusline.sh"
+        f.write_text(f"#!/usr/bin/env bash\ncat >/dev/null\necho {tag}\n")
+        return f
+
+    def test_env_override_wins(self):
+        f = self._fake_statusline(self.home / "override", "OVERRIDE")
+        (self.home / ".claude" / "adjudant-statusline-path").write_text("/nope/statusline.sh\n")
+        out = self._bar(script=SHIM, extra_env={"ADJUDANT_STATUSLINE": str(f)})
+        self.assertEqual(out.strip(), "OVERRIDE")
+
+    def test_pointer_is_followed(self):
+        f = self._fake_statusline(self.home / "pointed", "POINTED")
+        (self.home / ".claude" / "adjudant-statusline-path").write_text(f"{f}\n")
+        self.assertEqual(self._bar(script=SHIM).strip(), "POINTED")
+
+    def test_glob_fallback_picks_the_newest_version(self):
+        cache = self.home / ".claude" / "plugins" / "cache" / "market" / "adjudant"
+        self._fake_statusline(cache / "4.1.9" / "statusline", "OLD")
+        self._fake_statusline(cache / "4.1.19" / "statusline", "NEW")
+        self._fake_statusline(cache / "4.1.10" / "statusline", "MID")
+        # a stale pointer that names a pruned version falls through
+        (self.home / ".claude" / "adjudant-statusline-path").write_text(
+            f"{cache}/4.1.8/statusline/statusline.sh\n")
+        self.assertEqual(self._bar(script=SHIM).strip(), "NEW")
+
+    def test_nothing_installed_says_so(self):
+        out = self._bar(script=SHIM)
+        self.assertIn("no adjudant statusline", out)
+
+    def test_shim_runs_the_real_statusline(self):
+        (self.home / ".claude" / "adjudant-statusline-path").write_text(f"{STATUSLINE}\n")
+        out = self._bar(script=SHIM)
+        self.assertIn("main", out)
+        self.assertNotIn("no adjudant statusline", out)
+
+
+class TestInstall(_Repo):
+
+    def _install(self):
+        env = dict(os.environ)
+        env["HOME"] = str(self.home)
+        return subprocess.run(["bash", str(INSTALL)], env=env,
+                              capture_output=True, text=True, timeout=20)
+
+    def test_installs_the_shim_and_the_pointer(self):
+        r = self._install()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        dest = self.home / ".claude" / "statusline-v2.sh"
+        self.assertEqual(dest.read_text(), SHIM.read_text())
+        self.assertTrue(os.access(dest, os.X_OK))
+        pointer = self.home / ".claude" / "adjudant-statusline-path"
+        self.assertEqual(Path(pointer.read_text().strip()).resolve(), STATUSLINE.resolve())
+        # no settings.json here, so it prints the block to add
+        self.assertIn('"statusLine"', r.stdout)
+
+    def test_moves_a_foreign_statusline_aside_and_overwrites_a_shim_in_place(self):
+        dest = self.home / ".claude" / "statusline-v2.sh"
+        dest.write_text("#!/bin/bash\necho old\n")
+        self._install()
+        baks = list((self.home / ".claude").glob("statusline-v2.sh.bak-*"))
+        self.assertEqual(len(baks), 1)
+        self.assertEqual(baks[0].read_text(), "#!/bin/bash\necho old\n")
+        # second run: the shim is recognised and overwritten, no second backup
+        self._install()
+        self.assertEqual(len(list((self.home / ".claude").glob("statusline-v2.sh.bak-*"))), 1)
+
+    def test_silent_about_settings_when_already_wired(self):
+        (self.home / ".claude" / "settings.json").write_text(
+            '{"statusLine": {"type": "command", "command": "bash \\"$HOME/.claude/statusline-v2.sh\\""}}')
+        r = self._install()
+        self.assertNotIn('"statusLine"', r.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

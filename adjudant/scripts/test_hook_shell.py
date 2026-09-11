@@ -267,6 +267,54 @@ class TestSessionStartHook(unittest.TestCase):
             self.assertLess(len(line) // 4, 45,
                             f"git banner is ~{len(line) // 4} tok, cap 45")
 
+    def test_session_start_writes_the_statusline_pointer(self):
+        # The shim at ~/.claude/statusline-v2.sh execs whatever this file
+        # names. It is refreshed from the hook's own location so a plugin
+        # update moves the bar on the next session start.
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")
+            (home / ".claude").mkdir(exist_ok=True)
+            r = _run("session-start.sh", project, home)
+            self.assertEqual(r.returncode, 0)
+            pointer = home / ".claude" / "adjudant-statusline-path"
+            self.assertTrue(pointer.is_file())
+            target = Path(pointer.read_text().strip())
+            self.assertEqual(target.resolve(), (PLUGIN_ROOT / "statusline" / "statusline.sh").resolve())
+            self.assertTrue(target.is_file())
+            # Silent: no banner line mentions it.
+            self.assertNotIn("statusline", r.stdout)
+
+    def test_statusline_pointer_is_written_before_the_breadcrumb_gate(self):
+        # Machine-wide, so a project with no breadcrumb still refreshes it.
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"; (home / ".claude").mkdir(parents=True)
+            project = Path(tmp) / "code"; project.mkdir()
+            _run("session-start.sh", project, home)
+            self.assertTrue((home / ".claude" / "adjudant-statusline-path").is_file())
+
+    def test_statusline_pointer_rewritten_only_when_it_differs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")
+            (home / ".claude").mkdir(exist_ok=True)
+            pointer = home / ".claude" / "adjudant-statusline-path"
+            pointer.write_text("/stale/statusline.sh\n")
+            _run("session-start.sh", project, home)
+            first = pointer.stat().st_mtime_ns
+            self.assertNotIn("/stale/", pointer.read_text())
+            import time; time.sleep(0.02)
+            _run("session-start.sh", project, home)
+            self.assertEqual(pointer.stat().st_mtime_ns, first)
+
+    def test_no_dot_claude_means_no_pointer(self):
+        # The hook never creates ~/.claude; a HOME without one is not a
+        # Claude Code machine and gets nothing written.
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")
+            if (home / ".claude").exists():
+                (home / ".claude").rmdir()
+            _run("session-start.sh", project, home)
+            self.assertFalse((home / ".claude" / "adjudant-statusline-path").exists())
+
     def test_colon_breadcrumb_resolves(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")

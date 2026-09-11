@@ -38,7 +38,7 @@ This plugin registers 11 hook entries across 10 events (vault-aware only):
 
 | Event | Script | Purpose |
 |---|---|---|
-| SessionStart | `hooks/scripts/session-start.sh` | Leads the context block with the **voice directive** (see below) — the contract's fourth and widest surface, and the only one that reaches the chat rather than a file; off via `voice: off` in the breadcrumb or `ADJUDANT_VOICE_DISABLE=1`. Then: discover vault, detect AGENTS.md+CLAUDE.md, init/resume session note; stamp the Claude Code conversation UUID into `session_id:` (list, idempotent on resume); no resumed marker on `compact`/`clear` sources; writes the resolved session-note path to `$TMPDIR/adjudant-session-{session_id}` for the per-turn hook to read (the intent nudge itself moved to UserPromptSubmit — this hook runs before the session has a purpose to record, and re-runs on every resume and compact, so it nagged early and repeatedly); renders a board status line when a board exists, plus one banner line per declared capability whose probe is on PATH, on `startup` only (`scripts/_profile.py --session-banner`); echoes the handoff freshness banner (and a STALE warning) so a red handoff cannot sit unseen |
+| SessionStart | `hooks/scripts/session-start.sh` | Leads the context block with the **voice directive** (see below) — the contract's fourth and widest surface, and the only one that reaches the chat rather than a file; off via `voice: off` in the breadcrumb or `ADJUDANT_VOICE_DISABLE=1`. Then: discover vault, detect AGENTS.md+CLAUDE.md, init/resume session note; stamp the Claude Code conversation UUID into `session_id:` (list, idempotent on resume); no resumed marker on `compact`/`clear` sources; writes the resolved session-note path to `$TMPDIR/adjudant-session-{session_id}` for the per-turn hook to read (the intent nudge itself moved to UserPromptSubmit — this hook runs before the session has a purpose to record, and re-runs on every resume and compact, so it nagged early and repeatedly); renders a board status line when a board exists, plus one banner line per declared capability whose probe is on PATH, on `startup` only (`scripts/_profile.py --session-banner`); echoes the handoff freshness banner (and a STALE warning) so a red handoff cannot sit unseen. In a beans-tracked repo with a `.git`, one more line states the branch rule (feature beans on `feature/<bean-id>` in a worktree, tasks and bugs on main, merge by PR); the gate is a stat, never a `git` call. Before the breadcrumb gate, and silently, it refreshes `~/.claude/adjudant-statusline-path` to this plugin's `statusline/statusline.sh`, written only when the content differs |
 | UserPromptSubmit | `hooks/scripts/user-prompt-reminder.sh` | Two nags with inverse audiences, branched on the breadcrumb. **Unlinked project:** smart-fire vault reminder when the prompt has vault-y keywords (at most once per session). **Linked project:** the intent-line nudge — fires from the second prompt on (by then the session has a purpose; firing at the first is the mistimed nag this replaced), at most once per session, and only while the placeholder stands, so writing the line ends it. Reads the session-note path from the pointer SessionStart drops rather than re-deriving it — a second copy of the zone-aware lookup would drift |
 ### The voice contract, and where it bites
 
@@ -131,3 +131,20 @@ allows one or two in a long draft — adjudant allows none and wins.
 | Stop | `hooks/scripts/stop-canary.py` | The drift canary. SessionStart states one rule (end every message with a rare codeword) and never restates it; this reads `last_assistant_message` and records a hit or a miss in `$TMPDIR/adjudant-canary-{session_id}.json`. First miss blocks once and asks the model to re-read its instructions; later misses are recorded only, since coercing compliance past that point manufactures the appearance of health. The miss is kept either way, so a block that works cannot erase the evidence. The per-turn hook reports the tally; no vault writes |
 
 Universal drift-defense hooks (git safety, voice checks, etc.) live in hookify, not here.
+
+## The statusline
+
+`statusline/` ships the Claude Code statusline: `statusline.sh` (the bar),
+`statusline-tokens-24h.sh` (its background cost refresher, found relative to
+the bar), `shim.sh` (installed as `~/.claude/statusline-v2.sh`; execs the path
+in `~/.claude/adjudant-statusline-path`, falls back to the newest installed
+plugin copy, honours `ADJUDANT_STATUSLINE`) and `install.sh` (run once per
+machine). It reads adjudant's files directly, never its Python, because it
+repaints several times a second; the files it reads are the table in
+`state-contract.md`. Its git segment carries one glyph of adjudant's own: a
+red `!` in front of the branch when a `tracker: beans` repo breaks the branch
+rule (main checkout off main, a `feature/<id>` worktree whose bean is closed,
+or an in-progress feature with no branch). `scripts/test_statusline.py` drives
+it against real repositories and worktrees under a throwaway HOME;
+`ADJUDANT_STATUSLINE_NO_SPAWN=1` keeps the refresher from touching the real
+machine's cache during those runs.
