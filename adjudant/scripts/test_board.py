@@ -1716,6 +1716,78 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("clip-path:none", block.replace(" ", ""))
         self.assertIn(".brand-band{display:none}", block.replace(" ", ""))
 
+    def test_a_closed_lane_is_found_by_its_stamp_not_its_id(self):
+        # `completed` and `scrapped` declare stamps on a beans deck, `done` and
+        # `icebox` inherit theirs from STAMP on a vault deck. One rule covers
+        # both, and a lane renamed from `done` to `shipped` keeps working.
+        fn = _js_function(self.src, "isTerminal")
+        self.assertIn("laneStamp(col)", fn)
+        body = _js_function(self.src, "render")
+        self.assertNotIn('"completed"', body)
+        self.assertNotIn('"scrapped"', body)
+
+    def test_hiding_closed_lanes_never_empties_the_board(self):
+        # A deck of nothing but terminal lanes still shows them: hiding the
+        # whole board is not a view.
+        body = _js_function(self.src, "render").replace(" ", "")
+        self.assertIn("terminal.length<state.columns.length", body)
+        # and the cards are dropped from the BOARD, not from the deck
+        self.assertIn("state.columns.filter(c=>!isTerminal(c))", body)
+
+    def test_hidden_lanes_are_counted_out_loud(self):
+        # Nothing may vanish silently; the button says how many lanes and cards
+        # went, and the preference survives a reload.
+        body = _js_function(self.src, "render")
+        self.assertIn("hidCards", body)
+        self.assertIn('setAttribute("aria-pressed"', body)
+        self.assertIn("TERM_KEY", self.src)
+        self.assertIn("localStorage", _js_function(self.src, "readHideTerminal"))
+
+    def test_the_histogram_picks_its_bin_instead_of_assuming_one(self):
+        # A 24-day span is 24 daily columns in a corner 248px wide. The span
+        # chooses the unit so the bar count stays readable at any deck age.
+        fn = _js_function(self.src, "sparkBins")
+        self.assertIn("span<=20", fn.replace(" ", ""))
+        self.assertIn("DAY*7", fn)
+        self.assertIn("DAY*28", fn)
+
+    def test_the_histogram_marks_a_bulk_write_rather_than_hiding_it(self):
+        # Measured on a real deck: 83 of 92 cards shared one updatedAt day,
+        # which was an import plus a churn bug, not a day somebody moved 83
+        # cards. Drawn as activity it would be a lie.
+        fn = _js_function(self.src, "sparkBins").replace(" ", "")
+        self.assertIn("b.bulk", fn)
+        self.assertIn("ts.length/2", fn)
+        self.assertIn("bulk", _js_function(self.src, "paintSpark"))
+
+    def test_the_histogram_names_the_field_it_plots(self):
+        # createdAt is when work was filed, updatedAt is when the file changed.
+        # Only one of them is activity, so the chart says which it is showing.
+        fn = _js_function(self.src, "paintSpark")
+        self.assertIn('"updatedAt","Touched"', fn.replace(", ", ","))
+        self.assertIn('"createdAt","Filed"', fn.replace(", ", ","))
+        self.assertIn("sparkField", fn)
+        # inline SVG, because the page is offline-locked and a library is a fetch
+        self.assertIn("createElementNS(SVGNS", fn)
+
+    def test_the_histogram_describes_the_board_in_front_of_you(self):
+        # Filtered cards and hidden lanes both count, or the chart describes
+        # cards the reader cannot see.
+        body = _js_function(self.src, "render").replace(" ", "")
+        self.assertIn("shownCols.forEach", body)
+        self.assertIn("cardMatches(e.card)", body)
+        self.assertIn("paintSpark(sparkCards)", body)
+
+    def test_the_favicon_is_the_band_and_follows_the_figure(self):
+        # At 16px the head is a smudge and three stripes are unmistakable, and
+        # the stripes belong to whichever figure the roll produced.
+        fn = _js_function(self.src, "paintFavicon")
+        self.assertIn("data:image/svg+xml,", fn)
+        self.assertIn("encodeURIComponent", fn)
+        self.assertIn("paintFavicon(m.band)", _js_function(self.src, "paintMark"))
+        # a data URI fetches nothing, which is what validator 24 actually guards
+        self.assertNotIn("url(http", self.src)
+
     def test_the_id_and_the_body_can_leave_the_page(self):
         # Both were readable and neither could be taken out, so quoting an id
         # into a `beans update` meant retyping it off the screen.

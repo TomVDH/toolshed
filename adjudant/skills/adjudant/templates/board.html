@@ -217,7 +217,14 @@
   }
   .sub{margin:2px 0 0;font-size:var(--fs-small);color:var(--text-dim)}
   .sub[hidden]{display:none}
-  .controls{display:flex;align-items:center;gap:var(--s3);margin-left:auto;flex-wrap:wrap}
+  /* The header is sticky, so its top right corner IS the viewport's, with no
+     floating overlay to obstruct a lane. The histogram takes that corner and
+     the controls sit under it. */
+  .head-right{
+    margin-left:auto;display:flex;flex-direction:column;
+    align-items:flex-end;gap:var(--s3);min-width:0
+  }
+  .controls{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
   .controls input#q{
     font:inherit;font-size:var(--fs-small);
     background:var(--surface);color:var(--text);
@@ -250,6 +257,44 @@
   .controls .link:hover{color:var(--text)}
 
   /* counts as a sentence, not a slash-separated ledger strip */
+  /* Reads as part of the count line, because it changes what the count means. */
+  .metabtn{
+    font:inherit;font-size:var(--fs-small);cursor:pointer;
+    background:none;color:var(--text-dim);
+    border:1px solid var(--border);border-radius:var(--r-chip);
+    padding:1px 8px;margin-left:var(--s2);
+    transition:color .15s var(--ease),border-color .15s var(--ease)
+  }
+  .metabtn:hover{color:var(--text);border-color:var(--border-strong)}
+  .metabtn[aria-pressed="true"]{color:var(--text);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .metabtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .metabtn[hidden]{display:none}
+
+  /* ── The activity histogram ──────────────────────────────────────────────
+     Every card already carries createdAt and updatedAt, and until now the
+     board threw the shape of them away. Drawn as inline SVG because the page
+     is offline-locked and a chart library is a fetch. */
+  .spark{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .spark[hidden]{display:none}
+  .spark-head{
+    display:flex;align-items:baseline;gap:var(--s2);
+    font-size:var(--fs-micro);color:var(--text-faint)
+  }
+  .spark-head .rail{padding:2px}
+  .spark-head .rail button{padding:2px 7px}
+  .spark svg{display:block;overflow:visible}
+  .spark rect.bar{fill:var(--accent);opacity:.80}
+  .spark rect.bar.bulk{fill:var(--text-faint);opacity:.55}
+  .spark rect.hit{fill:transparent;cursor:default}
+  .spark g.col:hover rect.bar,.spark g.col:focus-visible rect.bar{opacity:1}
+  .spark g.col:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .spark .axis{stroke:var(--border);stroke-width:1}
+  .spark-foot{
+    font-size:var(--fs-micro);color:var(--text-faint);
+    font-variant-numeric:tabular-nums;min-height:1.35em
+  }
+  @media (max-width:900px){ .spark{display:none} }
+
   .meta{
     display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
     margin-top:var(--s4);font-size:var(--fs-small);color:var(--text-dim)
@@ -657,16 +702,20 @@
       </div>
       <p class="sub" id="boardSub" hidden></p>
     </div>
-    <div class="controls">
-      <input id="q" type="search" placeholder="Filter cards" spellcheck="false" autocomplete="off" aria-label="Filter cards">
-      <button class="conn" id="connectBtn" type="button">Connect file</button>
-      <button class="link" id="downloadBtn" type="button">Download</button>
+    <div class="head-right">
+      <div class="spark" id="spark" hidden></div>
+      <div class="controls">
+        <input id="q" type="search" placeholder="Filter cards" spellcheck="false" autocomplete="off" aria-label="Filter cards">
+        <button class="conn" id="connectBtn" type="button">Connect file</button>
+        <button class="link" id="downloadBtn" type="button">Download</button>
+      </div>
     </div>
   </div>
   <div class="meta">
     <span><b id="cardCount">—</b> cards</span>
     <span class="rule" aria-hidden="true"></span>
     <span>updated <b id="rev">—</b></span>
+    <button class="metabtn" id="termBtn" type="button" aria-pressed="false" hidden></button>
   </div>
   <div class="rail-row"><span class="rail-lbl">Type</span><div class="legend" id="legend"></div></div>
   <div class="rail-row" id="tagRow" hidden><span class="rail-lbl">Tag</span><div class="legend tags" id="tagRail"></div></div>
@@ -770,6 +819,20 @@ function pickMark(){
    Inline, not a data: URI. An external SVG document is a separate document and
    cannot see this page's custom properties, so the ink would never arrive. */
 const SVGNS="http://www.w3.org/2000/svg";
+/* The band, not the figure. At 16px the head is a smudge and three stripes are
+   unmistakable, and the stripes belong to whichever figure the roll produced,
+   so the tab carries the easter egg too. A data URI fetches nothing, which is
+   what validator 24 guards: it bans a url() pointing off-machine, not url(). */
+function paintFavicon(band){
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+    +'<rect width="24" height="24" fill="'+band[0]+'"/>'
+    +'<rect y="8" width="24" height="8" fill="'+band[1]+'"/>'
+    +'<rect y="16" width="24" height="8" fill="'+band[2]+'"/></svg>';
+  let link=document.querySelector('link[rel="icon"]');
+  if(!link){ link=document.createElement("link"); link.rel="icon"; document.head.appendChild(link); }
+  link.type="image/svg+xml";
+  link.href="data:image/svg+xml,"+encodeURIComponent(svg);
+}
 function paintMark(){
   const m=pickMark();
   const fig=document.getElementById("brandMark");
@@ -783,8 +846,9 @@ function paintMark(){
     path.setAttribute("d",d);
     fig.appendChild(path);
   });
-  /* the band belongs to whichever figure turned up */
+  /* the band belongs to whichever figure turned up, and so does the tab */
   m.band.forEach((c,i)=>document.documentElement.style.setProperty("--band-"+(i+1),c));
+  paintFavicon(m.band);
   svg.setAttribute("viewBox","0 -75 "+m.w+" 85");
   svg.setAttribute("aria-label",m.label);
   svg.querySelector("path").setAttribute("d",m.d);
@@ -811,6 +875,14 @@ let baseJson=null, baseCols=[], moves={};
 let sheetKey=null, sheetId=null;
 /* view-state only (never persisted): text filter + toggled legend category */
 let filterText="", filterCat=null, filterTag=null;
+/* How a person reads, not a fact about a deck, so it lives per browser beside
+   the note view rather than in board-data.json. */
+const TERM_KEY="adjudant-board:terminal";
+let hideTerminal=false;
+/* Which timestamp the histogram plots. createdAt is when work was FILED,
+   updatedAt is when the file last CHANGED. Different questions, and only one
+   of them is activity, so the chart names the one it is showing. */
+let sparkField="updatedAt";
 /* The deck's ordinary tags, recomputed each render. Suppressed on the face for
    the reason the category chip was deleted: board.py defaults `category` to
    `task`, so a vault board painted an identical `task` chip on every card it
@@ -1577,6 +1649,134 @@ function copyButton(label,getText,announceAs){
   return b;
 }
 
+/* ── Terminal lanes ───────────────────────────────────────────────────────
+   A lane is terminal when it carries a stamp, which is deck data and not two
+   hardcoded ids: `completed` and `scrapped` declare theirs on a beans deck,
+   `done` and `icebox` inherit theirs from STAMP on a vault deck. One rule,
+   both shapes, and a lane renamed from `done` to `shipped` keeps working. */
+function isTerminal(col){ return !!laneStamp(col); }
+function readHideTerminal(){
+  try{ return localStorage.getItem(TERM_KEY)==="1"; }
+  catch(e){ console.warn("board: lane preference unreadable",e); return false; }
+}
+function writeHideTerminal(v){
+  try{ localStorage.setItem(TERM_KEY,v?"1":"0"); }
+  catch(e){ console.warn("board: lane preference unsaved",e); }
+}
+
+/* ── The activity histogram ───────────────────────────────────────────────
+   Bins are chosen, never assumed. A 24-day span is 24 daily columns in a
+   corner 260px wide, and a deck imported in one afternoon is one tall bar read
+   as a working day. So the span picks the unit, and a bin where most of the
+   deck shares a timestamp is drawn as bulk rather than as activity. */
+const DAY=86400000;
+function sparkBins(cards,field){
+  const ts=[];
+  cards.forEach(c=>{
+    const v=c&&c[field];
+    if(!v) return;
+    const t=Date.parse(v);
+    if(!isNaN(t)) ts.push(t);
+  });
+  if(ts.length<2) return null;
+  ts.sort((a,b)=>a-b);
+  const lo=ts[0], hi=ts[ts.length-1];
+  const span=(hi-lo)/DAY;
+  /* aim for a readable 6 to 20 bars whatever the deck's age */
+  const unit = span<=20 ? DAY : span<=140 ? DAY*7 : DAY*28;
+  const label = unit===DAY ? "day" : unit===DAY*7 ? "week" : "month";
+  const floor=t=>Math.floor(t/unit)*unit;
+  const start=floor(lo), end=floor(hi);
+  const bins=[];
+  for(let t=start;t<=end;t+=unit) bins.push({t:t, n:0});
+  const at=t=>Math.round((floor(t)-start)/unit);
+  ts.forEach(t=>{ const i=at(t); if(bins[i]) bins[i].n++; });
+  /* A bin holding more than half the deck is an import or a sweep. Say so
+     rather than letting it read as a day somebody moved sixty cards. */
+  bins.forEach(b=>{ b.bulk = b.n > ts.length/2 && ts.length>8; });
+  return {bins:bins, unit:unit, label:label, total:ts.length};
+}
+function sparkDateText(t,unit){
+  const d=new Date(t);
+  const iso=d.toISOString().slice(0,10);
+  if(unit===DAY) return iso;
+  const e=new Date(t+unit-DAY);
+  return iso+" to "+e.toISOString().slice(0,10);
+}
+
+/* Drawn from the CARDS THE BOARD IS SHOWING, so it answers the filter rather
+   than ignoring it. Filter to one tag and the chart is that tag's history. */
+function paintSpark(shownCards){
+  const box=document.getElementById("spark");
+  if(!box) return;
+  const data=sparkBins(shownCards,sparkField);
+  box.innerHTML="";
+  if(!data){ box.hidden=true; return; }
+  box.hidden=false;
+
+  const head=el("div","spark-head");
+  head.appendChild(el("span",null,"Activity by "+data.label));
+  const rail=el("div","rail"); rail.setAttribute("role","group");
+  rail.setAttribute("aria-label","Which timestamp the histogram plots");
+  [["updatedAt","Touched"],["createdAt","Filed"]].forEach(([f,lbl])=>{
+    const b=el("button",null,lbl); b.type="button";
+    b.setAttribute("aria-pressed",sparkField===f?"true":"false");
+    b.addEventListener("click",()=>{ sparkField=f; render(); });
+    rail.appendChild(b);
+  });
+  head.appendChild(rail);
+  box.appendChild(head);
+
+  const W=248,H=34,gap=1;
+  const bins=data.bins, max=Math.max.apply(null,bins.map(b=>b.n))||1;
+  const bw=Math.max(2,(W-gap*(bins.length-1))/bins.length);
+  const svg=document.createElementNS(SVGNS,"svg");
+  svg.setAttribute("viewBox","0 0 "+W+" "+(H+1));
+  svg.setAttribute("width",String(W)); svg.setAttribute("height",String(H+1));
+  svg.setAttribute("role","img");
+  const bulkN=bins.filter(b=>b.bulk).length;
+  svg.setAttribute("aria-label",
+    data.total+" cards over "+bins.length+" "+data.label+"s, "
+    +sparkDateText(bins[0].t,data.unit).slice(0,10)+" to "
+    +sparkDateText(bins[bins.length-1].t,data.unit).slice(-10)
+    +", busiest "+max
+    +(bulkN?", "+bulkN+" bulk-write "+data.label+(bulkN>1?"s":""):""));
+
+  const foot=el("div","spark-foot");
+  bins.forEach((b,i)=>{
+    const h=b.n?Math.max(2,Math.round(b.n/max*H)):0;
+    const x=i*(bw+gap);
+    const g=document.createElementNS(SVGNS,"g");
+    g.setAttribute("class","col"); g.setAttribute("tabindex","0");
+    const note=sparkDateText(b.t,data.unit)+": "+b.n+(b.bulk?" (bulk write)":"");
+    /* a full-height transparent target, so a one-card bin is still hoverable */
+    const hit=document.createElementNS(SVGNS,"rect");
+    hit.setAttribute("class","hit");
+    hit.setAttribute("x",String(x)); hit.setAttribute("y","0");
+    hit.setAttribute("width",String(bw)); hit.setAttribute("height",String(H));
+    g.appendChild(hit);
+    if(h){
+      const r=document.createElementNS(SVGNS,"rect");
+      r.setAttribute("class","bar"+(b.bulk?" bulk":""));
+      r.setAttribute("x",String(x)); r.setAttribute("y",String(H-h));
+      r.setAttribute("width",String(bw)); r.setAttribute("height",String(h));
+      g.appendChild(r);
+    }
+    const show=()=>{ foot.textContent=note; };
+    const clear=()=>{ foot.textContent=""; };
+    g.addEventListener("mouseenter",show); g.addEventListener("focus",show);
+    g.addEventListener("mouseleave",clear); g.addEventListener("blur",clear);
+    svg.appendChild(g);
+  });
+  const axis=document.createElementNS(SVGNS,"line");
+  axis.setAttribute("class","axis");
+  axis.setAttribute("x1","0"); axis.setAttribute("y1",String(H+0.5));
+  axis.setAttribute("x2",String(W)); axis.setAttribute("y2",String(H+0.5));
+  svg.appendChild(axis);
+  box.appendChild(svg);
+  box.appendChild(foot);
+}
+
 function ticketNode(card,key){
   const t=el("div","ticket"); t.draggable=true; t.dataset.id=card.id; t.dataset.key=String(key);
   t.setAttribute("role","listitem");
@@ -1788,7 +1988,37 @@ function render(){
     const b=buckets.get(String(card.column));
     (b||orphans).push({card:card,key:key});
   });
-  state.columns.forEach(col=>laneNode(col,buckets.get(String(col.id)),{droppable:true}));
+  /* Terminal lanes are dropped from the BOARD, never from the deck: the card
+     keeps its column, the sheet's lane row still lists every lane, and the
+     count below says what went. A deck of nothing but terminal lanes shows
+     them anyway, because hiding the whole board is not a view. */
+  const terminal=state.columns.filter(isTerminal);
+  const hiding = hideTerminal && terminal.length>0 && terminal.length<state.columns.length;
+  const shownCols = hiding ? state.columns.filter(c=>!isTerminal(c)) : state.columns;
+  shownCols.forEach(col=>laneNode(col,buckets.get(String(col.id)),{droppable:true}));
+
+  const termBtn=document.getElementById("termBtn");
+  if(terminal.length && terminal.length<state.columns.length){
+    const hidCards=terminal.reduce((a,c)=>a+(buckets.get(String(c.id))||[]).length,0);
+    termBtn.hidden=false;
+    termBtn.setAttribute("aria-pressed",hiding?"true":"false");
+    termBtn.textContent = hiding
+      ? "show "+terminal.length+" closed lane"+(terminal.length>1?"s":"")+" ("+hidCards+")"
+      : "hide closed";
+    termBtn.setAttribute("aria-label",hiding
+      ? "Show the "+terminal.length+" closed lanes, holding "+hidCards+" cards"
+      : "Hide the "+terminal.length+" closed lanes, holding "+hidCards+" cards");
+  }else{
+    termBtn.hidden=true;
+  }
+
+  /* The histogram answers the board in front of you, filters and hidden lanes
+     included, so it is never describing cards you cannot see. */
+  const sparkCards=[];
+  shownCols.forEach(c=>(buckets.get(String(c.id))||[]).forEach(e=>{
+    if(cardMatches(e.card)) sparkCards.push(e.card);
+  }));
+  paintSpark(sparkCards);
   // Safety lane: cards whose column matches no lane (deck edited by hand,
   // column removed) must never be invisible. It takes no drops, so it also
   // registers no dragover: painting an accept outline over a target that then
@@ -1852,6 +2082,11 @@ q.addEventListener("keydown",ev=>{
 });
 document.getElementById("sheetClose").addEventListener("click",closeSheet);
 paintMark();
+hideTerminal=readHideTerminal();
+document.getElementById("termBtn").addEventListener("click",()=>{
+  hideTerminal=!hideTerminal; writeHideTerminal(hideTerminal); render();
+  announce(hideTerminal?"closed lanes hidden":"closed lanes shown");
+});
 noteView=readNoteView();
 paintNoteToggle();
 document.getElementById("noteView").addEventListener("click",ev=>{

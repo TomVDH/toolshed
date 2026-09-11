@@ -1,11 +1,11 @@
 ---
 # toolshed-10dm
 title: Activity histogram on the board
-status: todo
+status: completed
 type: feature
-priority: low
+priority: normal
 created_at: 2026-09-11T01:11:10Z
-updated_at: 2026-09-11T01:11:10Z
+updated_at: 2026-09-11T02:08:07Z
 parent: toolshed-e4y3
 ---
 

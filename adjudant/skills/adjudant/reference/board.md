@@ -88,6 +88,50 @@ Three marks reach the face, and only when they carry something:
   tag is in the card's accessible name, because an `aria-label` replaces a
   button's contents rather than adding to them.
 
+### Closed lanes
+
+A lane is closed when it carries a stamp, which is deck data rather than two
+hardcoded ids: `completed` and `scrapped` declare theirs on a beans deck, `done`
+and `icebox` inherit theirs from the STAMP defaults on a vault deck. One rule
+covers both, and a lane renamed from `done` to `shipped` keeps working.
+
+`hide closed` drops them from the BOARD, never from the deck. The card keeps its
+column, the sheet's lane row still lists every lane, and the button says how many
+lanes and cards went. A deck of nothing but closed lanes shows them anyway,
+because hiding the whole board is not a view. The preference is per browser,
+beside the note view: it is how a person reads, not a fact about a deck.
+
+### The activity histogram
+
+Top right of the masthead, which is sticky, so it holds the viewport's corner
+without a floating overlay that could obstruct a lane. Inline SVG: the page is
+offline-locked and a chart library is a fetch.
+
+Three things it refuses to do.
+
+It does not assume a bin. A 24-day span is 24 daily columns in a corner 248px
+wide, so the span picks the unit: days under three weeks, then weeks, then
+months, aiming at a readable bar count whatever the deck's age.
+
+It does not call a bulk write activity. Measured on a real deck, 83 of 92 cards
+shared one `updatedAt` day, which was an import plus the churn bug fixed in
+4.1.1. A bin holding more than half the cards is drawn as bulk and named as
+such.
+
+It does not leave the field ambiguous. `createdAt` is when work was filed,
+`updatedAt` is when the file last changed. Only one of those is activity, so the
+chart names the one it is showing and offers the other.
+
+It describes the board in front of you: filters and hidden lanes both count, or
+it would be reporting cards the reader cannot see.
+
+### The favicon
+
+The band, not the figure: at 16px the head is a smudge and three stripes are
+unmistakable. The stripes are whichever figure the roll produced, so the tab
+carries the easter egg too. Written as an inline `data:` URI, which fetches
+nothing.
+
 ### Taking things out of the sheet
 
 The id and the body are the two things a person takes OUT of the page, and both
