@@ -59,6 +59,7 @@ from _vault_walk import (
 
 TEMPLATE = Path(__file__).resolve().parent.parent / "skills" / "adjudant" / "templates" / "board.html"
 MARK_RE = re.compile(r"/\*BOARD_DATA_START\*/.*?/\*BOARD_DATA_END\*/", re.DOTALL)
+VERSION_RE = re.compile(r"/\*ADJ_VERSION_START\*/.*?/\*ADJ_VERSION_END\*/", re.DOTALL)
 
 DECK_VERSION = 1
 # Deck backups live in a dot-dir beside the board, one timestamped file per
@@ -744,6 +745,19 @@ def _board_html_current(html_path: Path) -> bool:
     return f"{_TEMPLATE_STAMP_PREFIX}{current} -->" in html
 
 
+def plugin_version() -> str:
+    """This plugin's version from its own plugin.json, or "" when unreadable.
+
+    A board must still render for someone running the template straight out of
+    a checkout, so every failure here is empty-string, never an exception.
+    """
+    try:
+        manifest = Path(__file__).resolve().parents[1] / ".claude-plugin" / "plugin.json"
+        return str(json.loads(manifest.read_text()).get("version") or "")
+    except Exception:
+        return ""
+
+
 def render_template(deck: dict[str, Any]) -> str:
     """The full board.html text with the deck injected. Raises before any file
     is written when the template is missing/markerless, so a failed render
@@ -758,6 +772,14 @@ def render_template(deck: dict[str, Any]) -> str:
     payload_json = json.dumps(deck, indent=2).replace("<", "\\u003c")
     payload = "/*BOARD_DATA_START*/" + payload_json + "/*BOARD_DATA_END*/"
     rendered = MARK_RE.sub(lambda _m: payload, tpl, count=1)
+    # Stamp WHICH adjudant drew this page. The file is static once written, so
+    # a board scaffolded by 4.1.9 must keep saying 4.1.9 after the plugin moves
+    # on; reading the version at page load would make the stamp a guess about
+    # what is installed now, not a fact about what produced this file.
+    ver = json.dumps(plugin_version())
+    rendered = VERSION_RE.sub(
+        lambda _m: "/*ADJ_VERSION_START*/" + ver + "/*ADJ_VERSION_END*/",
+        rendered, count=1)
     # Stamp which template produced this page, so the ambient path can
     # re-emit html-only when a plugin upgrade ships a new template.
     stamp = template_hash()

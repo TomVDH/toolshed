@@ -88,6 +88,43 @@ Three marks reach the face, and only when they carry something:
   tag is in the card's accessible name, because an `aria-label` replaces a
   button's contents rather than adding to them.
 
+### The version stamp
+
+A tiny mono tag beside the wordmark, naming which adjudant drew the page.
+
+Stamped by `board.py` at scaffold time, between `ADJ_VERSION_START` and
+`ADJ_VERSION_END`, read from the plugin's own `plugin.json`. Not read at page
+load: the file is static once written, so a board scaffolded by 4.1.9 must keep
+saying 4.1.9 after the plugin moves on. A load-time read would make the stamp a
+guess about what is installed now rather than a fact about what produced this
+file. Every failure to read the manifest yields an empty string and the tag
+hides itself, so a template run straight out of a checkout still renders.
+
+`--text-faint` and no more. 9.5px is body size for contrast, and stacking
+opacity on that token measured 3.74:1 on dark and 2.93:1 on light against a
+4.5:1 floor. The token alone is 5.97:1 and 5.00:1, and it is already the
+quietest ink on the board.
+
+### The masthead, in three bands
+
+Identity and the ambient glance, then state and actions, then filters. Generous
+between the bands, tight inside them: that contrast is what makes them read as
+three groups rather than one list.
+
+It was four bands of identical spacing, and a right-hand column 125px tall
+against the brand's 55px, so the taller column set the header's height and left
+a 38px hole under the mark. Measured at 1200x800 the masthead took 295px, 37% of
+the screen, and the first card began at 379px. Three bands take 247px, 31%, and
+the first card starts at 331px.
+
+The counts and the actions are one relationship, not two: what the board holds
+sits left, what you do to it sits right, on one line.
+
+The histogram is ambient and must never set the header's height. It reserved a
+second line for a hover readout that is usually absent, which made it the
+tallest thing in the masthead; the readout swaps into its own label line
+instead.
+
 ### On a phone
 
 The filter rails scroll sideways rather than wrapping. Measured on a 375px

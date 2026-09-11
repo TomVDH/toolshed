@@ -1716,6 +1716,50 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("clip-path:none", block.replace(" ", ""))
         self.assertIn(".brand-band{display:none}", block.replace(" ", ""))
 
+    def test_the_version_is_stamped_at_scaffold_time_not_read_at_load(self):
+        # The file is static once written. A board scaffolded by 4.1.9 must keep
+        # saying 4.1.9 after the plugin moves on, or the stamp is a guess about
+        # what is installed now rather than a fact about what made this page.
+        self.assertIn("ADJ_VERSION_START", self.src)
+        self.assertIn("ADJ_VERSION_END", self.src)
+        self.assertIn('id="brandVer"', self.src)
+        self.assertIn("ADJUDANT_VERSION", _js_function(self.src, "paintMark"))
+
+    def test_the_version_tag_is_faint_but_not_unreadable(self):
+        # 9.5px is body size for contrast, so the floor is 4.5:1. Stacking
+        # opacity on --text-faint measured 3.74:1 on dark and 2.93:1 on light.
+        m = re.search(r"\.brand-ver\{(.*?)\}", self.src, re.S)
+        self.assertIsNotNone(m, ".brand-ver rule missing")
+        rule = m.group(1)
+        self.assertIn("var(--text-faint)", rule)
+        self.assertNotIn("opacity:", rule.replace(" ", ""))
+
+    def test_the_masthead_is_three_bands_with_a_deliberate_rhythm(self):
+        # It was four bands of identical spacing, which gave everything equal
+        # weight, and a right column 125px tall against the brand's 55px, which
+        # left a 38px hole under the mark and set the header to 295px, 37% of a
+        # 1200x800 screen. Three bands now: identity and the ambient glance,
+        # state and actions, filters. Generous BETWEEN, tight WITHIN.
+        self.assertIn('class="head-ops"', self.src)
+        self.assertIn('class="rails"', self.src)
+        self.assertNotIn('class="head-right"', self.src)
+        flat = self.src.replace(" ", "").replace("\n", "")
+        # the two rails are one block: the block takes the generous interval,
+        # the rails inside it take the tight one
+        self.assertIn(".rails{margin-top:var(--s4);display:flex;flex-direction:column;gap:var(--s2)}", flat)
+        self.assertIn(".rails.rail-row{margin-top:0}", flat)
+        self.assertIn(".head-ops{display:flex;align-items:center;gap:var(--s4)", flat)
+
+    def test_the_histogram_never_sets_the_mastheads_height(self):
+        # It is ambient. It reserved a second line for a hover readout that is
+        # usually absent, which made it 82px and the tallest thing up there.
+        # The readout swaps into its own label line instead.
+        self.assertNotIn("spark-foot", self.src)
+        fn = _js_function(self.src, "paintSpark")
+        self.assertIn('el("span","lbl"', fn.replace(", ", ","))
+        self.assertIn("lbl.textContent=note", fn)
+        self.assertIn("lbl.textContent=restLabel", fn)
+
     def test_the_filter_rails_scroll_sideways_on_a_phone(self):
         # MEASURED on a 375px screen before this rule: the tag rail wrapped to
         # FOUR rows and the type rail to two, the header took 487px of an 812px

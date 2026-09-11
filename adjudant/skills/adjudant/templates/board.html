@@ -145,6 +145,20 @@
   .brand{display:flex;align-items:center;gap:14px}
   .brand-mark{width:52px;height:auto;flex:none;position:relative;z-index:2;display:block}
   .brand-text{min-width:0}
+  .brand-line{display:flex;align-items:baseline;gap:7px;min-width:0}
+  /* Which adjudant drew this page. Stamped at scaffold time, because the file
+     is static once written: a board made by 4.1.9 must keep saying 4.1.9 when
+     the plugin has moved on, or the stamp is a guess. Sized and coloured to be
+     found when looked for and never otherwise. */
+  .brand-ver{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.03em;
+    /* --text-faint and no more. Stacking opacity on it measured 3.74:1 on dark
+       and 2.93:1 on light, and 9.5px is body size for contrast. The token alone
+       is 5.97:1 and 5.00:1, and it is already the quietest ink on the board. */
+    color:var(--text-faint);white-space:nowrap;
+    align-self:flex-end;padding-bottom:5px
+  }
+  .brand-ver:empty{display:none}
   .brand-word{position:relative;height:28px;display:flex;align-items:center;overflow:hidden}
   /* THE ONE ENTRANCE ANIMATION, and it is a deliberate exception. This theme
      has no entrance vocabulary: nothing else on the board moves on arrival,
@@ -206,7 +220,27 @@
     padding:var(--s5) var(--s6) var(--s4);
     border-bottom:1px solid var(--border);
   }
-  .head-row{display:flex;align-items:flex-start;gap:var(--s5);flex-wrap:wrap}
+  /* THREE BANDS, and the rhythm is the point: generous BETWEEN them, tight
+     WITHIN. Four bands of identical spacing gave everything equal weight and
+     left a 38px hole under the brand, because the right column was 125px tall
+     against the brand's 55px and the taller one set the header's height.
+
+     1. identity and the ambient glance   2. state and actions   3. filters  */
+  .head-row{
+    display:flex;align-items:center;gap:var(--s5);flex-wrap:wrap;
+    min-height:55px
+  }
+  /* State on the left, what you do to it on the right, one line. They were two
+     bands; they are one relationship. */
+  .head-ops{
+    display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap;
+    margin-top:var(--s4)
+  }
+  .head-ops .controls{margin-left:auto}
+  /* The two rails are ONE filter block, so they sit tight to each other and
+     the block takes the generous interval. */
+  .rails{margin-top:var(--s4);display:flex;flex-direction:column;gap:var(--s2)}
+  .rails .rail-row{margin-top:0}
   .ident{min-width:0}
   /* The board's own name, subordinate to the mark: this is a letterhead, so
      the tool is named first and the document second. ZenaSoft's section-sub
@@ -220,10 +254,6 @@
   /* The header is sticky, so its top right corner IS the viewport's, with no
      floating overlay to obstruct a lane. The histogram takes that corner and
      the controls sit under it. */
-  .head-right{
-    margin-left:auto;display:flex;flex-direction:column;
-    align-items:flex-end;gap:var(--s3);min-width:0
-  }
   .controls{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
   .controls input#q{
     font:inherit;font-size:var(--fs-small);
@@ -274,7 +304,11 @@
      Every card already carries createdAt and updatedAt, and until now the
      board threw the shape of them away. Drawn as inline SVG because the page
      is offline-locked and a chart library is a fetch. */
-  .spark{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  /* Ambient, and it must READ as ambient: it takes the corner opposite the
+     mark and none of the header's height. Its hover readout replaces the label
+     on its own line rather than reserving a second one, which is what made it
+     82px tall and the tallest thing in the masthead. */
+  .spark{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:auto}
   .spark[hidden]{display:none}
   .spark-head{
     display:flex;align-items:baseline;gap:var(--s2);
@@ -289,15 +323,14 @@
   .spark g.col:hover rect.bar,.spark g.col:focus-visible rect.bar{opacity:1}
   .spark g.col:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .spark .axis{stroke:var(--border);stroke-width:1}
-  .spark-foot{
-    font-size:var(--fs-micro);color:var(--text-faint);
-    font-variant-numeric:tabular-nums;min-height:1.35em
-  }
+  /* one line, swapped in place: no reserved row for a value that is usually absent */
+  .spark-head .lbl{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .spark-head .lbl.live{color:var(--text-dim)}
   @media (max-width:900px){ .spark{display:none} }
 
   .meta{
     display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
-    margin-top:var(--s4);font-size:var(--fs-small);color:var(--text-dim)
+    font-size:var(--fs-small);color:var(--text-dim)
   }
   .meta b{font-weight:600;color:var(--text)}
   .meta .rule{width:1px;height:12px;background:var(--border-strong)}
@@ -664,8 +697,9 @@
 
   @media (max-width: 640px){
     header.masthead{padding:var(--s3) var(--s4) var(--s3)}
-    .head-right{width:100%;margin-left:0;margin-top:var(--s3)}
-    .controls{width:100%;margin-left:0;margin-top:0}
+    .head-ops{margin-top:var(--s3);gap:var(--s2)}
+    .head-ops .controls{width:100%;margin-left:0}
+    .rails{margin-top:var(--s3)}
     /* One row, not three. A 120px basis is enough to type a filter into and
        small enough that both buttons stay on the line with it; at `auto` the
        input claimed the row and pushed Download onto its own. */
@@ -679,9 +713,8 @@
        scrolls sideways on one line and the board gets its screen back. */
     .legend{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px}
     .legend .k{flex:0 0 auto}
-    .rail-row{align-items:center;gap:var(--s2);margin-top:var(--s2)}
+    .rail-row{align-items:center;gap:var(--s2)}
     .rail-lbl{padding-top:0;width:auto}
-    .meta{margin-top:var(--s3)}
     .notice{margin:var(--s3) var(--s4) 0}
     .board{padding:var(--s4);grid-auto-columns:minmax(84vw,1fr);align-items:start}
     /* One lane is in view at a time here, so matching every well to the tallest
@@ -709,32 +742,37 @@
       <div class="brand">
         <svg class="brand-mark" id="brandMark" aria-hidden="true"></svg>
         <div class="brand-text">
-          <span class="brand-word">
-            <svg id="brandWord" viewBox="0 -75 300 85" role="img" aria-label="Adjudant"><path fill="currentColor"/></svg>
-            <span class="brand-band" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-line">
+            <span class="brand-word">
+              <svg id="brandWord" viewBox="0 -75 300 85" role="img" aria-label="Adjudant"><path fill="currentColor"/></svg>
+              <span class="brand-band" aria-hidden="true"><i></i><i></i><i></i></span>
+            </span>
+            <span class="brand-ver" id="brandVer"></span>
           </span>
           <h1 class="title" id="boardTitle">Board</h1>
         </div>
       </div>
       <p class="sub" id="boardSub" hidden></p>
     </div>
-    <div class="head-right">
-      <div class="spark" id="spark" hidden></div>
-      <div class="controls">
-        <input id="q" type="search" placeholder="Filter cards" spellcheck="false" autocomplete="off" aria-label="Filter cards">
-        <button class="conn" id="connectBtn" type="button">Connect file</button>
-        <button class="link" id="downloadBtn" type="button">Download</button>
-      </div>
+    <div class="spark" id="spark" hidden></div>
+  </div>
+  <div class="head-ops">
+    <div class="meta">
+      <span><b id="cardCount">—</b> cards</span>
+      <span class="rule" aria-hidden="true"></span>
+      <span>updated <b id="rev">—</b></span>
+      <button class="metabtn" id="termBtn" type="button" aria-pressed="false" hidden></button>
+    </div>
+    <div class="controls">
+      <input id="q" type="search" placeholder="Filter cards" spellcheck="false" autocomplete="off" aria-label="Filter cards">
+      <button class="conn" id="connectBtn" type="button">Connect file</button>
+      <button class="link" id="downloadBtn" type="button">Download</button>
     </div>
   </div>
-  <div class="meta">
-    <span><b id="cardCount">—</b> cards</span>
-    <span class="rule" aria-hidden="true"></span>
-    <span>updated <b id="rev">—</b></span>
-    <button class="metabtn" id="termBtn" type="button" aria-pressed="false" hidden></button>
+  <div class="rails">
+    <div class="rail-row"><span class="rail-lbl">Type</span><div class="legend" id="legend"></div></div>
+    <div class="rail-row" id="tagRow" hidden><span class="rail-lbl">Tag</span><div class="legend tags" id="tagRail"></div></div>
   </div>
-  <div class="rail-row"><span class="rail-lbl">Type</span><div class="legend" id="legend"></div></div>
-  <div class="rail-row" id="tagRow" hidden><span class="rail-lbl">Tag</span><div class="legend tags" id="tagRail"></div></div>
 </header>
 <div class="notice" id="notice" role="alert" hidden>
   <span id="noticeText"></span>
@@ -834,6 +872,9 @@ function pickMark(){
 
    Inline, not a data: URI. An external SVG document is a separate document and
    cannot see this page's custom properties, so the ink would never arrive. */
+/* Replaced by board.py at scaffold time from the plugin's own plugin.json.
+   The template's own value is what an un-scaffolded copy shows. */
+const ADJUDANT_VERSION=/*ADJ_VERSION_START*/""/*ADJ_VERSION_END*/;
 const SVGNS="http://www.w3.org/2000/svg";
 /* The band, not the figure. At 16px the head is a smudge and three stripes are
    unmistakable, and the stripes belong to whichever figure the roll produced,
@@ -868,6 +909,11 @@ function paintMark(){
   svg.setAttribute("viewBox","0 -75 "+m.w+" 85");
   svg.setAttribute("aria-label",m.label);
   svg.querySelector("path").setAttribute("d",m.d);
+  const ver=document.getElementById("brandVer");
+  if(ver&&ADJUDANT_VERSION){
+    ver.textContent="v"+ADJUDANT_VERSION;
+    ver.title="Scaffolded by adjudant "+ADJUDANT_VERSION;
+  }
 }
 
 /* category hue palette (OKLCH; assigned by index unless categories carries explicit colors) */
@@ -1731,7 +1777,8 @@ function paintSpark(shownCards){
   box.hidden=false;
 
   const head=el("div","spark-head");
-  head.appendChild(el("span",null,"Activity by "+data.label));
+  const lbl=el("span","lbl","Activity by "+data.label);
+  head.appendChild(lbl);
   const rail=el("div","rail"); rail.setAttribute("role","group");
   rail.setAttribute("aria-label","Which timestamp the histogram plots");
   [["updatedAt","Touched"],["createdAt","Filed"]].forEach(([f,lbl])=>{
@@ -1758,7 +1805,7 @@ function paintSpark(shownCards){
     +", busiest "+max
     +(bulkN?", "+bulkN+" bulk-write "+data.label+(bulkN>1?"s":""):""));
 
-  const foot=el("div","spark-foot");
+  const restLabel="Activity by "+data.label;
   bins.forEach((b,i)=>{
     const h=b.n?Math.max(2,Math.round(b.n/max*H)):0;
     const x=i*(bw+gap);
@@ -1778,8 +1825,8 @@ function paintSpark(shownCards){
       r.setAttribute("width",String(bw)); r.setAttribute("height",String(h));
       g.appendChild(r);
     }
-    const show=()=>{ foot.textContent=note; };
-    const clear=()=>{ foot.textContent=""; };
+    const show=()=>{ lbl.textContent=note; lbl.classList.add("live"); };
+    const clear=()=>{ lbl.textContent=restLabel; lbl.classList.remove("live"); };
     g.addEventListener("mouseenter",show); g.addEventListener("focus",show);
     g.addEventListener("mouseleave",clear); g.addEventListener("blur",clear);
     svg.appendChild(g);
@@ -1790,7 +1837,6 @@ function paintSpark(shownCards){
   axis.setAttribute("x2",String(W)); axis.setAttribute("y2",String(H+0.5));
   svg.appendChild(axis);
   box.appendChild(svg);
-  box.appendChild(foot);
 }
 
 function ticketNode(card,key){
