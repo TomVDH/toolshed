@@ -1,11 +1,11 @@
 ---
 # toolshed-w0t3
-title: 'Board 4.1.20: one ColorSym vocabulary on rail, card and sheet'
+title: 'Board 4.1.26: one ColorSym vocabulary on rail, card and sheet'
 status: completed
 type: feature
 priority: normal
 created_at: 2026-09-11T07:57:50Z
-updated_at: 2026-09-11T07:57:50Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-2z4w
 ---
 
@@ -19,4 +19,4 @@ Tom: increase the ColorSym symbols slightly and their punch; bring them in as th
 
 ## Summary of Changes
 
-The 8px squares on the card foot and in the sheet became the same ColorSym mark the rail key wears. Version 4.1.20. Tests 1600.
+The 8px squares on the card foot and in the sheet became the same ColorSym mark the rail key wears. Version 4.1.23. Tests 1600.

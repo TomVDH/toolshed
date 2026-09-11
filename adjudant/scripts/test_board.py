@@ -1672,7 +1672,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
     def test_each_figure_is_two_drawings_and_the_scheme_picks_one(self):
         # The dark scheme used to be the light drawing with its ink swapped by a
         # custom property, which flattened an illustration into a silhouette.
-        # The refined artwork of 4.1.24 ships an inverse drawing per figure,
+        # The refined artwork of 4.1.27 ships an inverse drawing per figure,
         # the head as a pale line on the ground, so each figure carries a
         # light and a dark drawing and paintMark picks by scheme. No plaque,
         # no raster, no property: the paths are the page's own.

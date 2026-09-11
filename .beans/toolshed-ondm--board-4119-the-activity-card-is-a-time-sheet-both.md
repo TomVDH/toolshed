@@ -1,11 +1,11 @@
 ---
 # toolshed-ondm
-title: 'Board 4.1.19: the activity card is a time sheet, both fields at once, no hover readout'
+title: 'Board 4.1.25: the activity card is a time sheet, both fields at once, no hover readout'
 status: completed
 type: feature
 priority: normal
 created_at: 2026-09-11T07:13:10Z
-updated_at: 2026-09-11T07:13:10Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-2z4w
 ---
 
@@ -20,4 +20,4 @@ Overdrive round on #spark under impeccable live (session 1d89c800): "redo this e
 
 ## Summary of Changes
 
-The histogram became a time sheet: two 7x6 day grids side by side, tinted by count, bulk days grey, today ringed, months under. Version 4.1.19.
+The histogram became a time sheet: two 7x6 day grids side by side, tinted by count, bulk days grey, today ringed, months under. Version 4.1.22.

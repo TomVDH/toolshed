@@ -1,11 +1,11 @@
 ---
 # toolshed-my5j
-title: 'Board 4.1.24: the refined marks, two drawings per figure'
+title: 'Board 4.1.27: the refined marks, two drawings per figure'
 status: completed
 type: feature
 priority: normal
 created_at: 2026-09-11T08:55:32Z
-updated_at: 2026-09-11T08:55:32Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-2z4w
 ---
 
@@ -19,4 +19,4 @@ Tom delivered four refined SVGs: ADJUDANT, ADJUDANT INV, ADJUDANTE, ADJUDANTE IN
 
 ## Summary of Changes
 
-The dark scheme shows the artist's inverse drawing instead of a recoloured light one. Version 4.1.24.
+The dark scheme shows the artist's inverse drawing instead of a recoloured light one. Version 4.1.27.

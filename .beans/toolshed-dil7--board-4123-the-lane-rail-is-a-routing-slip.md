@@ -1,11 +1,11 @@
 ---
 # toolshed-dil7
-title: 'Board 4.1.23: the lane rail is a routing slip'
+title: 'Board 4.1.26: the lane rail is a routing slip'
 status: completed
 type: feature
 priority: normal
 created_at: 2026-09-11T08:42:41Z
-updated_at: 2026-09-11T08:42:41Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-2z4w
 ---
 
@@ -17,4 +17,4 @@ Delight round on #sheetLanes under impeccable live (session 1921529b, "make much
 
 ## Summary of Changes
 
-The lane rail says where the card has been, not only where it is. Version 4.1.23. Tests 1602.
+The lane rail says where the card has been, not only where it is. Version 4.1.26. Tests 1602.

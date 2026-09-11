@@ -1,11 +1,11 @@
 ---
 # toolshed-kfqg
-title: 'Board 4.1.22: the sheet can be picked under impeccable live'
+title: 'Board 4.1.25: the sheet can be picked under impeccable live'
 status: completed
 type: task
 priority: normal
 created_at: 2026-09-11T08:22:02Z
-updated_at: 2026-09-11T08:22:02Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-cwfk
 ---
 
@@ -17,4 +17,4 @@ Tom: the flyout displays over impeccable when open, so it cannot be selected for
 
 ## Summary of Changes
 
-A modal dialog lives in the top layer above the picker. Under live the sheet leaves the top layer; shipped boards are unchanged. Version 4.1.22.
+A modal dialog lives in the top layer above the picker. Under live the sheet leaves the top layer; shipped boards are unchanged. Version 4.1.25.

@@ -1,11 +1,11 @@
 ---
 # toolshed-pzw4
-title: 'Board 4.1.21: the type mark in front of the sheet title'
+title: 'Board 4.1.27: the type mark in front of the sheet title'
 status: completed
 type: task
 priority: normal
 created_at: 2026-09-11T08:12:02Z
-updated_at: 2026-09-11T08:12:02Z
+updated_at: 2026-09-11T09:05:52Z
 parent: toolshed-w0t3
 ---
 
@@ -17,4 +17,4 @@ Tom circled the space left of the sheet title: put the ColorSym task symbol ther
 
 ## Summary of Changes
 
-The sheet says the card's type first: the same ColorSym mark, largest here. Version 4.1.21.
+The sheet says the card's type first: the same ColorSym mark, largest here. Version 4.1.24.

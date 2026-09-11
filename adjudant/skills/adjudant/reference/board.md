@@ -126,12 +126,12 @@ key and a mark there would be noise.
 
 Symbols are ColorSym, github.com/luisfrancisco/colorsym, CC BY-SA 4.0.
 
-One vocabulary (4.1.20). The rail taught a mark the card and the sheet did not
+One vocabulary (4.1.23). The rail taught a mark the card and the sheet did not
 speak; they carried an 8px square. Now all three carry the same mark, built
 once as `.sym` and keyed by `data-sym`, which `catSym` assigns by index beside
 the hue, so a card and its key always agree. Sizes: 20px on the rail key, 14px
 on the card face, 16px beside the category in the sheet, and 26px in front of
-the sheet's title (4.1.21), the largest it is drawn anywhere: the sheet is
+the sheet's title (4.1.24), the largest it is drawn anywhere: the sheet is
 where one card is read, so its type is said first. On a multi-type deck every typed card
 wears its mark; the type's name is still printed only on the exceptions. The
 mark is decoration; the name stays in the card's accessible label.
@@ -149,7 +149,7 @@ paper shows through. The filtered key darkens and its rule gains an ink line.
 Picked from eight studies under impeccable live: square, symbol, knockout,
 symbol only, tinted field, leading rule, stamp, underscored. Underscored won.
 
-A tag key is not a second type key (4.1.18). With the marks gone it was the
+A tag key is not a second type key (4.1.21). With the marks gone it was the
 type key minus its mark, and the two rails read as one. A tag is an identifier,
 so it is set the way identifiers are set on this page: in the mono face with a
 leading hash, no rule and no box. The filtered tag is stamped in ink. Picked
@@ -240,7 +240,7 @@ lanes and cards went. A deck of nothing but closed lanes shows them anyway,
 because hiding the whole board is not a view. The preference is per browser,
 beside the note view: it is how a person reads, not a fact about a deck.
 
-### The activity card (4.1.19)
+### The activity card (4.1.22)
 
 Top right of the masthead, which is sticky, so it holds the viewport's corner
 without a floating overlay that could obstruct a lane. Plain elements, no SVG,
@@ -279,7 +279,7 @@ unmistakable. The stripes are whichever figure the roll produced, so the tab
 carries the easter egg too. Written as an inline `data:` URI, which fetches
 nothing.
 
-### The lane rail is a routing slip (4.1.23)
+### The lane rail is a routing slip (4.1.26)
 
 A segmented control only ever said where the card is. A work order's routing
 slip says where it has been: the lanes are stations on a printed line, the
@@ -289,7 +289,7 @@ Chosen under impeccable live from four ways of letting a move feel like
 something (a sliding thumb, the slip, a stamp, keycap hints). The note view's
 Pretty/Raw rail keeps its track.
 
-### The sheet under live preview (4.1.22)
+### The sheet under live preview (4.1.25)
 
 A modal dialog sits in the top layer, above impeccable's picker, so nothing
 in the sheet could be put through a round. When the page carries the injected
@@ -314,7 +314,7 @@ as `file://` it is not, and the async API is simply absent, so `execCommand` is
 the fallback rather than the first choice. The button reports the result either
 way and announces it: a page must not claim a copy it did not make.
 
-### The mark (refined 4.1.24)
+### The mark (refined 4.1.27)
 
 The figure is inline SVG, built at load from path data the template carries. Not
 a `data:` URI and not a raster: the page is offline-locked and a raster large
