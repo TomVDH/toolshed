@@ -192,3 +192,21 @@ in it. Copy the file in and the banner returns:
 ```
 cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant
 ```
+
+## 11. The statusline
+
+The bar at the bottom of Claude Code is adjudant's too. It shows the git
+segment (branch, dirt, diff size, time since the last commit, ahead/behind,
+a `⑂` inside a worktree), the vault or beans slot (open items, what is in
+motion, a handoff age), the model and context, and the day's cost. Install
+it once per machine with `statusline/install.sh` from the installed plugin
+(the README has the one-liner) and add the `statusLine` block it prints to
+`~/.claude/settings.json`.
+
+After that nothing is yours to maintain: each session start points the shim
+in `~/.claude` at the plugin copy that is installed right now. Two things
+worth knowing. The `!` in front of the branch is the branch rule from
+section 10 breaking: the main checkout is off `main`, the worktree you are
+in belongs to a finished bean, or a feature in progress has no branch. And
+in a fresh worktree the bar is quiet about all of that until you copy
+`.claude/adjudant` in, for the same reason the banner is.

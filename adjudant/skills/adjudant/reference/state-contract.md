@@ -1,14 +1,24 @@
 # State contract
 
-Files and lines outside adjudant that read adjudant's output. Anything listed
-here is a published interface: moving or reformatting it silently breaks a
-consumer that has no test in this repo.
+Files and lines that read adjudant's output without going through its Python
+layer. Anything listed here is a published interface: moving or reformatting
+it silently breaks a consumer that parses files, not functions.
 
 ## Consumer: the statusline
 
-`~/.claude/statusline-v2.sh`, a symlink into
-`~/Library/Mobile Documents/com~apple~CloudDocs/Projects/IDE/claude/`. It lives
-in iCloud and syncs to both machines, so it is edited once and lands on both.
+`statusline/statusline.sh`, shipped inside this plugin since 4.1.19 and
+covered by `scripts/test_statusline.py`. On a machine it is reached through
+`~/.claude/statusline-v2.sh`, a shim (`statusline/shim.sh`, installed once by
+`statusline/install.sh`) that execs the path in
+`~/.claude/adjudant-statusline-path`, which the SessionStart hook refreshes
+to the installed plugin copy at every session start. The bar therefore
+follows plugin updates with no other step. `ADJUDANT_STATUSLINE=<path>`
+overrides the pointer, which is how a checkout of this repo drives the bar
+with its working copy while the script is being edited.
+
+The script reads files, not Python, on purpose: it repaints several times a
+second and must not pay an interpreter start. That is why this table exists
+even though the consumer now lives in the same tree.
 
 Paths below are relative to the vault project directory unless they say
 otherwise. `{project}` is that directory, `{repo}` is the code root, `{slug}`
@@ -61,8 +71,10 @@ probing, not read from the breadcrumb.
    `[A-Za-z0-9_.-]` collapsed to a hyphen, ends trimmed, empty becoming
    `project`. Adding a kind is safe; renaming one is not. Two paths are named
    exceptions to it — see below — and they are the only two.
-5. Anything added to this table needs the statusline updated in the same
-   change. Nothing in this repo can catch that break.
+5. Anything added to this table needs `statusline/statusline.sh` and
+   `scripts/test_statusline.py` updated in the same change. The tests drive
+   the script against real files, so a moved path that is covered fails the
+   build; one that is not covered still breaks silently. Cover it.
 6. The lifecycle folder is the project's lifecycle state; `zone_of()` is
    authoritative and nothing compares it against a declared status anymore.
    A v3 brief writes no `status:` field. Where one survives from before v3,

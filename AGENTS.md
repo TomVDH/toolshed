@@ -10,7 +10,7 @@
 │   └── marketplace.json     # Marketplace manifest — source of truth for every plugin's version + description
 ├── .beans/                  # work items, TRACKED IN GIT. See "Work items" below
 ├── .beans.yml               # beans config: types, statuses, priorities for this repo
-├── adjudant/                # Vault editor/writer + project initializer, /adjudant with six verbs and a two-tier cleanup model (successor to the retired obsidian-bridge). v4; the v3 redesign shipped
+├── adjudant/                # Vault editor/writer + project initializer, /adjudant with six verbs and a two-tier cleanup model (successor to the retired obsidian-bridge). v4; the v3 redesign shipped. Also ships the Claude Code statusline (adjudant/statusline/)
 ├── cabinet-of-imd/          # Crew/persona flavor layer (functionality sunset; character-only)
 ├── tui-toolbox/             # Operating language for agent-built helper CLIs (bash TUI + python helper); formerly cli-wrapper-helper
 ├── gemineye/                # Sandboxed Gemini second opinion via the agy CLI (SUNSET 2026-08-12: unlisted from marketplace, kept in tree)
@@ -103,6 +103,21 @@ Two consequences a newcomer would otherwise undo:
 The template has no JavaScript test runner, by design. Its tests assert that the
 code implementing a behaviour is still shaped the way it was when that behaviour
 was last verified in a browser. A green suite is not a substitute for driving it.
+
+## The statusline lives in adjudant
+
+`adjudant/statusline/` is the Claude Code statusline: `statusline.sh`, its
+refresher `statusline-tokens-24h.sh`, `shim.sh` (what `~/.claude/statusline-v2.sh`
+is) and `install.sh`. It moved here from the iCloud suitcase in 4.1.19, so it is
+git-tracked, covered by `adjudant/scripts/test_statusline.py`, and released with
+the plugin. Once per machine: run `install.sh` from the installed plugin and add
+the `statusLine` block it prints to `~/.claude/settings.json`. After that the
+session-start hook keeps `~/.claude/adjudant-statusline-path` on the installed
+version. To drive the bar from this checkout while editing it, set
+`ADJUDANT_STATUSLINE` to the working copy's `statusline.sh` in the shell that
+launches Claude Code. Any change to a file the bar reads (the table in
+`adjudant/skills/adjudant/reference/state-contract.md`) lands with the matching
+statusline and test change in the same commit.
 
 ## Universal drift defense (via hookify)
 

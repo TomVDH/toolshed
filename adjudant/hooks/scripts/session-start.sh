@@ -112,6 +112,27 @@ except Exception:
     CANARY_HEADER_PRINTED=1
   fi
 
+  # --- 0b. Statusline pointer ---
+  # The statusline ships in this plugin (statusline/statusline.sh) and the
+  # shim at ~/.claude/statusline-v2.sh execs whatever path this file names.
+  # The plugin's install path is versioned, so the pointer is refreshed here,
+  # once per session start, from this script's own location: after a plugin
+  # update the next session moves the bar to the new version with no other
+  # step. Machine-wide, so it runs before the breadcrumb gate; silent, so it
+  # costs no banner tokens; written only when the content differs, so an
+  # unchanged pointer is one read and no write. Never fails the hook.
+  if [ -d "$HOME/.claude" ]; then
+    local _sl_path _sl_pointer _sl_cur=""
+    _sl_path=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../statusline" 2>/dev/null && pwd || true)
+    if [ -n "$_sl_path" ] && [ -f "$_sl_path/statusline.sh" ]; then
+      _sl_pointer="$HOME/.claude/adjudant-statusline-path"
+      [ -r "$_sl_pointer" ] && IFS= read -r _sl_cur < "$_sl_pointer" || true
+      if [ "$_sl_cur" != "$_sl_path/statusline.sh" ]; then
+        printf '%s\n' "$_sl_path/statusline.sh" > "$_sl_pointer" 2>/dev/null || true
+      fi
+    fi
+  fi
+
   # --- 1. Read breadcrumb ---
   local breadcrumb="$project_dir/.claude/adjudant"
   # (zone_project_dir is defined above main; mirrors _vault_walk.find_project_dir)
