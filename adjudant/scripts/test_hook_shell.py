@@ -202,6 +202,71 @@ class TestSessionStartHook(unittest.TestCase):
             self.assertLess(len(line) // 4, 120,
                             f"beans banner is ~{len(line) // 4} tok, budget 120")
 
+    def test_git_banner_appears_for_a_beans_repo_with_a_git_dir(self):
+        # The branch rule is keyed on bean type, so it rides the beans knob
+        # and only speaks where there is a repository to branch in.
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            (project / ".git").mkdir()
+            out = _run("session-start.sh", project, home).stdout
+            line = next(l for l in out.splitlines() if "- Git:" in l)
+            self.assertIn("feature/<bean-id>", line)
+            self.assertIn("ff-only", line)
+            self.assertIn("PR", line)
+
+    def test_git_banner_speaks_inside_a_linked_worktree(self):
+        # In a linked worktree `.git` is a file holding a gitdir pointer, not
+        # a directory. The gate is -e so the rule reaches the place it is
+        # meant to be followed.
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            (project / ".git").write_text("gitdir: /elsewhere/.git/worktrees/x\n")
+            out = _run("session-start.sh", project, home).stdout
+            self.assertIn("- Git:", out)
+
+    def test_git_banner_silent_without_a_git_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            out = _run("session-start.sh", project, home).stdout
+            self.assertNotIn("- Git:", out)
+
+    def test_git_banner_silent_for_a_vault_tracked_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: vault\n")
+            (project / ".git").mkdir()
+            out = _run("session-start.sh", project, home).stdout
+            self.assertNotIn("- Git:", out)
+
+    def test_git_banner_runs_no_subprocess(self):
+        # A stat on .git, then printf. No `git` invocation on the session
+        # start path: the hook must cost the same in a repo with a slow
+        # filesystem as in one without.
+        text = (Path(__file__).resolve().parents[1]
+                / "hooks" / "scripts" / "session-start.sh").read_text()
+        banner = next(l for l in text.splitlines() if "- Git:" in l)
+        self.assertTrue(banner.strip().startswith("printf"), banner)
+        i = text.index(banner)
+        gate = text[max(0, i - 200):i]
+        self.assertIn('[ -e "$project_dir/.git" ]', gate)
+        self.assertNotIn("$(git ", text)
+
+    def test_git_banner_stays_within_its_token_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            (project / ".git").mkdir()
+            out = _run("session-start.sh", project, home).stdout
+            line = next(l for l in out.splitlines() if "- Git:" in l)
+            self.assertLess(len(line) // 4, 120,
+                            f"git banner is ~{len(line) // 4} tok, budget 120")
+            # Self-imposed cap: one sentence per party, nothing more.
+            self.assertLess(len(line) // 4, 45,
+                            f"git banner is ~{len(line) // 4} tok, cap 45")
+
     def test_colon_breadcrumb_resolves(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, home = self._project(Path(tmp), "vault_path: {vault}\nslug: demo\n")

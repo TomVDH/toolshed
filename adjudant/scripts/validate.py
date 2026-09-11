@@ -491,7 +491,7 @@ def validate_repo_helper_parity(r: Result) -> None:
     r.add_pass(name)
 
 
-REPO_STANDARD_CATEGORIES = ("version coherence", "symlink integrity", "context files", "plan age", "registration")
+REPO_STANDARD_CATEGORIES = ("version coherence", "symlink integrity", "context files", "plan age", "registration", "git practice")
 
 
 def validate_repo_standards_coverage(r: Result) -> None:

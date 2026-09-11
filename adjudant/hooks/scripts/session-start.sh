@@ -223,6 +223,13 @@ print(v or "")' "$CLAUDE_PLUGIN_ROOT/scripts" "$project_dir" 2>/dev/null || true
   case "${tracker_knob:-vault}" in
     beans)
       printf -- '- Beans: this repo tracks work items in beans, not in the vault and not in a todo list. Run `beans prime` now and follow it. Find or create a bean before starting work, keep its checklist current as you go, and commit the bean file alongside the code.\n'
+      # The branch rule is keyed on bean type, so it rides the beans knob.
+      # Git-gated by a stat, never a `git` call: in a linked worktree .git is
+      # a file, so -e and not -d. One line; the full contract is
+      # reference/repo-standards.md "Git practice" and status reports drift.
+      if [ -e "$project_dir/.git" ]; then
+        printf -- '- Git: pull --ff-only first. Feature beans: worktree on `feature/<bean-id>`, merge by PR. Tasks and bugs: commit on main.\n'
+      fi
       ;;
     *) : ;;
   esac

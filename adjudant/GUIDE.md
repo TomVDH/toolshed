@@ -166,3 +166,29 @@ corrected name for each, under **worth a look**. It never renames anything:
 renaming breaks every wikilink pointing at the file, and that repair is yours to
 make: `clean --deep` reports the name, and you decide. Docs are exempt, because
 the standard wants those UPPERCASE.
+
+## 10. Branches and worktrees
+
+In a repo that tracks work in beans, the bean type decides where the code
+goes. A `feature` bean gets its own branch, `feature/<bean-id>`, checked out
+in a worktree at `.worktrees/<bean-id>`. The main checkout stays on `main`.
+Tasks and bugs commit on `main`, or on their parent feature's branch when
+that feature is in progress. Epics are containers and get no branch. When
+the feature is done, push the branch, open a PR, merge it on GitHub, then
+remove the worktree and delete the branch.
+
+The session-start banner says this in one line every session. `/adjudant
+connect` writes the full rule into a new project's `AGENTS.md`. Nothing
+blocks a commit that breaks it; instead `/adjudant status` reports drift:
+a main checkout that wandered off `main`, a feature in progress with no
+branch, a branch with no worktree, a worktree or branch that outlived its
+bean, and a dirty `main` while a feature is in progress. The two "outlived"
+findings land under **going stale**, the rest under **worth a look**.
+
+One thing to know before your first worktree: `.claude/adjudant` is usually
+git-ignored, so a fresh worktree has no breadcrumb and adjudant stays silent
+in it. Copy the file in and the banner returns:
+
+```
+cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant
+```
