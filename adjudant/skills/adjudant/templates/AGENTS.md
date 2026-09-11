@@ -29,7 +29,7 @@ Work items are beans. The bean type decides where the code goes.
 - Run `git pull --ff-only` on `main` before you start.
 - A `feature` bean gets its own branch, named `feature/<bean-id>`. An `epic` is a container and gets no branch.
 - Check that branch out in a worktree: `git worktree add .worktrees/<bean-id> -b feature/<bean-id>`. Do not `git switch` in the main checkout. The main checkout stays on `main`.
-- Keep `.worktrees/` in `.gitignore`. If `.claude/adjudant` is not tracked, copy it into the new worktree.
+- Keep `.worktrees/` in `.gitignore`. A worktree finds the main checkout's `.claude/adjudant` on its own; adjudant links it in at session start.
 - A `task` or `bug` bean with no in-progress feature parent commits on `main`.
 - A `task` or `bug` bean under an in-progress feature commits on that feature's branch, in its worktree.
 - To merge: push the branch, run `gh pr create`, and merge on GitHub. Then run `git worktree remove .worktrees/<bean-id>`, `git branch -d feature/<bean-id>`, and `git pull --ff-only` on `main`.

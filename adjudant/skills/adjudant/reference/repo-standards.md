@@ -44,8 +44,11 @@ report is the guard.
    `git switch`ed. Keep `.worktrees/` in `.gitignore`; the rule must land on
    `main` before the first worktree exists.
 4. The breadcrumb `.claude/adjudant` is usually git-ignored, so a fresh
-   worktree has none and adjudant is silent there. Copy it in:
-   `cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant`.
+   worktree has none of its own. It does not need one: the worktree's `.git`
+   file names the main checkout, the statusline reads the breadcrumb from
+   there, and the session-start hook links it in
+   (`.worktrees/<bean-id>/.claude/adjudant -> <main>/.claude/adjudant`) so
+   every other reader finds it where it expects. Nothing to copy.
 5. A `task` or `bug` bean with no in-progress feature parent commits on
    `main`. One under an in-progress feature commits on that feature's branch,
    in its worktree. Neither owns a branch of its own.

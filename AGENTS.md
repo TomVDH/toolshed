@@ -85,7 +85,7 @@ python3 adjudant/scripts/validate.py
 python3 -m unittest discover -s adjudant/scripts -p 'test_*.py'
 ```
 
-Current gate: 28 validators, 1669 tests. Both must pass before a commit.
+Current gate: 28 validators, 1674 tests. Both must pass before a commit.
 
 ## The board template is offline-locked
 
@@ -150,7 +150,7 @@ The bean type decides where the code goes. Adjudant states this every session, p
 
 - A `feature` bean gets its own branch, `feature/<bean-id>`, always checked out in a worktree: `git worktree add .worktrees/<bean-id> -b feature/<bean-id>`. The main checkout stays on `main` and is never `git switch`ed.
 - An `epic` is a container and gets no branch. A `task` or `bug` commits on `main`, or on its parent feature's branch when that feature is in progress.
-- `.claude/adjudant` is git-ignored, so copy it into a new worktree: `cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant`. Without it adjudant is silent there.
+- `.claude/adjudant` is git-ignored, so a new worktree has none of its own. It needs none: the worktree's `.git` file names the main checkout, the statusline reads the breadcrumb from there, and the session-start hook symlinks it in for every other reader.
 - Version bumps happen on the feature branch (`bump_plugin_version.py`) and reach `main` with the PR, so `main` only carries released versions.
 - Merge-back: `git push -u origin feature/<bean-id>`, `gh pr create`, merge on GitHub, then `git worktree remove .worktrees/<bean-id>`, `git branch -d feature/<bean-id>`, `git pull --ff-only`.
 

@@ -193,6 +193,10 @@ IFS=$'\037' read -r cwd proj_dir sid model_raw effort_raw used_pct rl5_raw <<<"$
     ((.rate_limits.five_hour.used_percentage // "") | tostring)
   ] | join("")' 2>/dev/null)"
 
+# Where the breadcrumb is read from. The project root, except in a linked
+# worktree (S1 below moves it to the main checkout, see there).
+crumb_dir="$proj_dir"
+
 NOW=$(date +%s)
 
 # ── S0: grind clock + break blurt ────────────────────────────────────────────
@@ -469,6 +473,16 @@ else
     _d="${_d%/*}"
   done
   [ -n "$wt" ] && s1_col+="${WT}${wt}${R} "
+  # The breadcrumb is git-ignored, so a linked worktree never carries one and
+  # every vault signal below went dark there. The pointer just read names the
+  # main checkout: strip "/.git/worktrees/<name>" and read ITS breadcrumb. The
+  # session-start hook symlinks one in for adjudant's other readers; this is
+  # the bar being right on the first repaint regardless, and in a worktree
+  # made by hand. Still no fork.
+  if [ -n "$wt" ] && [ ! -e "${proj_dir}/.claude/adjudant" ]; then
+    _main="${_p%/.git/worktrees/*}"
+    [ -f "${_main}/.claude/adjudant" ] && crumb_dir="$_main"
+  fi
 
   # -- Identity. v1 printed the hash on every repaint; v2 prints it only when it
   #    is news. On an ordinary branch the branch name already identifies you and
@@ -594,9 +608,9 @@ beans_label=""; beans_pip=""; beans_extra=""; beans_slotted=""
 #   no breadcrumb   -> nothing else claims the slot, so beans shows standalone
 #   linked, no key  -> the deck wins; run /adjudant connect to hand it to beans
 beans_tracker=""
-if [ -f "${proj_dir}/.claude/adjudant" ]; then
+if [ -f "${crumb_dir}/.claude/adjudant" ]; then
   beans_tracker=$(awk '/^tracker:/ {sub(/^tracker:[[:space:]]*/,""); sub(/[[:space:]]+$/,""); print; exit}' \
-                    "${proj_dir}/.claude/adjudant" 2>/dev/null)
+                    "${crumb_dir}/.claude/adjudant" 2>/dev/null)
   [ -z "$beans_tracker" ] && beans_tracker="vault"
 fi
 # ── Beans counts, read BEFORE the work-items slot ────────────────────────────
@@ -880,7 +894,7 @@ for _m in "${TMPDIR:-/tmp}/adjudant-vault-write${sid:+-$sid}" "${TMPDIR:-/tmp}/a
   fi
 done
 
-breadcrumb="${proj_dir}/.claude/adjudant"
+breadcrumb="${crumb_dir}/.claude/adjudant"
 if [ -f "$breadcrumb" ]; then
   slug=$(awk -F': ' '/^slug:/ {gsub(/[[:space:]]+$/, "", $2); print $2; exit}' "$breadcrumb")
   # vault_path may contain spaces; join all fields after the key

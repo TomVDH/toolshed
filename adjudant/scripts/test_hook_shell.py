@@ -226,6 +226,49 @@ class TestSessionStartHook(unittest.TestCase):
             out = _run("session-start.sh", project, home).stdout
             self.assertIn("- Git:", out)
 
+    def test_a_linked_worktree_is_linked_to_the_main_checkouts_breadcrumb(self):
+        # .claude/adjudant is git-ignored, so a worktree never carries one and
+        # adjudant went quiet there. The worktree's .git file names the main
+        # checkout; the hook symlinks the breadcrumb in, and the same run then
+        # reads it and speaks. A link, so a later `connect` on main flows through.
+        with tempfile.TemporaryDirectory() as tmp:
+            main, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            (main / ".git" / "worktrees" / "x").mkdir(parents=True)
+            wt = Path(tmp) / "code" / ".worktrees" / "x"
+            wt.mkdir(parents=True)
+            (wt / ".git").write_text(f"gitdir: {main}/.git/worktrees/x\n")
+            out = _run("session-start.sh", wt, home).stdout
+            link = wt / ".claude" / "adjudant"
+            self.assertTrue(link.is_symlink(), "the breadcrumb was not linked in")
+            self.assertEqual(link.resolve(), (main / ".claude" / "adjudant").resolve())
+            self.assertIn("- Vault:", out)
+            self.assertIn("- Git:", out)
+
+    def test_a_worktree_with_its_own_breadcrumb_is_left_alone(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            main, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            wt = Path(tmp) / "code" / ".worktrees" / "x"
+            (wt / ".claude").mkdir(parents=True)
+            (wt / ".claude" / "adjudant").write_text("vault_path: {vault}\nslug: own\ntracker: beans\n".format(vault=home / "vault"))
+            (wt / ".git").write_text(f"gitdir: {main}/.git/worktrees/x\n")
+            _run("session-start.sh", wt, home)
+            self.assertFalse((wt / ".claude" / "adjudant").is_symlink())
+            self.assertIn("slug: own", (wt / ".claude" / "adjudant").read_text())
+
+    def test_a_submodule_pointer_is_not_a_worktree(self):
+        # A submodule also uses a .git file, with the pointer under /modules/.
+        # It is not a worktree of anything and gets no breadcrumb from anywhere.
+        with tempfile.TemporaryDirectory() as tmp:
+            main, home = self._project(
+                Path(tmp), "vault_path: {vault}\nslug: demo\ntracker: beans\n")
+            sub = Path(tmp) / "code" / "lib"
+            sub.mkdir(parents=True)
+            (sub / ".git").write_text(f"gitdir: {main}/.git/modules/lib\n")
+            _run("session-start.sh", sub, home)
+            self.assertFalse((sub / ".claude" / "adjudant").exists())
+
     def test_git_banner_silent_without_a_git_dir(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, home = self._project(

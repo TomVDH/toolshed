@@ -186,12 +186,13 @@ bean, and a dirty `main` while a feature is in progress. The two "outlived"
 findings land under **going stale**, the rest under **worth a look**.
 
 One thing to know before your first worktree: `.claude/adjudant` is usually
-git-ignored, so a fresh worktree has no breadcrumb and adjudant stays silent
-in it. Copy the file in and the banner returns:
-
-```
-cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant
-```
+git-ignored, so a fresh worktree has no breadcrumb of its own. It does not
+need one. A linked worktree's `.git` is a file naming the main checkout, and
+that is enough: the statusline reads the main checkout's breadcrumb from the
+first repaint, and the session-start hook links it in
+(`.claude/adjudant -> <main>/.claude/adjudant`) so the banner, the hooks and
+`status` all find it. A link rather than a copy, so a later `connect` on main
+flows through.
 
 ## 11. The statusline
 

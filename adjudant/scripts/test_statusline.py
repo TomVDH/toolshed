@@ -222,13 +222,35 @@ class TestDriftGlyph(_Repo):
         self._breadcrumb(tracker="vault")
         self.assertFalse(self._drift(self._bar()))
 
-    def test_worktree_without_its_breadcrumb_is_silent(self):
-        # The documented gotcha: no breadcrumb in the worktree, no gate, no
-        # glyph. This is why repo-standards.md says to copy it in.
+    def test_worktree_without_its_own_breadcrumb_reads_the_main_checkouts(self):
+        # .claude/adjudant is git-ignored, so a fresh worktree carries none and
+        # the bar used to go dark there: no gate, no glyph, no vault. The
+        # worktree's .git file names the main checkout, and the bar reads the
+        # breadcrumb from there. A completed bean's worktree is drift, and the
+        # glyph now shows without anyone copying anything in.
         self._breadcrumb()
         self._beans(("demo-ab12", "feature", "completed"))
         wt = self._worktree("demo-ab12")
         (wt / ".claude" / "adjudant").unlink()
+        out = self._bar(cwd=wt)
+        self.assertIn("⑂", out)
+        self.assertTrue(self._drift(out))
+
+    def test_worktree_whose_main_has_no_breadcrumb_stays_silent(self):
+        # Nothing to fall back to: no breadcrumb anywhere, no gate, no glyph.
+        self._beans(("demo-ab12", "feature", "completed"))
+        wt = self._worktree("demo-ab12")
+        self.assertFalse((wt / ".claude" / "adjudant").exists())
+        self.assertFalse(self._drift(self._bar(cwd=wt)))
+
+    def test_worktrees_own_breadcrumb_wins_over_the_main_checkouts(self):
+        # A worktree that carries its own (a symlink from session-start, or a
+        # copy) is read as-is; the fallback is for the absent case only.
+        self._breadcrumb()
+        self._beans(("demo-ab12", "feature", "completed"))
+        wt = self._worktree("demo-ab12")
+        (wt / ".claude" / "adjudant").write_text(
+            f"vault_path: {self.home}/nope\nslug: demo\ntracker: vault\n")
         self.assertFalse(self._drift(self._bar(cwd=wt)))
 
     def test_no_nag_without_a_beans_project(self):
