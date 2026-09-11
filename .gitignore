@@ -44,3 +44,6 @@ __pycache__/
 
 # impeccable live-mode working state (session-local)
 .impeccable/
+
+# Git worktrees for feature beans (feature/<bean-id>), see AGENTS.md "Git practice"
+.worktrees/
