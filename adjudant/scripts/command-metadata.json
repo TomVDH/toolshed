@@ -1,6 +1,6 @@
 {
   "name": "adjudant",
-  "version": "4.1.29",
+  "version": "4.1.30",
   "verbs": [
     {
       "name": "connect",
