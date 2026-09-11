@@ -67,8 +67,12 @@ class Result:
         self.failures: list[str] = []
         self.passes: list[str] = []
 
-    def add_pass(self, name: str) -> None:
-        self.passes.append(name)
+    def add_pass(self, name: str, detail: str = "") -> None:
+        # A pass may carry a reason it is only a partial pass ("beans not
+        # installed; vocabulary unchecked"). Three call sites already did,
+        # and on a machine without beans the validator crashed on the first
+        # one, so CI was red on every push and local runs never noticed.
+        self.passes.append(f"{name} ({detail})" if detail else name)
 
     def add_fail(self, name: str, detail: str) -> None:
         self.failures.append(f"{name}: {detail}")
