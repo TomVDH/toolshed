@@ -1852,15 +1852,19 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn(".rails.rail-lbl{display:none}", flat)
         self.assertIn(".head-ops{display:flex;align-items:center;gap:var(--s4)", flat)
 
-    def test_the_histogram_never_sets_the_mastheads_height(self):
-        # It is ambient. It reserved a second line for a hover readout that is
-        # usually absent, which made it 82px and the tallest thing up there.
-        # The readout swaps into its own label line instead.
+    def test_the_activity_card_changes_nothing_that_has_a_width_on_hover(self):
+        # The old chart swapped a date readout into its label on hover, and a
+        # label that changes width moves the whole masthead every time the
+        # pointer crosses a cell. The date now lives in the tooltip and the
+        # accessible name, and nothing in the card is written to on hover.
         self.assertNotIn("spark-foot", self.src)
-        fn = _js_function(self.src, "paintSpark")
-        self.assertIn('el("span","lbl"', fn.replace(", ", ","))
-        self.assertIn("lbl.textContent=note", fn)
-        self.assertIn("lbl.textContent=restLabel", fn)
+        self.assertNotIn(".lbl.live", self.src)
+        panel = _js_function(self.src, "sparkPanel")
+        self.assertNotIn("lbl.textContent", panel)
+        self.assertNotIn("mouseenter", panel)
+        self.assertIn("c.title=note", panel)
+        self.assertIn('c.setAttribute("aria-label",note)', panel)
+        self.assertNotIn("textContent=", _js_function(self.src, "paintSpark"))
 
     def test_the_filter_rails_scroll_sideways_on_a_phone(self):
         # MEASURED on a 375px screen before this rule: the tag rail wrapped to
@@ -1902,32 +1906,45 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("TERM_KEY", self.src)
         self.assertIn("localStorage", _js_function(self.src, "readHideTerminal"))
 
-    def test_the_histogram_picks_its_bin_instead_of_assuming_one(self):
-        # A 24-day span is 24 daily columns in a corner 248px wide. The span
-        # chooses the unit so the bar count stays readable at any deck age.
-        fn = _js_function(self.src, "sparkBins")
-        self.assertIn("span<=20", fn.replace(" ", ""))
-        self.assertIn("DAY*7", fn)
-        self.assertIn("DAY*28", fn)
+    def test_the_activity_card_is_a_time_sheet_not_a_histogram(self):
+        # Bars binned by a unit that changed with the deck's age answered "how
+        # much" and never "when do we work on this". A calendar does: seven
+        # day-rows, a column per week, whole weeks from a Monday, padded only to
+        # the Sunday that closes the current week. Chosen from three readings
+        # under live.
+        self.assertNotIn("function sparkBins", self.src)
+        self.assertIn("const SPARK_WEEKS=", self.src)
+        rng = _js_function(self.src, "sparkRange").replace(" ", "")
+        self.assertIn("+6)%7", rng)                       # Monday first
+        self.assertIn("last:end+(6-dow)*DAY", rng)        # pad to Sunday, no further
+        self.assertIn("grid-template-rows:repeat(7,5px)", self.src.replace(" ", ""))
+        panel = _js_function(self.src, "sparkPanel")
+        self.assertIn("t<=range.last", panel.replace(" ", ""))
 
-    def test_the_histogram_marks_a_bulk_write_rather_than_hiding_it(self):
+    def test_the_activity_card_marks_a_bulk_write_rather_than_hiding_it(self):
         # Measured on a real deck: 83 of 92 cards shared one updatedAt day,
         # which was an import plus a churn bug, not a day somebody moved 83
-        # cards. Drawn as activity it would be a lie.
-        fn = _js_function(self.src, "sparkBins").replace(" ", "")
-        self.assertIn("b.bulk", fn)
-        self.assertIn("ts.length/2", fn)
-        self.assertIn("bulk", _js_function(self.src, "paintSpark"))
+        # cards. Drawn as activity it would be a lie, so the cell goes grey
+        # and the tooltip says so.
+        fn = _js_function(self.src, "sparkDays").replace(" ", "")
+        self.assertIn("n>total/2&&total>8", fn)
+        panel = _js_function(self.src, "sparkPanel")
+        self.assertIn('classList.add("bulk")', panel)
+        self.assertIn('" (bulk write)"', panel)
+        self.assertIn(".spark .punch i.bulk{background:var(--text-faint)}", self.src.replace("  ", ""))
 
-    def test_the_histogram_names_the_field_it_plots(self):
+    def test_the_activity_card_shows_both_fields_at_once(self):
         # createdAt is when work was filed, updatedAt is when the file changed.
-        # Only one of them is activity, so the chart says which it is showing.
-        fn = _js_function(self.src, "paintSpark")
-        self.assertIn('"updatedAt","Touched"', fn.replace(", ", ","))
-        self.assertIn('"createdAt","Filed"', fn.replace(", ", ","))
-        self.assertIn("sparkField", fn)
-        # inline SVG, because the page is offline-locked and a library is a fetch
-        self.assertIn("createElementNS(SVGNS", fn)
+        # Different questions, so each panel is captioned with its own, and
+        # both are on the page at once: no switch, no mode to remember.
+        fn = _js_function(self.src, "paintSpark").replace(" ", "")
+        self.assertIn('sparkPanel("Touched","updatedAt"', fn)
+        self.assertIn('sparkPanel("Filed","createdAt"', fn)
+        self.assertNotIn("sparkField", self.src)
+        self.assertNotIn("aria-pressed", fn)
+        # plain elements: no SVG, and still no fetch
+        self.assertNotIn("createElementNS", fn)
+        self.assertNotIn("createElementNS", _js_function(self.src, "sparkPanel"))
 
     def test_the_histogram_describes_the_board_in_front_of_you(self):
         # Filtered cards and hidden lanes both count, or the chart describes

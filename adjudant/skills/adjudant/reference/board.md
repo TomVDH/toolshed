@@ -197,10 +197,9 @@ the first card starts at 331px.
 The counts and the actions are one relationship, not two: what the board holds
 sits left, what you do to it sits right, on one line.
 
-The histogram is ambient and must never set the header's height. It reserved a
-second line for a hover readout that is usually absent, which made it the
-tallest thing in the masthead; the readout swaps into its own label line
-instead.
+The activity card is ambient. It sets the top band's height now, at 89px
+against the identity block's 55, and nothing in it changes size on hover: the
+date lives in the cell's tooltip, never swapped into the label.
 
 ### On a phone
 
@@ -212,8 +211,8 @@ scrolling. A rail is scanned along, not read down, so one scrolling line buys th
 board its screen back: the header is 261px, the first card starts at 333px, and
 fourteen cards are in view.
 
-The histogram is not drawn under 900px. There is no corner to spare, and a
-248px chart on a 375px screen is a decoration.
+The activity card is not drawn under 900px. There is no corner to spare, and
+two time sheets on a 375px screen are a decoration.
 
 ### Closed lanes
 
@@ -228,26 +227,34 @@ lanes and cards went. A deck of nothing but closed lanes shows them anyway,
 because hiding the whole board is not a view. The preference is per browser,
 beside the note view: it is how a person reads, not a fact about a deck.
 
-### The activity histogram
+### The activity card (4.1.19)
 
 Top right of the masthead, which is sticky, so it holds the viewport's corner
-without a floating overlay that could obstruct a lane. Inline SVG: the page is
-offline-locked and a chart library is a fetch.
+without a floating overlay that could obstruct a lane. Plain elements, no SVG,
+no library: the page is offline-locked and a chart library is a fetch.
+
+It is a time sheet, not a histogram. Bars binned by a unit that changed with
+the deck's age answered "how much" and never "when do we work on this". Two
+panels of the same six weeks, Touched and Filed: seven day-rows with Monday at
+the top, a column per week, a cell per day tinted by count in four steps of
+the accent. Today is ringed in ink. Whole weeks only, padded to the Sunday
+that closes this one. Chosen from three readings under impeccable live.
 
 Three things it refuses to do.
 
-It does not assume a bin. A 24-day span is 24 daily columns in a corner 248px
-wide, so the span picks the unit: days under three weeks, then weeks, then
-months, aiming at a readable bar count whatever the deck's age.
-
 It does not call a bulk write activity. Measured on a real deck, 83 of 92 cards
 shared one `updatedAt` day, which was an import plus the churn bug fixed in
-4.1.1. A bin holding more than half the cards is drawn as bulk and named as
-such.
+4.1.1. A day holding more than half the cards goes grey and its tooltip says
+bulk write.
 
-It does not leave the field ambiguous. `createdAt` is when work was filed,
-`updatedAt` is when the file last changed. Only one of those is activity, so the
-chart names the one it is showing and offers the other.
+It does not make you choose a field. `createdAt` is when work was filed,
+`updatedAt` is when the file last changed. Different questions, so both are on
+the page at once, each panel captioned with its own. The switch is gone.
+
+It does not change size on hover. The old chart swapped a date readout into
+its label, and a label that changes width moves the whole masthead every time
+the pointer crosses a cell. The date and count live in the cell's tooltip and
+accessible name; a lit cell is a focusable list item.
 
 It describes the board in front of you: filters and hidden lanes both count, or
 it would be reporting cards the reader cannot see.

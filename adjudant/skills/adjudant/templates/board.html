@@ -387,32 +387,37 @@
   .metabtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .metabtn[hidden]{display:none}
 
-  /* ── The activity histogram ──────────────────────────────────────────────
-     Every card already carries createdAt and updatedAt, and until now the
-     board threw the shape of them away. Drawn as inline SVG because the page
-     is offline-locked and a chart library is a fetch. */
-  /* Ambient, and it must READ as ambient: it takes the corner opposite the
-     mark and none of the header's height. Its hover readout replaces the label
-     on its own line rather than reserving a second one, which is what made it
-     82px tall and the tallest thing in the masthead. */
+  /* ── The activity card ──────────────────────────────────────────────────
+     Every card carries createdAt and updatedAt. Two time sheets of the same
+     six weeks, Touched and Filed, take the corner opposite the mark: seven
+     day-rows, a column per week, a cell per day tinted by count. Plain
+     elements, no SVG and no library, and nothing here changes size on hover:
+     the date lives in the tooltip, because a readout that swapped into the
+     label moved the whole masthead every time the pointer crossed a bar. */
   .spark{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:auto}
   .spark[hidden]{display:none}
-  .spark-head{
-    display:flex;align-items:baseline;gap:var(--s2);
-    font-size:var(--fs-micro);color:var(--text-faint)
-  }
-  .spark-head .rail{padding:2px}
-  .spark-head .rail button{padding:2px 7px}
-  .spark svg{display:block;overflow:visible}
-  .spark rect.bar{fill:var(--accent);opacity:.80}
-  .spark rect.bar.bulk{fill:var(--text-faint);opacity:.55}
-  .spark rect.hit{fill:transparent;cursor:default}
-  .spark g.col:hover rect.bar,.spark g.col:focus-visible rect.bar{opacity:1}
-  .spark g.col:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .spark .axis{stroke:var(--border);stroke-width:1}
-  /* one line, swapped in place: no reserved row for a value that is usually absent */
+  .spark-head{display:flex;align-items:baseline;gap:var(--s2);font-size:var(--fs-micro);color:var(--text-faint)}
   .spark-head .lbl{font-variant-numeric:tabular-nums;white-space:nowrap}
-  .spark-head .lbl.live{color:var(--text-dim)}
+  /* Two time sheets side by side. Seven rows are the days of the week, Monday
+     at the top; a column is a week; a cell is a day, tinted by count in four
+     steps of the accent. A bulk write goes grey, today is ringed in ink. */
+  .spark .panels{display:flex;gap:var(--s3)}
+  .spark .panel{display:flex;flex-direction:column;gap:2px}
+  .spark .cap{font-size:9px;font-family:var(--mono);color:var(--text-faint);letter-spacing:.04em;text-transform:uppercase}
+  .spark .punch{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,5px);grid-auto-columns:5px;gap:1px}
+  .spark .punch i{display:block;background:var(--surface-2);position:relative;outline:none}
+  .spark .punch i[data-l="1"]{background:color-mix(in oklch,var(--accent) 35%,var(--surface-2))}
+  .spark .punch i[data-l="2"]{background:color-mix(in oklch,var(--accent) 60%,var(--surface-2))}
+  .spark .punch i[data-l="3"]{background:color-mix(in oklch,var(--accent) 82%,var(--surface-2))}
+  .spark .punch i[data-l="4"]{background:var(--accent)}
+  .spark .punch i.bulk{background:var(--text-faint)}
+  .spark .punch i.pad{visibility:hidden}
+  .spark .punch i.today::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--text)}
+  /* the date lives in the tooltip, so hover changes nothing that has a width */
+  .spark .punch i[data-l]:hover{box-shadow:inset 0 0 0 1px var(--text)}
+  .spark .punch i:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .spark .months{display:flex;font-family:var(--mono);font-size:9px;line-height:10px;color:var(--text-faint);letter-spacing:.02em}
+  .spark .months b{font-weight:400;flex:0 0 auto;width:6px;overflow:visible;white-space:nowrap}
   @media (max-width:900px){ .spark{display:none} }
 
   .meta{
@@ -846,6 +851,7 @@
 </head>
 <body>
 <header class="masthead">
+
   <div class="head-row">
     <div class="ident">
       <div class="brand">
@@ -865,6 +871,7 @@
     </div>
     <div class="spark" id="spark" hidden></div>
   </div>
+
   <div class="head-ops">
     <div class="meta">
       <span><b id="cardCount">—</b> cards</span>
@@ -1060,10 +1067,6 @@ let filterText="", filterCat=null, filterTag=null;
    the note view rather than in board-data.json. */
 const TERM_KEY="adjudant-board:terminal";
 let hideTerminal=false;
-/* Which timestamp the histogram plots. createdAt is when work was FILED,
-   updatedAt is when the file last CHANGED. Different questions, and only one
-   of them is activity, so the chart names the one it is showing. */
-let sparkField="updatedAt";
 /* The deck's ordinary tags, recomputed each render. Suppressed on the face for
    the reason the category chip was deleted: board.py defaults `category` to
    `task`, so a vault board painted an identical `task` chip on every card it
@@ -1849,117 +1852,97 @@ function writeHideTerminal(v){
   catch(e){ console.warn("board: lane preference unsaved",e); }
 }
 
-/* ── The activity histogram ───────────────────────────────────────────────
-   Bins are chosen, never assumed. A 24-day span is 24 daily columns in a
-   corner 260px wide, and a deck imported in one afternoon is one tall bar read
-   as a working day. So the span picks the unit, and a bin where most of the
-   deck shares a timestamp is drawn as bulk rather than as activity. */
+/* ── The activity card ───────────────────────────────────────────────────
+   A time sheet, not a histogram. Two panels of the same six weeks, TOUCHED
+   and FILED, seven day-rows and a column per week, a cell per day tinted by
+   how many cards. Bars binned by a unit that changed with the deck's age
+   answered "how much" and never "when do we work on this"; a calendar does.
+   Both fields at once, so there is no switch and no mode to remember.
+   Chosen from three readings under live.
+
+   createdAt is when work was FILED, updatedAt is when the file last CHANGED.
+   Different questions, so each panel is captioned with the one it plots. */
 const DAY=86400000;
-function sparkBins(cards,field){
-  const ts=[];
+const SPARK_WEEKS=6;
+function sparkDays(cards,field){
+  const days=new Map(); let total=0, max=0;
   cards.forEach(c=>{
     const v=c&&c[field];
     if(!v) return;
     const t=Date.parse(v);
-    if(!isNaN(t)) ts.push(t);
+    if(isNaN(t)) return;
+    const d=new Date(t).toISOString().slice(0,10);
+    const n=(days.get(d)||0)+1;
+    days.set(d,n); total++; if(n>max) max=n;
   });
-  if(ts.length<2) return null;
-  ts.sort((a,b)=>a-b);
-  const lo=ts[0], hi=ts[ts.length-1];
-  const span=(hi-lo)/DAY;
-  /* aim for a readable 6 to 20 bars whatever the deck's age */
-  const unit = span<=20 ? DAY : span<=140 ? DAY*7 : DAY*28;
-  const label = unit===DAY ? "day" : unit===DAY*7 ? "week" : "month";
-  const floor=t=>Math.floor(t/unit)*unit;
-  const start=floor(lo), end=floor(hi);
-  const bins=[];
-  for(let t=start;t<=end;t+=unit) bins.push({t:t, n:0});
-  const at=t=>Math.round((floor(t)-start)/unit);
-  ts.forEach(t=>{ const i=at(t); if(bins[i]) bins[i].n++; });
-  /* A bin holding more than half the deck is an import or a sweep. Say so
-     rather than letting it read as a day somebody moved sixty cards. */
-  bins.forEach(b=>{ b.bulk = b.n > ts.length/2 && ts.length>8; });
-  return {bins:bins, unit:unit, label:label, total:ts.length};
+  /* A day holding more than half the deck is an import or a sweep. Say so
+     rather than letting it read as a day somebody touched eighty cards. */
+  const bulk=d=>{ const n=days.get(d)||0; return n>total/2 && total>8; };
+  return {days:days, total:total, max:max, bulk:bulk};
 }
-function sparkDateText(t,unit){
-  const d=new Date(t);
-  const iso=d.toISOString().slice(0,10);
-  if(unit===DAY) return iso;
-  const e=new Date(t+unit-DAY);
-  return iso+" to "+e.toISOString().slice(0,10);
+/* The window ends today and starts on the Monday SPARK_WEEKS-1 weeks back,
+   so a column is always a whole week and the last column is this one. */
+function sparkRange(weeks){
+  const today=new Date(); today.setUTCHours(0,0,0,0);
+  const end=today.getTime();
+  const dow=(new Date(end).getUTCDay()+6)%7;
+  /* `last` is the Sunday closing this week: the grid pads to it, no further */
+  return {start:end-dow*DAY-(weeks-1)*7*DAY, end:end, today:end, last:end+(6-dow)*DAY};
+}
+function sparkPanel(label,field,cards,range){
+  const A=sparkDays(cards,field);
+  const pan=el("div","panel");
+  pan.appendChild(el("span","cap",label));
+  const g=el("div","punch");
+  g.setAttribute("role","list");
+  g.setAttribute("aria-label",A.total+" cards "+label.toLowerCase()+" over "+SPARK_WEEKS+" weeks, busiest day "+A.max);
+  const months=el("div","months"); let lastM="";
+  for(let t=range.start; t<=range.last; t+=DAY){
+    const d=new Date(t).toISOString().slice(0,10), n=A.days.get(d)||0;
+    const c=el("i");
+    if(t>range.end){
+      /* the rest of this week, so the column stays a column */
+      c.className="pad"; c.setAttribute("aria-hidden","true");
+    } else {
+      if(n){
+        c.dataset.l=String(Math.max(1,Math.ceil(n/A.max*4)));
+        if(A.bulk(d)) c.classList.add("bulk");
+        /* Said in the tooltip and to a screen reader, never swapped into the
+           label: a readout that changed width on hover moved the whole
+           masthead every time the pointer crossed a cell. */
+        const note=d+": "+n+(n===1?" card":" cards")+(A.bulk(d)?" (bulk write)":"");
+        c.setAttribute("role","listitem"); c.tabIndex=0;
+        c.title=note; c.setAttribute("aria-label",note);
+      } else c.setAttribute("aria-hidden","true");
+      if(t===range.today) c.classList.add("today");
+    }
+    g.appendChild(c);
+    if(((t-range.start)/DAY)%7===0){
+      const m=new Date(t).toLocaleString("en",{month:"short",timeZone:"UTC"});
+      months.appendChild(el("b",null,m===lastM?"":m)); lastM=m;
+    }
+  }
+  pan.appendChild(g); pan.appendChild(months);
+  return pan;
 }
 
 /* Drawn from the CARDS THE BOARD IS SHOWING, so it answers the filter rather
-   than ignoring it. Filter to one tag and the chart is that tag's history. */
+   than ignoring it. Filter to one tag and the card is that tag's time sheet. */
 function paintSpark(shownCards){
   const box=document.getElementById("spark");
   if(!box) return;
-  const data=sparkBins(shownCards,sparkField);
   box.innerHTML="";
-  if(!data){ box.hidden=true; return; }
+  const stamped=shownCards.filter(c=>c&&(c.updatedAt||c.createdAt)).length;
+  if(stamped<2){ box.hidden=true; return; }
   box.hidden=false;
-
   const head=el("div","spark-head");
-  const lbl=el("span","lbl","Activity by "+data.label);
-  head.appendChild(lbl);
-  const rail=el("div","rail"); rail.setAttribute("role","group");
-  rail.setAttribute("aria-label","Which timestamp the histogram plots");
-  [["updatedAt","Touched"],["createdAt","Filed"]].forEach(([f,lbl])=>{
-    const b=el("button",null,lbl); b.type="button";
-    b.setAttribute("aria-pressed",sparkField===f?"true":"false");
-    b.addEventListener("click",()=>{ sparkField=f; render(); });
-    rail.appendChild(b);
-  });
-  head.appendChild(rail);
+  head.appendChild(el("span","lbl",shownCards.length+" cards, "+SPARK_WEEKS+" weeks"));
   box.appendChild(head);
-
-  const W=248,H=34,gap=1;
-  const bins=data.bins, max=Math.max.apply(null,bins.map(b=>b.n))||1;
-  const bw=Math.max(2,(W-gap*(bins.length-1))/bins.length);
-  const svg=document.createElementNS(SVGNS,"svg");
-  svg.setAttribute("viewBox","0 0 "+W+" "+(H+1));
-  svg.setAttribute("width",String(W)); svg.setAttribute("height",String(H+1));
-  svg.setAttribute("role","img");
-  const bulkN=bins.filter(b=>b.bulk).length;
-  svg.setAttribute("aria-label",
-    data.total+" cards over "+bins.length+" "+data.label+"s, "
-    +sparkDateText(bins[0].t,data.unit).slice(0,10)+" to "
-    +sparkDateText(bins[bins.length-1].t,data.unit).slice(-10)
-    +", busiest "+max
-    +(bulkN?", "+bulkN+" bulk-write "+data.label+(bulkN>1?"s":""):""));
-
-  const restLabel="Activity by "+data.label;
-  bins.forEach((b,i)=>{
-    const h=b.n?Math.max(2,Math.round(b.n/max*H)):0;
-    const x=i*(bw+gap);
-    const g=document.createElementNS(SVGNS,"g");
-    g.setAttribute("class","col"); g.setAttribute("tabindex","0");
-    const note=sparkDateText(b.t,data.unit)+": "+b.n+(b.bulk?" (bulk write)":"");
-    /* a full-height transparent target, so a one-card bin is still hoverable */
-    const hit=document.createElementNS(SVGNS,"rect");
-    hit.setAttribute("class","hit");
-    hit.setAttribute("x",String(x)); hit.setAttribute("y","0");
-    hit.setAttribute("width",String(bw)); hit.setAttribute("height",String(H));
-    g.appendChild(hit);
-    if(h){
-      const r=document.createElementNS(SVGNS,"rect");
-      r.setAttribute("class","bar"+(b.bulk?" bulk":""));
-      r.setAttribute("x",String(x)); r.setAttribute("y",String(H-h));
-      r.setAttribute("width",String(bw)); r.setAttribute("height",String(h));
-      g.appendChild(r);
-    }
-    const show=()=>{ lbl.textContent=note; lbl.classList.add("live"); };
-    const clear=()=>{ lbl.textContent=restLabel; lbl.classList.remove("live"); };
-    g.addEventListener("mouseenter",show); g.addEventListener("focus",show);
-    g.addEventListener("mouseleave",clear); g.addEventListener("blur",clear);
-    svg.appendChild(g);
-  });
-  const axis=document.createElementNS(SVGNS,"line");
-  axis.setAttribute("class","axis");
-  axis.setAttribute("x1","0"); axis.setAttribute("y1",String(H+0.5));
-  axis.setAttribute("x2",String(W)); axis.setAttribute("y2",String(H+0.5));
-  svg.appendChild(axis);
-  box.appendChild(svg);
+  const panels=el("div","panels");
+  const range=sparkRange(SPARK_WEEKS);
+  panels.appendChild(sparkPanel("Touched","updatedAt",shownCards,range));
+  panels.appendChild(sparkPanel("Filed","createdAt",shownCards,range));
+  box.appendChild(panels);
 }
 
 function ticketNode(card,key){
