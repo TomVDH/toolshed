@@ -1716,6 +1716,19 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("clip-path:none", block.replace(" ", ""))
         self.assertIn(".brand-band{display:none}", block.replace(" ", ""))
 
+    def test_the_filter_rails_scroll_sideways_on_a_phone(self):
+        # MEASURED on a 375px screen before this rule: the tag rail wrapped to
+        # FOUR rows and the type rail to two, the header took 487px of an 812px
+        # phone, and the first card began at 559px. A filter rail is scanned
+        # along, not read down.
+        m = re.search(r"@media \(max-width: 640px\)\{(.*?)\n  \}", self.src, re.S)
+        self.assertIsNotNone(m, "the 640px block is missing")
+        block = m.group(1).replace(" ", "")
+        self.assertIn(".legend{flex-wrap:nowrap;overflow-x:auto", block)
+        self.assertIn(".legend.k{flex:0 0 auto}".replace(" ", ""), block)
+        # and the controls stay on one line rather than three
+        self.assertIn("input#q{flex:1 1 120px".replace(" ", ""), block)
+
     def test_a_closed_lane_is_found_by_its_stamp_not_its_id(self):
         # `completed` and `scrapped` declare stamps on a beans deck, `done` and
         # `icebox` inherit theirs from STAMP on a vault deck. One rule covers

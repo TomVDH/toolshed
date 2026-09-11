@@ -88,6 +88,19 @@ Three marks reach the face, and only when they carry something:
   tag is in the card's accessible name, because an `aria-label` replaces a
   button's contents rather than adding to them.
 
+### On a phone
+
+The filter rails scroll sideways rather than wrapping. Measured on a 375px
+screen before that rule: the tag rail wrapped to four rows and the type rail to
+two, the header took 487px of an 812px phone, and the first card began at 559px.
+Sixty percent of the screen was chrome and six cards were reachable without
+scrolling. A rail is scanned along, not read down, so one scrolling line buys the
+board its screen back: the header is 261px, the first card starts at 333px, and
+fourteen cards are in view.
+
+The histogram is not drawn under 900px. There is no corner to spare, and a
+248px chart on a 375px screen is a decoration.
+
 ### Closed lanes
 
 A lane is closed when it carries a stamp, which is deck data rather than two
