@@ -1669,22 +1669,28 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn('el("button","k"', body.replace(", ", ","))
         self.assertIn('setAttribute("aria-pressed"', body.replace(", ", ","))
 
-    def test_the_marks_ink_is_a_property_not_a_second_asset(self):
-        # The head is filled #26211a, which is this theme's own dark --bg, so on
-        # the dark scheme the head WAS the background and vanished. It was given
-        # a paper plaque, then a second raster. It is one custom property now,
-        # which needs no plaque, no second asset and no scheme listener, and is
-        # right before the first paint rather than after it.
+    def test_each_figure_is_two_drawings_and_the_scheme_picks_one(self):
+        # The dark scheme used to be the light drawing with its ink swapped by a
+        # custom property, which flattened an illustration into a silhouette.
+        # The refined artwork of 4.1.24 ships an inverse drawing per figure,
+        # the head as a pale line on the ground, so each figure carries a
+        # light and a dark drawing and paintMark picks by scheme. No plaque,
+        # no raster, no property: the paths are the page's own.
         self.assertNotIn(".brand-mark{background:", self.src.replace(" ", ""))
         self.assertNotIn("imgDark", self.src)
-        self.assertNotIn("addEventListener(\"change\"", self.src)
-        # anchored on the array opening, so the prose above paintMark that
-        # names the property does not count as a third figure
-        self.assertEqual(2, self.src.count('[["var(--mark-ink,#26211a)"'),
-                         "each figure's head fill must be the property")
-        # and the dark scheme has to actually set it
-        dark = self.src[self.src.index("prefers-color-scheme: dark"):]
-        self.assertIn("--mark-ink:", dark[:dark.index("}\n  }")])
+        self.assertNotIn("var(--mark-ink", self.src)
+        self.assertNotIn("--mark-ink:", self.src)
+        for who in ("him", "her"):
+            self.assertRegex(self.src, who + r":\{label:\"[^\"]+\",w:[\d.]+,d:\"[^\"]+\",\s*light:\{vh:[\d.]+,fig:\[", f"{who} has no light drawing")
+            self.assertRegex(self.src, who + r":\{[^\n]*\n\s*light:\{[^\n]*\n\s*dark:\{vh:[\d.]+,fig:\[", f"{who} has no dark drawing")
+        fn = _js_function(self.src, "paintMark").replace(" ", "")
+        self.assertIn("constart=DARK_SCHEME.matches?m.dark:m.light;", fn)
+        # the figure is held, so a scheme flip repaints the same face
+        self.assertIn("if(!markFigure)markFigure=pickMark();", fn)
+        self.assertIn('DARK_SCHEME.addEventListener("change",paintMark)', self.src)
+        # the inverse drawings carry no invisible silhouette and no crown flecks
+        self.assertNotIn('["none",', self.src)
+        self.assertNotIn('["#cd072e",', self.src)
 
     def test_the_wipe_is_one_timeline_so_it_is_actually_a_reveal(self):
         # A wipe is one constraint: the width of wordmark showing must EQUAL the
@@ -2010,7 +2016,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         fn = _js_function(self.src, "paintFavicon")
         self.assertIn("data:image/svg+xml,", fn)
         self.assertIn("encodeURIComponent", fn)
-        self.assertIn("paintFavicon(m.band)", _js_function(self.src, "paintMark"))
+        self.assertIn("paintFavicon(MARK.band)", _js_function(self.src, "paintMark"))
         # a data URI fetches nothing, which is what validator 24 actually guards
         self.assertNotIn("url(http", self.src)
 
@@ -2106,27 +2112,20 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertNotIn("url(//", self.src)
         self.assertNotIn("url(http", self.src)
 
-    def test_skin_shades_with_the_face_and_only_the_eye_does_not(self):
-        # 4.1.5 through 4.1.8 ran both details off one token, which painted the
-        # EARS as eyes: a grey ear on a cream cheek, reading as another material.
-        # Isolating each path and reading its bounding box off the alpha channel
-        # says what they are -- his #24292c and her #262b2e are ears, her
-        # #272b2e is the eye, and he has no eye path at all.
-        self.assertEqual(2, self.src.count("var(--mark-shade,"),
-                         "both ears shade with the face")
-        self.assertEqual(1, self.src.count("var(--mark-eye,"),
-                         "only her eye is an eye; his is negative space")
-        self.assertIn("var(--mark-shade,#24292c)", self.src)   # his ear
-        self.assertIn("var(--mark-shade,#262b2e)", self.src)   # her ear
-        self.assertIn("var(--mark-eye,#272b2e)", self.src)     # her eye
-        dark = self.src[self.src.index("prefers-color-scheme: dark"):]
-        block = dark[:dark.index("}\n  }")].replace(" ", "")
-        # On dark the face is one cream: head, both ears and her eye island.
-        # The tokens stay separate because LIGHT keeps the artwork's own three
-        # cool near-blacks, which are not ours to flatten.
-        self.assertIn("--mark-ink:#e2ddd7", block)
-        self.assertIn("--mark-shade:#e2ddd7", block)
-        self.assertIn("--mark-eye:#e2ddd7", block)
+    def test_the_dark_drawing_is_the_artists_inverse_not_a_recolour(self):
+        # 4.1.5 through 4.1.11 recoloured the light drawing's ink by token and
+        # spent six patches deciding which cool near-black was an ear and which
+        # an eye. The inverse drawings settle it: the dark head is drawn in one
+        # pale line (#d2d7d8, the artwork's own) over the ground, and the light
+        # drawing keeps its inks untouched. No mark token remains.
+        self.assertNotIn("--mark-shade", self.src)
+        self.assertNotIn("--mark-eye", self.src)
+        light_ink = self.src.count('["#26211a",')
+        self.assertGreaterEqual(light_ink, 2, "each light drawing carries the ink")
+        self.assertGreaterEqual(self.src.count('["#d2d7d8",'), 2, "the inverse drawings are the pale line")
+        # one band, both figures, and it is still the wipe and the tab
+        self.assertIn('band:["#7c1b16","#bd281c","#dd4d25"]', self.src)
+        self.assertEqual(1, self.src.count("band:["), "one band for both figures")
 
     def test_the_two_filter_rails_say_which_axis_each_one_is(self):
         # They were two rows of identically shaped buttons, which read as one

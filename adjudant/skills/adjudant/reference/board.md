@@ -314,43 +314,35 @@ as `file://` it is not, and the async API is simply absent, so `execCommand` is
 the fallback rather than the first choice. The button reports the result either
 way and announces it: a page must not claim a copy it did not make.
 
-### The mark
+### The mark (refined 4.1.24)
 
 The figure is inline SVG, built at load from path data the template carries. Not
-a `data:` URI and not a raster, for one reason each. An external SVG document is
-a separate document and cannot see this page's custom properties, so the ink
-would never reach it. And a raster large enough to stay sharp on a 3x display,
-in both inks, costs more bytes than the vectors do while still being fixed at
-one size, which a mark destined for reports and exports cannot be.
+a `data:` URI and not a raster: the page is offline-locked and a raster large
+enough to stay sharp on a 3x display costs more bytes than the vectors while
+still being fixed at one size, which a mark destined for reports and exports
+cannot be.
 
-The head is filled `#26211a`, which is this theme's own dark `--bg`, so on the
-dark scheme the head IS the background colour. That one fill is emitted as
-`var(--mark-ink,#26211a)` and the dark block sets the property. No second asset,
-no scheme listener, and the right ink before the first paint rather than after
-it. Only that fill: the figure is a fourteen-colour illustration, not a
-silhouette, so `filter:invert()` would take the plume to cyan and the skin to
-blue, and recolouring the cool near-blacks as well takes the pupil with them.
+Each figure is two drawings, the artist's refined artwork of 2026-09-11. The
+light one is the inked head. The dark one is its inverse: the head drawn as one
+pale line (`#d2d7d8`, the artwork's own) over the ground, with the ground showing
+through the face. `paintMark` picks the drawing by `prefers-color-scheme` and
+repaints on a change; the figure itself is picked once and held, so a scheme
+flip shows the same face in its other drawing rather than rolling the dice
+again.
 
-Three fills follow the scheme, not one, because the details do different jobs.
-`--mark-ink` is the head. `--mark-shade` is the ear. `--mark-eye` is the eye, and
-only Adjudante has one as a path at all: his is negative space in the silhouette.
-Which path is which was settled by rendering each alone and reading its bounding
-box off the alpha channel, not by reading the fill names.
+This retires the recolour. From 4.1.5 to 4.1.11 the dark scheme was the light
+drawing with its inks swapped by three custom properties, and six patches went
+into deciding which cool near-black was an ear and which an eye. A drawing made
+for the ground is a better thing than a recoloured one; the tokens are gone.
 
-An ear is skin. It shades with the face and must not read as another material,
-which is exactly what a grey ear on a cream cheek does. On light it is a cool
-near-black a step off the head's warm one, so on dark it is a cool cream a step
-off the head's warm one: the mirror, which is right here.
+One band for both figures now (`#7c1b16 #bd281c #dd4d25`): the refined artwork
+gave Adjudante his ramp. It is still the wipe and still the favicon.
 
-An eye is not skin, and it is the one place the mirror fails. Hers is 215px wide
-and 1.21% of the mark; a whisper-level step leaves a feature that size as a pale
-patch merging into a pale cheek, which is a blank stare. So it is an iris, cool
-and dark enough against the cream to hold an edge, picked off a rendered ladder
-at 52px, the size the board actually uses, rather than at inspection size where
-every rung looks fine.
-
-Path data is rounded to one decimal on a 100-unit grid. Measured against the
-original at both 52px and 156px: mean channel error 1.0 to 1.3 of 255.
+Path data is scaled to a 100-unit box at two decimals, the precision that closes
+the hairline seams. His light file carried eight flecks of an earlier crown,
+none over three pixels at 300px wide, and the inverse files an invisible
+`fill:none` silhouette; all dropped. Kept: six paths for him light, five dark,
+eight for her light, nine dark.
 
 ### Task lists
 
