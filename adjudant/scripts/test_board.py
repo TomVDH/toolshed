@@ -1778,16 +1778,26 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
                       self.src.replace("  ", ""))
         self.assertNotIn(".legend .k i{width:8px", self.src.replace("  ", ""))
 
-    def test_a_tag_key_rule_is_not_built_on_the_hue_it_does_not_have(self):
-        # A tag key sets no --c. A box-shadow built on an undefined custom
-        # property is not "no colour", it is an invalid declaration, and the
-        # whole shadow goes: the tag rail would lose its rules and its on-state.
-        # So the tag key states its own, in ink, never in var(--c).
+    def test_a_tag_key_is_an_identifier_not_a_second_type_key(self):
+        # With the marks gone a tag key was the type key minus its mark, and the
+        # two rails read as one. A tag is an identifier, so it is set the way
+        # identifiers are set on this page: mono, a leading hash, no rule, no
+        # box. Picked from four studies under live. The filtered tag is stamped
+        # in ink, and the whole state is stated on its own rather than
+        # inherited, because a box-shadow built on the --c a tag never sets is
+        # an invalid declaration and the whole shadow would go.
         flat = self.src.replace("  ", "")
-        self.assertIn("#tagRow .k{box-shadow:inset 0 -1px 0 var(--border-strong)}", flat)
-        self.assertIn("#tagRow .k.on{box-shadow:inset 0 -2px 0 var(--text)}", flat)
-        for rule in re.findall(r"#tagRow \.k(?:\.on)?\{([^}]*)\}", self.src):
+        m = re.search(r"\n#tagRow \.k\{([^}]*)\}", flat)
+        self.assertIsNotNone(m, "#tagRow .k rule missing")
+        rule = m.group(1)
+        self.assertIn("font-family:var(--mono)", rule)
+        self.assertIn("box-shadow:none", rule)
+        self.assertIn('#tagRow .k::before{content:"#"', flat)
+        self.assertIn("#tagRow .k.on{background:var(--text);color:var(--bg)", flat)
+        for rule in re.findall(r"#tagRow \.k[^{]*\{([^}]*)\}", self.src):
             self.assertNotIn("var(--c)", rule)
+        # the hash is decoration: the key's name stays the tag and its count
+        self.assertIn('k.setAttribute("aria-label",tag+", "+count', self.src)
 
     def test_every_palette_hue_clears_3_to_1_on_every_surface(self):
         # The hue is now a 2px rule under the key and an 18px mark beside it:

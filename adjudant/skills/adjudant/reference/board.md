@@ -136,10 +136,16 @@ paper shows through. The filtered key darkens and its rule gains an ink line.
 Picked from eight studies under impeccable live: square, symbol, knockout,
 symbol only, tinted field, leading rule, stamp, underscored. Underscored won.
 
-A tag key has no hue, so its rule is the border colour and its on-state is ink.
-This is stated as its own rule on purpose: a `box-shadow` built on an undefined
-`--c` is not "no colour", it is an invalid declaration, and the whole shadow
-would go.
+A tag key is not a second type key (4.1.18). With the marks gone it was the
+type key minus its mark, and the two rails read as one. A tag is an identifier,
+so it is set the way identifiers are set on this page: in the mono face with a
+leading hash, no rule and no box. The filtered tag is stamped in ink. Picked
+from four studies under live: mono labels, index line, ticket stub, stamp row.
+The hash is decoration; the key's accessible name stays the tag and its count.
+
+Its state is stated on its own rule on purpose: a `box-shadow` built on the
+`--c` a tag never sets is not "no colour", it is an invalid declaration, and
+the whole shadow would go.
 
 The palette is eight 70s tones at 56 to 59 percent lightness: aubergine,
 avocado, burnt orange, petrol, rust rose, teal, harvest gold, brick. That band
