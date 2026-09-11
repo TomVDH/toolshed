@@ -78,6 +78,11 @@ surfaces and retires the rest, so read the preview before you apply.
 - **A drift canary.** Session start names one rare word. Adjudant checks every reply
   for it. A model that drops a one-word instruction has stopped following
   instructions, and that is the moment to start a fresh session.
+- **A branch rule, stated and observed.** In a beans-tracked repo, a `feature`
+  bean works on `feature/<bean-id>` in a `.worktrees/<bean-id>` worktree, tasks
+  and bugs commit on `main`, and merge-back is a PR. Session start says so in
+  one line, `connect` writes it into a new project's `AGENTS.md`, and `status`
+  reports the drift. Nothing blocks a commit; the report is the guard.
 
 ## The vault
 

@@ -36,6 +36,14 @@ connect is three phases; the card in the middle is the only thing the user must 
    carries every session in a beans-owned repo: work items live in beans, not in the
    vault and not in a todo list. Find or create a bean before starting, keep its
    checklist current, and commit the bean file with the code.
+
+   The same banner carries the branch rule in one line, and the `AGENTS.md`
+   connect provisions carries it in full under `## Git practice`: feature beans
+   work on `feature/<bean-id>` in a `.worktrees/<bean-id>` worktree, tasks and
+   bugs commit on `main`, merge-back is a PR. The contract is
+   `repo-standards.md`, "Git practice". Connect never edits an `AGENTS.md`
+   that already exists, so on a re-connect the section is copied in by hand
+   from `templates/AGENTS.md`.
 3. **Apply + receipt.** Run connect.py with the confirmed values (`--purpose`,
    `--initial-status`, plus the usual flags). Render `summary.receipt` back as the same
    card with per-artifact marks: created / already-present / updated. A re-run on a
