@@ -105,6 +105,54 @@ opacity on that token measured 3.74:1 on dark and 2.93:1 on light against a
 4.5:1 floor. The token alone is 5.97:1 and 5.00:1, and it is already the
 quietest ink on the board.
 
+### The type keys carry a shape
+
+Colour alone excluded anyone with a colour vision deficiency from telling one
+type key from another. Each palette hue gets a ColorSym symbol, so the same fact
+is carried in shape: the swatch does not gain an element, it becomes the mark,
+drawn in the category hue.
+
+`nth-child` is exact rather than a guess, because `catColor` assigns the palette
+BY INDEX, so key order is hue order.
+
+The eight are a **bijection**, solved as an assignment problem rather than
+matched by nearest hue. Nearest-hue gave blue and cyan the same symbol, and two
+categories wearing one mark is worse than no mark at all. Total hue error 73
+degrees, worst single 40 (blue, which has nowhere closer to go).
+
+Inlined as CSS masks, 3,479 characters for all eight: no font, no fetch, and the
+offline lock untouched. A tag key takes no symbol, because a tag has no hue to
+key and a mark there would be noise.
+
+Symbols are ColorSym, github.com/luisfrancisco/colorsym, CC BY-SA 4.0.
+
+### One rail, not two
+
+Type and tag both answer "narrow this board", so they are one scrolling line
+split by a rule rather than two labelled rows. The labels go with the second
+row. The tags scroll rather than wrap: wrapping inside a one-line rail is the
+two-row layout again with the label removed, and it measured 59px against the
+type rail's 25px.
+
+### Persisting board edits
+
+The control that connects `board-data.json` was called "Connect file", which
+named a mechanism nobody had to care about. It read as an unexplained button and
+went unused, so it was hidden, which hid the only affordance for the thing that
+makes a drag outlive the tab.
+
+It is back, and the label names what you get. The punctuation carries the mood:
+unconnected it ASKS, connected it REPORTS.
+
+| state | label |
+|---|---|
+| unconnected | Persist board edits? |
+| connected | Persisting board edits |
+| handle lapsed | Resume persisting? |
+| both stores failed | Not persisted |
+
+Dashed while it is still a question, solid once it is answered.
+
 ### The masthead, in three bands
 
 Identity and the ambient glance, then state and actions, then filters. Generous

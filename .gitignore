@@ -41,3 +41,6 @@ __pycache__/
 
 # Playwright MCP scratch (browser profile + traces)
 .playwright-mcp/
+
+# impeccable live-mode working state (session-local)
+.impeccable/

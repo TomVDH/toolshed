@@ -1734,6 +1734,44 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("var(--text-faint)", rule)
         self.assertNotIn("opacity:", rule.replace(" ", ""))
 
+    def test_a_type_key_carries_a_shape_not_only_a_hue(self):
+        # Colour alone excluded anyone with a colour vision deficiency from
+        # telling one type key from another. ColorSym gives each palette hue a
+        # symbol, so the same fact is carried in shape as well.
+        masks = re.findall(r"\.legend \.k:nth-child\((\d+)\) i\{", self.src)
+        self.assertEqual(8, len(masks), "one symbol per palette hue")
+        self.assertEqual(sorted(int(m) for m in masks), list(range(1, 9)),
+                         "nth-child 1..8, because catColor assigns PALETTE by index")
+        # inlined, never fetched: the board is offline-locked
+        self.assertIn("mask:url(\"data:image/svg+xml,", self.src.replace("-webkit-", ""))
+        self.assertNotIn("url(http", self.src)
+
+    def test_every_type_symbol_is_distinct(self):
+        # Nearest-hue matching gave blue and cyan the SAME symbol, which makes
+        # two categories identical and defeats the entire point. The assignment
+        # is a bijection, so eight hues get eight different marks.
+        block = self.src
+        paths = re.findall(r"\.legend \.k:nth-child\(\d+\) i\{[^}]*?viewBox='[^']*'%3E%3Cpath d='([^']+)'", block)
+        self.assertEqual(8, len(paths), f"expected 8 symbol paths, found {len(paths)}")
+        self.assertEqual(8, len(set(paths)), "two type keys share a symbol")
+
+    def test_a_tag_key_takes_no_symbol(self):
+        # A tag has no hue to key, so a mark would be noise.
+        self.assertIn("#tagRow .k i{display:none}", self.src.replace("  ", ""))
+
+    def test_the_persist_control_asks_then_reports(self):
+        # "Connect file" named a mechanism nobody had to care about, so it read
+        # as an unexplained button and went unused. The label now names what you
+        # get, and its punctuation carries the mood.
+        m = re.search(r"const CONN=\{(.*?)\};", self.src, re.S)
+        self.assertIsNotNone(m, "CONN table missing")
+        table = m.group(1)
+        self.assertIn('"Persist board edits?"', table)   # unconnected: asks
+        self.assertIn('"Persisting board edits"', table)  # connected: reports
+        self.assertNotIn('"Connect file"', table)
+        # and it is visible, after a version that hid it
+        self.assertNotIn(".head-ops .conn{display:none}", self.src.replace("  ", ""))
+
     def test_the_masthead_is_three_bands_with_a_deliberate_rhythm(self):
         # It was four bands of identical spacing, which gave everything equal
         # weight, and a right column 125px tall against the brand's 55px, which
@@ -1744,10 +1782,14 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn('class="rails"', self.src)
         self.assertNotIn('class="head-right"', self.src)
         flat = self.src.replace(" ", "").replace("\n", "")
-        # the two rails are one block: the block takes the generous interval,
-        # the rails inside it take the tight one
-        self.assertIn(".rails{margin-top:var(--s4);display:flex;flex-direction:column;gap:var(--s2)}", flat)
-        self.assertIn(".rails.rail-row{margin-top:0}", flat)
+        # The two rails became ONE row in 4.1.16: they answer the same question
+        # ("narrow this board"), so they stopped being two labelled rows and
+        # became one scrolling line split by a rule. The band still takes the
+        # generous interval.
+        self.assertIn(".rails{margin-top:var(--s4);display:flex;flex-direction:row;", flat)
+        # `flat` has every space removed, so `flex:0 0 auto` reads `flex:00auto`
+        self.assertIn(".rails.rail-row{margin-top:0;flex:00auto", flat)
+        self.assertIn(".rails.rail-lbl{display:none}", flat)
         self.assertIn(".head-ops{display:flex;align-items:center;gap:var(--s4)", flat)
 
     def test_the_histogram_never_sets_the_mastheads_height(self):
