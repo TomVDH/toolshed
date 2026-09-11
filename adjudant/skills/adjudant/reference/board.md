@@ -130,7 +130,9 @@ One vocabulary (4.1.20). The rail taught a mark the card and the sheet did not
 speak; they carried an 8px square. Now all three carry the same mark, built
 once as `.sym` and keyed by `data-sym`, which `catSym` assigns by index beside
 the hue, so a card and its key always agree. Sizes: 20px on the rail key, 14px
-on the card face, 16px in the sheet. On a multi-type deck every typed card
+on the card face, 16px beside the category in the sheet, and 26px in front of
+the sheet's title (4.1.21), the largest it is drawn anywhere: the sheet is
+where one card is read, so its type is said first. On a multi-type deck every typed card
 wears its mark; the type's name is still printed only on the exceptions. The
 mark is decoration; the name stays in the card's accessible label.
 

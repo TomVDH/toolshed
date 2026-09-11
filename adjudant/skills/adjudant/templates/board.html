@@ -659,6 +659,11 @@
     margin:0;font-family:var(--serif);font-size:20px;font-weight:600;
     line-height:1.3;letter-spacing:normal;text-wrap:pretty
   }
+  /* The type's mark in front of the title, the largest it is drawn anywhere:
+     the sheet is where one card is read, so its type is said first, in the
+     hue the rail key and the card face already gave it. */
+  .sheet-sym{width:26px;height:26px;align-self:flex-start}   /* 26px on a 26px title line: the mark sits on the FIRST line of a wrapped title */
+  .sheet-sym[hidden]{display:none}
   .sheet-close{
     flex:none;margin-left:auto;font:inherit;font-size:var(--fs-small);
     background:var(--surface);color:var(--text-dim);cursor:pointer;
@@ -911,6 +916,7 @@
 <dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
   <div class="sheet-wrap">
     <div class="sheet-head">
+      <i class="sym sheet-sym" id="sheetSym" aria-hidden="true" hidden></i>
       <h2 class="sheet-title" id="sheetTitle"></h2>
       <button class="sheet-close" id="sheetClose" type="button">Close</button>
     </div>
@@ -1670,6 +1676,9 @@ function renderSheet(){
   const card=state.cards[sheetKey];
   if(!card) return;
   document.getElementById("sheetTitle").textContent=card.title||"Untitled card";
+  const sym=document.getElementById("sheetSym");
+  sym.hidden=!card.category;
+  if(card.category){ sym.dataset.sym=String(catSym(card.category)); sym.style.setProperty("--c",catColor(card.category)); }
 
   const lanes=document.getElementById("sheetLanes");
   /* the move that just happened was made from one of these buttons, and render()

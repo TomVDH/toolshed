@@ -1770,6 +1770,10 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         sheet = _js_function(self.src, "renderSheet").replace(" ", "")
         self.assertIn('el("i","sym")', sheet)
         self.assertIn("catSym(card.category)", sheet)
+        # and once more in front of the title, the largest it is drawn anywhere
+        self.assertIn('<i class="sym sheet-sym" id="sheetSym" aria-hidden="true" hidden></i>', self.src)
+        self.assertIn('getElementById("sheetSym")', sheet)
+        self.assertIn(".sheet-sym{width:26px;height:26px", self.src.replace("  ", ""))
         self.assertNotIn("t-swatch", self.src)
         # the masks are defined once, on .sym, never per surface
         self.assertEqual(8, len(re.findall(r'\.sym\[data-sym="\d"\]\{', self.src)))
