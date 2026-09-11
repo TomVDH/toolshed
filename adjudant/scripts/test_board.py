@@ -2209,6 +2209,20 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         for var in ("filterText", "filterCat", "filterTag"):
             self.assertIn(var, line[0], f"Escape does not clear {var}")
 
+    def test_the_tag_rails_overflow_note_never_wraps_or_stretches_the_rail(self):
+        # Seen on a real deck at 4.1.27: with more than twelve tags
+        # the "+N more" note sits in the one-line scrolling rail, shrank to
+        # 31px, wrapped into six lines and stood 103px tall; every key in the
+        # rail stretched to match and the filtered tag's ink block became a
+        # black slab across the masthead. The note may not shrink or wrap, and
+        # keys keep their own height.
+        m = re.search(r"\.legend \.rail-more\{([^}]*)\}", self.src)
+        self.assertIsNotNone(m, ".rail-more rule missing")
+        rule = m.group(1).replace(" ", "").replace("\n", "")
+        self.assertIn("flex:00auto", rule)
+        self.assertIn("white-space:nowrap", rule)
+        self.assertIn(".rails #tagRow .legend{align-items:center}", self.src.replace("  ", ""))
+
     def test_the_tag_rail_says_what_it_left_out(self):
         # A rail that silently drops the tag you were looking for teaches you
         # the tag does not exist.

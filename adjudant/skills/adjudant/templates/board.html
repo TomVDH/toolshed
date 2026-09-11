@@ -297,6 +297,8 @@
      type rail's 25px. */
   .rails #tagRow .legend{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;min-width:0;gap:var(--s3)}
   .rails #tagRow .legend .k{flex:0 0 auto}
+  /* keys sit on their own line height, never on the rail's */
+  .rails #tagRow .legend{align-items:center}
 
   /* ColorSym, one vocabulary. github.com/luisfrancisco/colorsym, symbols
      CC BY-SA 4.0. Colour alone excluded anyone with a colour vision deficiency
@@ -451,8 +453,13 @@
      how much of the deck each tag is worth before you spend a click on it. */
   .legend .k b{font-weight:500;color:var(--text-faint);font-variant-numeric:tabular-nums}
   .legend .k.on b{color:var(--text-dim)}
+  /* One line, and it may not shrink. Measured on a deck with more than
+     twelve tags: inside the one-line scrolling rail this note was squeezed to
+     31px and wrapped into six lines, 103px tall, and every key in the rail
+     stretched to match; the filtered tag's ink block made it a black slab. */
   .legend .rail-more{
-    align-self:center;font-size:var(--fs-micro);color:var(--text-faint)
+    flex:0 0 auto;white-space:nowrap;align-self:center;
+    font-size:var(--fs-micro);color:var(--text-faint)
   }
   .legend .k:hover{color:var(--text)}
   .legend .k.off{opacity:.5}
