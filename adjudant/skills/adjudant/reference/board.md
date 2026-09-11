@@ -279,6 +279,16 @@ unmistakable. The stripes are whichever figure the roll produced, so the tab
 carries the easter egg too. Written as an inline `data:` URI, which fetches
 nothing.
 
+### The lane rail is a routing slip (4.1.23)
+
+A segmented control only ever said where the card is. A work order's routing
+slip says where it has been: the lanes are stations on a printed line, the
+ones the card has passed are inked, the one it is at is the accent and a size
+larger, the ones ahead are hollow. One tap on a station still moves the card.
+Chosen under impeccable live from four ways of letting a move feel like
+something (a sliding thumb, the slip, a stamp, keycap hints). The note view's
+Pretty/Raw rail keeps its track.
+
 ### The sheet under live preview (4.1.22)
 
 A modal dialog sits in the top layer, above impeccable's picker, so nothing

@@ -1792,6 +1792,20 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertNotIn("const LIVE_PREVIEW", self.src)
         self.assertIn(".sheet[open]:not(:modal){position:fixed;inset:0 0 0 auto", self.src.replace("  ", ""))
 
+    def test_the_lane_rail_is_a_routing_slip_that_says_where_the_card_has_been(self):
+        # A segmented control only ever said where the card is. The lanes are
+        # stations on a printed line: the ones behind the card inked, the one
+        # it is at the accent and larger, the ones ahead hollow. Chosen in live
+        # from four ways of letting a move feel like something. Scoped to the
+        # lane rail by id, so the note view's Pretty/Raw rail keeps its track.
+        flat = self.src.replace("  ", "")
+        self.assertIn("#sheetLanes{background:none;", flat)
+        self.assertIn('#sheetLanes button:has(~ [aria-current="true"])::before{background:var(--text)', flat)
+        self.assertIn('#sheetLanes button[aria-current="true"]::before{background:var(--accent)', flat)
+        self.assertIn(".sheet-lbl-row .rail{margin-left:auto}", flat)
+        # the ring is drawn round the word, not the station
+        self.assertIn("#sheetLanes button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}", flat)
+
     def test_a_tag_key_takes_no_symbol(self):
         # A tag has no hue to key, so a mark would be noise.
         self.assertIn("#tagRow .k i{display:none}", self.src.replace("  ", ""))
