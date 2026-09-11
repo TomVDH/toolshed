@@ -1779,6 +1779,19 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertEqual(8, len(re.findall(r'\.sym\[data-sym="\d"\]\{', self.src)))
         self.assertEqual(8, self.src.count('mask-image:url("data:image/svg+xml,') // 2)  # -webkit- and plain, once each
 
+    def test_the_sheet_leaves_the_top_layer_only_under_live_preview(self):
+        # A modal dialog sits in the top layer, above impeccable's picker, so
+        # nothing in the sheet could be put through a round. Under the live
+        # script it opens with show(); a shipped board never carries that tag
+        # and keeps showModal, the focus trap and the inert background.
+        fn = _js_function(self.src, "openSheet").replace(" ", "")
+        self.assertIn("if(livePreview())d.show();elsed.showModal();", fn)
+        sig = _js_function(self.src, "livePreview")
+        self.assertIn('script[src*="/live.js?"]', sig)
+        # asked at open time: the tag is injected at the end of the body
+        self.assertNotIn("const LIVE_PREVIEW", self.src)
+        self.assertIn(".sheet[open]:not(:modal){position:fixed;inset:0 0 0 auto", self.src.replace("  ", ""))
+
     def test_a_tag_key_takes_no_symbol(self):
         # A tag has no hue to key, so a mark would be noise.
         self.assertIn("#tagRow .k i{display:none}", self.src.replace("  ", ""))

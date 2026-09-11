@@ -650,6 +650,8 @@
       var(--border-strong) 50% 75%, var(--surface) 75% 100%)
   }
   .sheet::backdrop{background:oklch(24% 0.012 160 / 0.42)}
+  /* opened non-modally (live preview only): pinned where the modal one sits */
+  .sheet[open]:not(:modal){position:fixed;inset:0 0 0 auto;z-index:40}
   .sheet-wrap{display:flex;flex-direction:column;height:100%}
   .sheet-head{
     display:flex;align-items:flex-start;gap:var(--s4);
@@ -1641,9 +1643,15 @@ function openSheet(key){
      measures every width as zero, and the rail's scroll-into-view was doing its
      arithmetic against that. Both calls are in one task, so nothing paints in
      between and there is no flash of an empty sheet. */
-  if(!d.open) d.showModal();
+  /* Under impeccable live the sheet opens without the top layer: a modal
+     dialog sits above the picker and cannot be picked, so nothing inside it
+     could ever be put through a round. The injected script tag is the only
+     signal, and a shipped board never carries one. */
+  if(!d.open){ if(livePreview()) d.show(); else d.showModal(); }
   renderSheet();
 }
+/* asked at open time, not at load: the tag is injected at the end of the body */
+function livePreview(){ return !!document.querySelector('script[src*="/live.js?"]'); }
 /* Every close converges here, and the bookkeeping happens here rather than on
    the dialog's `close` event, because that event is a queued element task: a
    throttled or hidden page may never deliver it, which leaves sheetKey stale

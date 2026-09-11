@@ -279,6 +279,15 @@ unmistakable. The stripes are whichever figure the roll produced, so the tab
 carries the easter egg too. Written as an inline `data:` URI, which fetches
 nothing.
 
+### The sheet under live preview (4.1.22)
+
+A modal dialog sits in the top layer, above impeccable's picker, so nothing
+in the sheet could be put through a round. When the page carries the injected
+live script the sheet opens with `show()` and is pinned where the modal one
+sits. A shipped board never carries that tag and keeps `showModal()`, the
+focus trap and the inert background. The signal is read at open time, because
+the tag is injected at the end of the body.
+
 ### Taking things out of the sheet
 
 The id and the body are the two things a person takes OUT of the page, and both
