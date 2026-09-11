@@ -133,6 +133,28 @@ except Exception:
     fi
   fi
 
+  # --- 0b. A linked worktree has no breadcrumb of its own ---
+  # .claude/adjudant is git-ignored, so `git worktree add` never writes one and
+  # every reader here, in the other hooks and in the statusline went quiet
+  # there. The worktree's .git is a FILE holding
+  # "gitdir: <main>/.git/worktrees/<name>", which names the main checkout, so
+  # the worktree can find its own provenance without help. Link, do not copy:
+  # a later `connect` on main then flows through. One stat and one read
+  # builtin; no git call, and a submodule (gitdir under /modules/) is left be.
+  if [ ! -e "$project_dir/.claude/adjudant" ] && [ -f "$project_dir/.git" ]; then
+    local _wt_key _wt_ptr _wt_main
+    read -r _wt_key _wt_ptr < "$project_dir/.git" 2>/dev/null || true
+    case "$_wt_ptr" in
+      *"/worktrees/"*)
+        _wt_main="${_wt_ptr%/.git/worktrees/*}"
+        if [ -f "$_wt_main/.claude/adjudant" ]; then
+          mkdir -p "$project_dir/.claude" 2>/dev/null \
+            && ln -s "$_wt_main/.claude/adjudant" "$project_dir/.claude/adjudant" 2>/dev/null \
+            || true
+        fi ;;
+    esac
+  fi
+
   # --- 1. Read breadcrumb ---
   local breadcrumb="$project_dir/.claude/adjudant"
   # (zone_project_dir is defined above main; mirrors _vault_walk.find_project_dir)

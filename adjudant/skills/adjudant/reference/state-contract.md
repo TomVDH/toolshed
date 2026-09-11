@@ -29,6 +29,7 @@ probing, not read from the breadcrumb.
 | It reads | For |
 |---|---|
 | `{repo}/.claude/adjudant`, `vault_path:` and `slug:` | vault location, project name |
+| `{repo}/.git` when it is a file: `gitdir: <main>/.git/worktrees/<name>` | a linked worktree; the breadcrumb is then read from `<main>/.claude/adjudant` when the worktree has none, and the SessionStart hook links it in |
 | `{repo}/.claude/adjudant`, `stale_after_days:` | the threshold for both the lifecycle hint and the dream age (30 when absent or non-numeric) |
 | `{vault}/projects/{active\|paused\|finished\|archive}/{slug}/` (dir exists) | lifecycle folder, rendered as a badge for anything but `active` |
 | `{vault}/projects/{slug}/`, `{vault}/projects/_fridge/{slug}/`, `{vault}/projects/_archive/{slug}/` | pre-v3 shapes, probed after the four; `_fridge` reads as paused, `_archive` as archive |
