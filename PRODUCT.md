@@ -28,7 +28,7 @@ It is also **honest about its own data**. The histogram names bulk writes rather
 
 ## Operating Context
 
-- Two machines, pushed directly to `main`, no PR workflow. Pull `--ff-only` before starting.
+- Two machines. Tasks and bugs push straight to `main`; feature beans work on `feature/<bean-id>` in a `.worktrees/` worktree and merge by PR. Pull `--ff-only` before starting.
 - The vault is Obsidian, in iCloud. The HubSpot repo is in OneDrive; reads there are slow and sometimes evicted.
 - Work items live in **beans**, tracked in git, committed alongside the code they describe.
 - Boards are served by `board.py serve` on localhost, or opened straight off disk.

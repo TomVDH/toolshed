@@ -18,7 +18,8 @@
 ├── docs/                    # historical design docs, plans, and specs; archived material under docs/archive/
 ├── scripts/                 # repo-root tooling: bump_plugin_version.py, check_marketplace_versions.py + tests
 ├── .github/workflows/       # validate.yml: CI rerun of the local validators on push/PR
-├── .gitignore               # ignores session-local .claude/ state and .superpowers/ working dirs
+├── .worktrees/              # one linked worktree per feature bean, feature/<bean-id>; git-ignored
+├── .gitignore               # ignores session-local .claude/ state, .superpowers/, .worktrees/
 ├── .pre-commit-config.yaml  # validators that fail the build on drift
 ├── README.md
 └── AGENTS.md / CLAUDE.md    # this file + Claude overrides
@@ -84,7 +85,7 @@ python3 adjudant/scripts/validate.py
 python3 -m unittest discover -s adjudant/scripts -p 'test_*.py'
 ```
 
-Current gate: 28 validators, 1597 tests. Both must pass before a commit.
+Current gate: 28 validators, 1627 tests. Both must pass before a commit.
 
 ## The board template is offline-locked
 
@@ -126,7 +127,19 @@ This repo is mirrored across two machines. The OneDrive folder syncs the working
 | Personal | `tomlinson` |
 | Work | `tomvanderhegden` |
 
-Always `git pull --ff-only` before starting work; the other machine is often ahead. Branch is `main`; PRs not currently used (direct pushes from both machines).
+Always `git pull --ff-only` before starting work; the other machine is often ahead. Tasks and bugs push straight to `main` from either machine; feature beans go through a branch and a PR (see "Git practice"). A worktree removed on the other machine leaves a dangling entry here: `git worktree prune`.
+
+## Git practice
+
+The bean type decides where the code goes. Adjudant states this every session, provisions it into every project it connects, and `/adjudant status` reports drift. Nothing blocks a commit; the report is the guard.
+
+- A `feature` bean gets its own branch, `feature/<bean-id>`, always checked out in a worktree: `git worktree add .worktrees/<bean-id> -b feature/<bean-id>`. The main checkout stays on `main` and is never `git switch`ed.
+- An `epic` is a container and gets no branch. A `task` or `bug` commits on `main`, or on its parent feature's branch when that feature is in progress.
+- `.claude/adjudant` is git-ignored, so copy it into a new worktree: `cp .claude/adjudant .worktrees/<bean-id>/.claude/adjudant`. Without it adjudant is silent there.
+- Version bumps happen on the feature branch (`bump_plugin_version.py`) and reach `main` with the PR, so `main` only carries released versions.
+- Merge-back: `git push -u origin feature/<bean-id>`, `gh pr create`, merge on GitHub, then `git worktree remove .worktrees/<bean-id>`, `git branch -d feature/<bean-id>`, `git pull --ff-only`.
+
+The full contract is `adjudant/skills/adjudant/reference/repo-standards.md`, "Git practice".
 
 ## Commit conventions
 
@@ -142,6 +155,7 @@ docs(adjudant): migration guide from the retired obsidian-bridge verbs to /adjud
 
 - Scope is the plugin name (or `marketplace` for cross-plugin manifest changes).
 - Version bumps use `release(<plugin>): vX.Y.Z - <summary>`.
+- The bean file lands in the same commit as the code it describes.
 
 ## Naming
 
@@ -151,6 +165,6 @@ docs(adjudant): migration guide from the retired obsidian-bridge verbs to /adjud
 
 ## What this repo does NOT contain
 
-- No PR / branch workflow — work is pushed directly to `main` from either machine.
+- No long-lived branches. `main` plus one short `feature/<bean-id>` branch per feature bean in flight, merged by PR and deleted. Tasks and bugs push straight to `main`.
 - No CI beyond a thin GitHub Action (`.github/workflows/validate.yml`) that reruns the local validators on push and PR; pre-commit remains the primary gate.
 - No publish step beyond `git push origin main`. Claude Code's marketplace install pulls directly from the git remote.
