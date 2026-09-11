@@ -1686,6 +1686,128 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         dark = self.src[self.src.index("prefers-color-scheme: dark"):]
         self.assertIn("--mark-ink:", dark[:dark.index("}\n  }")])
 
+    def test_the_wipe_is_one_timeline_so_it_is_actually_a_reveal(self):
+        # A wipe is one constraint: the width of wordmark showing must EQUAL the
+        # width the band has vacated. The first cut ran the two on different
+        # curves, so the word was 90% drawn a fifth of a second in, sitting
+        # under an opaque bar that had not reached it. Nothing revealed
+        # anything. The pair only holds if they share duration, delay, driver
+        # and keyframe split, so that is what this pins.
+        band = re.search(r"animation:brand-unfurl ([^;]+);", self.src)
+        word = re.search(r"animation:brand-uncover ([^;]+) forwards", self.src)
+        self.assertIsNotNone(band, "band animation missing")
+        self.assertIsNotNone(word, "wordmark animation missing")
+        self.assertEqual(band.group(1).replace(" forwards", "").strip(),
+                         word.group(1).strip(),
+                         "the band and the wordmark must run on one timeline")
+        # both keyframe sets split at the same instant and share the exit curve
+        for name in ("brand-unfurl", "brand-uncover"):
+            block = re.search(name + r"\{(.*?)\n  \}", self.src, re.S)
+            self.assertIsNotNone(block, name + " keyframes missing")
+            self.assertIn("44%{", block.group(1).replace(" ", ""))
+            self.assertIn("cubic-bezier(.45,.05,.25,1)", block.group(1).replace(" ", ""))
+
+    def test_the_one_entrance_animation_still_yields_to_reduced_motion(self):
+        rm = self.src[self.src.index("prefers-reduced-motion"):]
+        block = rm[:rm.index("\n  }")]
+        # the clip-path that hides the wordmark has to be lifted, not just the
+        # animation stopped, or the mark would never appear at all
+        self.assertIn("animation:none", block.replace(" ", ""))
+        self.assertIn("clip-path:none", block.replace(" ", ""))
+        self.assertIn(".brand-band{display:none}", block.replace(" ", ""))
+
+    def test_the_id_and_the_body_can_leave_the_page(self):
+        # Both were readable and neither could be taken out, so quoting an id
+        # into a `beans update` meant retyping it off the screen.
+        self.assertIn('id="noteCopy"', self.src)
+        body = _js_function(self.src, "renderSheet").replace(", ", ",")
+        self.assertIn('copyButton("Copy",()=>card.id,"Id")', body)
+        # the RAW body, not this page's rendering of it: what you paste has to
+        # be the source the tracker holds
+        self.assertIn('copyButton("Copy",()=>card.notes,"Note")', body)
+
+    def test_copy_falls_back_because_a_board_is_opened_off_disk_too(self):
+        # Served from board.py it is a secure context and navigator.clipboard
+        # exists. Opened as file:// it is not, and the async API is absent.
+        fn = _js_function(self.src, "copyText")
+        self.assertIn("navigator.clipboard", fn)
+        self.assertIn("legacyCopy", fn)
+        legacy = _js_function(self.src, "legacyCopy")
+        self.assertIn('execCommand("copy")', legacy)
+        # display:none cannot be selected, so the textarea goes off-screen.
+        # Asserted on the style string, not the function text: the comment
+        # above the line says "display:none" and would match a naive check.
+        style = [ln for ln in legacy.splitlines() if "cssText" in ln]
+        self.assertTrue(style, "the textarea sets no style")
+        self.assertIn("position:fixed", style[0])
+        self.assertNotIn("display:none", style[0])
+
+    def test_a_copy_that_failed_never_wears_the_face_of_one_that_worked(self):
+        fn = _js_function(self.src, "copyButton")
+        flat = fn.replace(", ", ",")
+        self.assertIn('ok?"Copied":"Failed"', flat)
+        self.assertIn('classList.toggle("bad",!ok)', flat)
+        self.assertIn("announce(", fn)
+        # and the label always returns to saying what the button does
+        self.assertIn("b.textContent=was", flat)
+        self.assertIn("delete b.dataset.busy", fn)
+
+    def test_a_task_list_renders_its_state_not_its_syntax(self):
+        # The sheet printed `<li>[ ] Test both embeds...</li>`: the raw marker,
+        # with nothing separating done from not done. Beans' whole loop is
+        # keeping those markers current, and this board is its front end.
+        self.assertIn("MD_TASK", self.src)
+        body = _js_function(self.src, "mdNodes").replace(", ", ",")
+        self.assertIn("MD_TASK.exec(m[2])", body)
+        self.assertIn('li.className="task"', body)
+        # `[x]` and `[X]` are both done; only a space is open
+        m = re.search(r"const MD_TASK=/([^/]+)/", self.src)
+        self.assertIsNotNone(m, "MD_TASK pattern missing")
+        self.assertIn("xX", m.group(1))
+
+    def test_the_checkbox_is_drawn_and_never_an_input(self):
+        # This board does not write bean bodies. A control that cannot be
+        # operated would be a lie about what the page can do.
+        body = _js_function(self.src, "mdNodes")
+        self.assertNotIn("createElement(\"input\"", body)
+        self.assertNotIn("type=\"checkbox\"", self.src)
+        self.assertIn('el("span","box")', body.replace(", ", ","))
+
+    def test_a_tasks_state_reaches_the_accessibility_tree(self):
+        # The box is aria-hidden decoration; without a text equivalent the
+        # done/open distinction would exist only in pixels.
+        body = _js_function(self.src, "mdNodes").replace(", ", ",")
+        self.assertIn('box.setAttribute("aria-hidden","true")', body)
+        self.assertIn('el("span","sr-only"', body)
+        self.assertIn('"done, "', _js_function(self.src, "mdNodes"))
+        self.assertIn('"to do, "', _js_function(self.src, "mdNodes"))
+
+    def test_the_card_face_strips_the_task_marker_too(self):
+        # mdText strips rather than parses, and it strips the bullet first, so
+        # the marker only reaches the start of the line after that.
+        body = _js_function(self.src, "mdText")
+        self.assertIn(r"^\[[ xX]\]", body)
+        bullet = body.index("[-*+]")
+        marker = body.index(r"^\[[ xX]\]")
+        self.assertLess(bullet, marker,
+                        "the task marker must be stripped after the bullet, not before")
+
+    def test_the_display_face_is_carried_in_the_file(self):
+        # The board is offline-locked, so a face is either embedded or absent,
+        # and absent meant every heading fell through to Iowan Old Style: a
+        # wide soft book serif where the brand is a tight condensed slab.
+        self.assertIn("@font-face{", self.src.replace(" ", "").replace("\n", ""))
+        self.assertIn('font-family:"Mozilla Headline Condensed"', self.src)
+        self.assertIn("src:url(data:font/woff2;base64,", self.src.replace(" ", ""))
+        # and it has to be the first name asked for, or it never gets used
+        serif = [ln for ln in self.src.splitlines() if ln.strip().startswith("--serif:")]
+        self.assertEqual(1, len(serif))
+        self.assertTrue(serif[0].strip().startswith('--serif:"Mozilla Headline Condensed"'),
+                        f"embedded face is not first in the stack: {serif[0].strip()}")
+        # a data URI fetches nothing, which is what validator 24 actually guards
+        self.assertNotIn("url(//", self.src)
+        self.assertNotIn("url(http", self.src)
+
     def test_skin_shades_with_the_face_and_only_the_eye_does_not(self):
         # 4.1.5 through 4.1.8 ran both details off one token, which painted the
         # EARS as eyes: a grey ear on a cream cheek, reading as another material.

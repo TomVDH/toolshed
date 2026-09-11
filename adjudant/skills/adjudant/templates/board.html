@@ -519,6 +519,22 @@
   /* drawn inside the track, so its own overflow cannot clip the ring */
   .rail button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
   .sheet-lbl-row .rail{margin-left:auto}
+  /* Quiet until reached for. The id and the body are the two things a person
+     takes OUT of this page, and both were readable and untakeable. */
+  .copy{
+    font:inherit;font-size:var(--fs-micro);cursor:pointer;
+    background:none;color:var(--text-faint);
+    border:1px solid var(--border);border-radius:var(--r-chip);
+    padding:1px 7px;margin-left:var(--s2);white-space:nowrap;
+    transition:color .15s var(--ease),border-color .15s var(--ease)
+  }
+  .copy:hover{color:var(--text);border-color:var(--border-strong)}
+  .copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* a copy that did not happen must not wear the same face as one that did */
+  .copy.bad{color:var(--bad);border-color:var(--bad)}
+  .sheet-facts dd.with-copy{display:flex;align-items:baseline;gap:0}
+  .sheet-facts dd.with-copy>span{min-width:0;overflow-wrap:anywhere}
+  #noteCopy{display:flex;align-items:center}
 
   /* The note, read rather than shown as source. Raw keeps every character the
      tracker wrote, which is the point of having the toggle at all. */
@@ -686,6 +702,7 @@
             <button type="button" data-view="pretty">Pretty</button>
             <button type="button" data-view="raw">Raw</button>
           </div>
+          <span id="noteCopy"></span>
         </div>
         <div class="sheet-note" id="sheetNote"></div>
       </div>
@@ -1420,6 +1437,11 @@ function renderSheet(){
       : mdNodes(card.notes));
   }
   document.getElementById("sheetNoteSec").hidden=!card.notes;
+  /* The RAW body, whichever view is showing. Pretty is a reading convenience;
+     what you paste into a `beans update` has to be the source the tracker
+     holds, not this page's rendering of it. */
+  const noteCopy=document.getElementById("noteCopy"); noteCopy.innerHTML="";
+  if(card.notes) noteCopy.appendChild(copyButton("Copy",()=>card.notes,"Note"));
   paintNoteToggle();
 
   const tags=document.getElementById("sheetTags"); tags.innerHTML="";
@@ -1450,7 +1472,13 @@ function renderSheet(){
     facts.appendChild(el("dt",null,label));
     facts.appendChild(el("dd",mono?"mono":null,String(value)));
   };
-  fact("Id",card.id,true);
+  if(card.id){
+    facts.appendChild(el("dt",null,"Id"));
+    const dd=el("dd","mono with-copy");
+    dd.appendChild(el("span",null,String(card.id)));
+    dd.appendChild(copyButton("Copy",()=>card.id,"Id"));
+    facts.appendChild(dd);
+  }
   if(card.category){
     facts.appendChild(el("dt",null,"Category"));
     const dd=el("dd","sheet-cat");
@@ -1495,6 +1523,58 @@ function deckOrdinaryTags(counts){
   if(total<3) return out;
   counts.forEach((n,tag)=>{ if(n*2>total) out.add(tag); });
   return out;
+}
+
+/* Two paths, because this board is opened both ways. Served from board.py it
+   is a secure context and navigator.clipboard exists; opened straight off disk
+   as file:// it is not, and the async API is simply absent. execCommand is
+   deprecated and still the only thing that works there, so it is the fallback
+   rather than the first choice. Returns a promise of true/false: a copy that
+   silently failed is worse than one that says so. */
+function copyText(text){
+  const str=String(text==null?"":text);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(str).then(()=>true,err=>{
+      console.warn("board: clipboard write refused",err);
+      return legacyCopy(str);
+    });
+  }
+  return Promise.resolve(legacyCopy(str));
+}
+function legacyCopy(str){
+  const ta=document.createElement("textarea");
+  ta.value=str;
+  /* off-screen but focusable: display:none cannot be selected */
+  ta.setAttribute("readonly","");
+  ta.style.cssText="position:fixed;top:-1000px;left:-1000px;opacity:0";
+  document.body.appendChild(ta);
+  let ok=false;
+  try{
+    ta.select(); ta.setSelectionRange(0,str.length);
+    ok=document.execCommand("copy");
+  }catch(e){ console.warn("board: legacy copy failed",e); }
+  document.body.removeChild(ta);
+  return ok;
+}
+/* The button says what happened, then goes back to saying what it does. A
+   failure has to reach the label too, or the page claims a copy it did not
+   make. */
+function copyButton(label,getText,announceAs){
+  const b=el("button","copy",label); b.type="button";
+  b.addEventListener("click",()=>{
+    if(b.dataset.busy) return;
+    b.dataset.busy="1";
+    const was=b.textContent;
+    copyText(getText()).then(ok=>{
+      b.textContent=ok?"Copied":"Failed";
+      b.classList.toggle("bad",!ok);
+      announce(ok?announceAs+" copied":announceAs+" could not be copied");
+      setTimeout(()=>{
+        b.textContent=was; b.classList.remove("bad"); delete b.dataset.busy;
+      },1400);
+    });
+  });
+  return b;
 }
 
 function ticketNode(card,key){

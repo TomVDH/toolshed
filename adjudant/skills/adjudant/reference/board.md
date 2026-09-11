@@ -88,6 +88,22 @@ Three marks reach the face, and only when they carry something:
   tag is in the card's accessible name, because an `aria-label` replaces a
   button's contents rather than adding to them.
 
+### Taking things out of the sheet
+
+The id and the body are the two things a person takes OUT of the page, and both
+were readable and untakeable. A Copy sits on the Id row and beside the
+Pretty/Raw toggle.
+
+The note copies the RAW body whichever view is showing. Pretty is a reading
+convenience; what you paste into a `beans update` has to be the source the
+tracker holds.
+
+Two write paths, because a board is opened both ways. Served from `board.py` it
+is a secure context and `navigator.clipboard` exists. Opened straight off disk
+as `file://` it is not, and the async API is simply absent, so `execCommand` is
+the fallback rather than the first choice. The button reports the result either
+way and announces it: a page must not claim a copy it did not make.
+
 ### The mark
 
 The figure is inline SVG, built at load from path data the template carries. Not
