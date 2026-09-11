@@ -126,6 +126,17 @@ key and a mark there would be noise.
 
 Symbols are ColorSym, github.com/luisfrancisco/colorsym, CC BY-SA 4.0.
 
+One vocabulary (4.1.20). The rail taught a mark the card and the sheet did not
+speak; they carried an 8px square. Now all three carry the same mark, built
+once as `.sym` and keyed by `data-sym`, which `catSym` assigns by index beside
+the hue, so a card and its key always agree. Sizes: 20px on the rail key, 14px
+on the card face, 16px in the sheet. On a multi-type deck every typed card
+wears its mark; the type's name is still printed only on the exceptions. The
+mark is decoration; the name stays in the card's accessible label.
+
+The palette gained 0.03 chroma for punch, with lightness trimmed on avocado,
+petrol and teal to hold the 3:1 floor. All 48 ratios are still computed.
+
 ### The key is a word on a rule, not a pill (4.1.17)
 
 Eight bordered pills in a row read as a toolbar and pulled the eye off the

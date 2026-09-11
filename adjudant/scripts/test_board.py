@@ -1738,12 +1738,14 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         # Colour alone excluded anyone with a colour vision deficiency from
         # telling one type key from another. ColorSym gives each palette hue a
         # symbol, so the same fact is carried in shape as well.
-        masks = re.findall(r"\.legend \.k:nth-child\((\d+)\) i\{", self.src)
+        masks = re.findall(r'\.sym\[data-sym="(\d+)"\]\{', self.src)
         self.assertEqual(8, len(masks), "one symbol per palette hue")
         self.assertEqual(sorted(int(m) for m in masks), list(range(1, 9)),
-                         "nth-child 1..8, because catColor assigns PALETTE by index")
+                         "data-sym 1..8, assigned by catSym beside the hue")
+        # assigned in the same pass as the hue, so a card and its key agree
+        self.assertIn("catSyms[n]=(i%PALETTE.length)+1", _js_function(self.src, "normalize").replace(" ", ""))
         # inlined, never fetched: the board is offline-locked
-        self.assertIn("mask:url(\"data:image/svg+xml,", self.src.replace("-webkit-", ""))
+        self.assertIn("mask-image:url(\"data:image/svg+xml,", self.src.replace("-webkit-", ""))
         self.assertNotIn("url(http", self.src)
 
     def test_every_type_symbol_is_distinct(self):
@@ -1751,9 +1753,27 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         # two categories identical and defeats the entire point. The assignment
         # is a bijection, so eight hues get eight different marks.
         block = self.src
-        paths = re.findall(r"\.legend \.k:nth-child\(\d+\) i\{[^}]*?viewBox='[^']*'%3E%3Cpath d='([^']+)'", block)
+        paths = re.findall(r"\.sym\[data-sym=\"\d+\"\]\{[^}]*?viewBox='[^']*'%3E%3Cpath d='([^']+)'", block)
         self.assertEqual(8, len(paths), f"expected 8 symbol paths, found {len(paths)}")
         self.assertEqual(8, len(set(paths)), "two type keys share a symbol")
+
+    def test_the_type_mark_is_the_same_on_rail_card_and_sheet(self):
+        # The rail taught a vocabulary the card and the sheet did not speak:
+        # they carried an 8px square. Now all three carry the ColorSym mark,
+        # built once as .sym and keyed by data-sym, so a card and its key
+        # always agree. The mark is decoration; the name stays in the label.
+        self.assertIn('el("i","sym")', _js_function(self.src, "render").replace(" ", ""))
+        face = _js_function(self.src, "ticketNode").replace(" ", "")
+        self.assertIn('el("i","symt-sym")', face)
+        self.assertIn("catSym(card.category)", face)
+        self.assertIn('setAttribute("aria-hidden","true")', face)
+        sheet = _js_function(self.src, "renderSheet").replace(" ", "")
+        self.assertIn('el("i","sym")', sheet)
+        self.assertIn("catSym(card.category)", sheet)
+        self.assertNotIn("t-swatch", self.src)
+        # the masks are defined once, on .sym, never per surface
+        self.assertEqual(8, len(re.findall(r'\.sym\[data-sym="\d"\]\{', self.src)))
+        self.assertEqual(8, self.src.count('mask-image:url("data:image/svg+xml,') // 2)  # -webkit- and plain, once each
 
     def test_a_tag_key_takes_no_symbol(self):
         # A tag has no hue to key, so a mark would be noise.
@@ -1774,8 +1794,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertIn("box-shadow:inset0-2px0var(--c)", rule)
         self.assertNotIn("border:1pxsolid", rule)
         # and the mark is large enough to be read as a shape, not a pip
-        self.assertIn(".legend .k i{width:18px;height:18px;background:var(--c)}",
-                      self.src.replace("  ", ""))
+        self.assertIn(".legend .k .sym{width:20px;height:20px}", self.src.replace("  ", ""))
         self.assertNotIn(".legend .k i{width:8px", self.src.replace("  ", ""))
 
     def test_a_tag_key_is_an_identifier_not_a_second_type_key(self):

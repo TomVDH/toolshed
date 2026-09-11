@@ -307,25 +307,28 @@
   .rails #tagRow .legend{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;min-width:0;gap:var(--s3)}
   .rails #tagRow .legend .k{flex:0 0 auto}
 
-  /* ColorSym on the type keys. github.com/luisfrancisco/colorsym, symbols
+  /* ColorSym, one vocabulary. github.com/luisfrancisco/colorsym, symbols
      CC BY-SA 4.0. Colour alone excluded anyone with a colour vision deficiency
-     from telling one type key from another; the symbol carries the same fact in
-     shape. The swatch does not gain an element, it BECOMES the mark, drawn in
-     the category hue.
+     from telling one type from another; the symbol carries the same fact in
+     shape. It is the SAME mark everywhere a type is named: the rail key, the
+     card face and the sheet, so the three read as one thing.
 
-     nth-child is exact, not a guess: catColor assigns PALETTE by index, so key
-     order is hue order. The eight are a BIJECTION, solved rather than matched,
-     because nearest-hue gave blue and cyan the same symbol and two identical
-     marks are worse than none. */
-  .legend .k i{width:18px;height:18px;background:var(--c)}
-  .legend .k:nth-child(1) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,33.25c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.3,1.91.84l14.92,16.03h0ZM38.62,45.29c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,33.25c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.3,1.91.84l14.92,16.03h0ZM38.62,45.29c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(2) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M20.28,36.64c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82.7.12,1.43.3,1.92.84l14.92,16.03c.99,1.06.93,2.73-.13,3.72-.5.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14h-.01ZM51.11,47.63c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.18-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M20.28,36.64c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82.7.12,1.43.3,1.92.84l14.92,16.03c.99,1.06.93,2.73-.13,3.72-.5.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14h-.01ZM51.11,47.63c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.18-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(3) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,43.23c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.17,2.63,2.63ZM28.24,26.19c0-2.86,2.33-5.19,5.19-5.19s5.19,2.33,5.19,5.19-2.33,5.19-5.19,5.19-5.19-2.33-5.19-5.19Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,43.23c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.17,2.63,2.63ZM28.24,26.19c0-2.86,2.33-5.19,5.19-5.19s5.19,2.33,5.19,5.19-2.33,5.19-5.19,5.19-5.19-2.33-5.19-5.19Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(4) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,39.65c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.71-1.79.71-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.31,1.91.84l14.92,16.03h0v-.02Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,39.65c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.71-1.79.71-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.31,1.91.84l14.92,16.03h0v-.02Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(5) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.36,33.43c0,9.34-7.6,16.93-16.94,16.93s-16.94-7.6-16.94-16.93,7.6-16.93,16.94-16.93,16.94,7.6,16.94,16.93ZM45.59,33.43c0-6.71-5.46-12.17-12.17-12.17s-12.16,5.46-12.16,12.17,5.46,12.17,12.16,12.17,12.17-5.46,12.17-12.17ZM38.61,33.43c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.36,33.43c0,9.34-7.6,16.93-16.94,16.93s-16.94-7.6-16.94-16.93,7.6-16.93,16.94-16.93,16.94,7.6,16.94,16.93ZM45.59,33.43c0-6.71-5.46-12.17-12.17-12.17s-12.16,5.46-12.16,12.17,5.46,12.17,12.16,12.17,12.17-5.46,12.17-12.17ZM38.61,33.43c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(6) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.79,18.72c-.08.11-.18.24-.29.34l-4.39,4.39v.03c2.05,2.79,3.26,6.23,3.26,9.94,0,4.68-1.89,8.91-4.97,11.96-3.05,3.08-7.28,4.99-11.96,4.99-.95,0-1.84-.08-2.73-.24-1.31-.21-2.6-.58-3.81-1.1-1.21-.53-2.34-1.18-3.39-1.95h-.03l-4.34,4.36-.05.05c-.53.47-1.16.71-1.81.71-.5,0-1-.16-1.45-.42-.29-.18-.55-.45-.76-.74-.66-1.03-.55-2.37.29-3.29l4.42-4.39v-.03c-1.55-2.08-2.6-4.55-3.05-7.2-.16-.89-.24-1.81-.24-2.73,0-3.5,1.08-6.76,2.92-9.46.32-.45.63-.89.97-1.29.34-.42.71-.84,1.1-1.21,3.08-3.08,7.28-4.97,11.96-4.97.47,0,.92.03,1.39.05.92.08,1.79.24,2.66.45.45.1.87.21,1.29.37.84.29,1.63.63,2.39,1.03h.03c.76.42,1.5.87,2.18,1.37h.03l4.39-4.39c.11-.11.24-.21.37-.29,1-.66,2.39-.55,3.29.34s1,2.29.34,3.31h0ZM39.96,23.19c-1.89-1.21-4.13-1.92-6.52-1.92-2.94,0-5.62,1.05-7.73,2.76-2.71,2.23-4.44,5.62-4.44,9.38,0,.97.11,1.89.34,2.79.11.5.26,1,.45,1.47.21.53.45,1.05.71,1.52.13.26.26.5.42.74,0,0,16.77-16.74,16.77-16.74ZM45.61,33.42c0-2.39-.71-4.65-1.92-6.55l-16.77,16.8c1.89,1.21,4.1,1.92,6.52,1.92,6.7,0,12.17-5.47,12.17-12.17Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.79,18.72c-.08.11-.18.24-.29.34l-4.39,4.39v.03c2.05,2.79,3.26,6.23,3.26,9.94,0,4.68-1.89,8.91-4.97,11.96-3.05,3.08-7.28,4.99-11.96,4.99-.95,0-1.84-.08-2.73-.24-1.31-.21-2.6-.58-3.81-1.1-1.21-.53-2.34-1.18-3.39-1.95h-.03l-4.34,4.36-.05.05c-.53.47-1.16.71-1.81.71-.5,0-1-.16-1.45-.42-.29-.18-.55-.45-.76-.74-.66-1.03-.55-2.37.29-3.29l4.42-4.39v-.03c-1.55-2.08-2.6-4.55-3.05-7.2-.16-.89-.24-1.81-.24-2.73,0-3.5,1.08-6.76,2.92-9.46.32-.45.63-.89.97-1.29.34-.42.71-.84,1.1-1.21,3.08-3.08,7.28-4.97,11.96-4.97.47,0,.92.03,1.39.05.92.08,1.79.24,2.66.45.45.1.87.21,1.29.37.84.29,1.63.63,2.39,1.03h.03c.76.42,1.5.87,2.18,1.37h.03l4.39-4.39c.11-.11.24-.21.37-.29,1-.66,2.39-.55,3.29.34s1,2.29.34,3.31h0ZM39.96,23.19c-1.89-1.21-4.13-1.92-6.52-1.92-2.94,0-5.62,1.05-7.73,2.76-2.71,2.23-4.44,5.62-4.44,9.38,0,.97.11,1.89.34,2.79.11.5.26,1,.45,1.47.21.53.45,1.05.71,1.52.13.26.26.5.42.74,0,0,16.77-16.74,16.77-16.74ZM45.61,33.42c0-2.39-.71-4.65-1.92-6.55l-16.77,16.8c1.89,1.21,4.1,1.92,6.52,1.92,6.7,0,12.17-5.47,12.17-12.17Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(7) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,33.55c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,33.55c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E") center/contain no-repeat}
-  .legend .k:nth-child(8) i{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M38.61,33.51c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M38.61,33.51c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E") center/contain no-repeat}
+     Keyed by data-sym, which catSym assigns by index alongside the hue, so a
+     card and its key always agree. The eight are a BIJECTION, solved rather
+     than matched, because nearest-hue gave blue and cyan the same symbol and
+     two identical marks are worse than none. */
+  .sym{display:inline-block;flex:none;background:var(--c);-webkit-mask:center/contain no-repeat;mask:center/contain no-repeat}
+  .sym[data-sym="1"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,33.25c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.3,1.91.84l14.92,16.03h0ZM38.62,45.29c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,33.25c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.3,1.91.84l14.92,16.03h0ZM38.62,45.29c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="2"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M20.28,36.64c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82.7.12,1.43.3,1.92.84l14.92,16.03c.99,1.06.93,2.73-.13,3.72-.5.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14h-.01ZM51.11,47.63c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.18-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M20.28,36.64c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82.7.12,1.43.3,1.92.84l14.92,16.03c.99,1.06.93,2.73-.13,3.72-.5.47-1.15.7-1.79.7-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14h-.01ZM51.11,47.63c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.18-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="3"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,43.23c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.17,2.63,2.63ZM28.24,26.19c0-2.86,2.33-5.19,5.19-5.19s5.19,2.33,5.19,5.19-2.33,5.19-5.19,5.19-5.19-2.33-5.19-5.19Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,43.23c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.17,2.63,2.63ZM28.24,26.19c0-2.86,2.33-5.19,5.19-5.19s5.19,2.33,5.19,5.19-2.33,5.19-5.19,5.19-5.19-2.33-5.19-5.19Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="4"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,39.65c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.71-1.79.71-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.31,1.91.84l14.92,16.03h0v-.02Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.41,39.65c.99,1.06.93,2.73-.13,3.72-.51.47-1.15.71-1.79.71-.7,0-1.41-.28-1.92-.84l-13.01-13.98-13.26,14c-1,1.06-2.67,1.1-3.72.1-1.05-1-1.1-2.66-.1-3.71l15.19-16.03c.5-.52,1.19-.82,1.91-.82h0c.73,0,1.42.31,1.91.84l14.92,16.03h0v-.02Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="5"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.36,33.43c0,9.34-7.6,16.93-16.94,16.93s-16.94-7.6-16.94-16.93,7.6-16.93,16.94-16.93,16.94,7.6,16.94,16.93ZM45.59,33.43c0-6.71-5.46-12.17-12.17-12.17s-12.16,5.46-12.16,12.17,5.46,12.17,12.16,12.17,12.17-5.46,12.17-12.17ZM38.61,33.43c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M50.36,33.43c0,9.34-7.6,16.93-16.94,16.93s-16.94-7.6-16.94-16.93,7.6-16.93,16.94-16.93,16.94,7.6,16.94,16.93ZM45.59,33.43c0-6.71-5.46-12.17-12.17-12.17s-12.16,5.46-12.16,12.17,5.46,12.17,12.16,12.17,12.17-5.46,12.17-12.17ZM38.61,33.43c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="6"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.79,18.72c-.08.11-.18.24-.29.34l-4.39,4.39v.03c2.05,2.79,3.26,6.23,3.26,9.94,0,4.68-1.89,8.91-4.97,11.96-3.05,3.08-7.28,4.99-11.96,4.99-.95,0-1.84-.08-2.73-.24-1.31-.21-2.6-.58-3.81-1.1-1.21-.53-2.34-1.18-3.39-1.95h-.03l-4.34,4.36-.05.05c-.53.47-1.16.71-1.81.71-.5,0-1-.16-1.45-.42-.29-.18-.55-.45-.76-.74-.66-1.03-.55-2.37.29-3.29l4.42-4.39v-.03c-1.55-2.08-2.6-4.55-3.05-7.2-.16-.89-.24-1.81-.24-2.73,0-3.5,1.08-6.76,2.92-9.46.32-.45.63-.89.97-1.29.34-.42.71-.84,1.1-1.21,3.08-3.08,7.28-4.97,11.96-4.97.47,0,.92.03,1.39.05.92.08,1.79.24,2.66.45.45.1.87.21,1.29.37.84.29,1.63.63,2.39,1.03h.03c.76.42,1.5.87,2.18,1.37h.03l4.39-4.39c.11-.11.24-.21.37-.29,1-.66,2.39-.55,3.29.34s1,2.29.34,3.31h0ZM39.96,23.19c-1.89-1.21-4.13-1.92-6.52-1.92-2.94,0-5.62,1.05-7.73,2.76-2.71,2.23-4.44,5.62-4.44,9.38,0,.97.11,1.89.34,2.79.11.5.26,1,.45,1.47.21.53.45,1.05.71,1.52.13.26.26.5.42.74,0,0,16.77-16.74,16.77-16.74ZM45.61,33.42c0-2.39-.71-4.65-1.92-6.55l-16.77,16.8c1.89,1.21,4.1,1.92,6.52,1.92,6.7,0,12.17-5.47,12.17-12.17Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.79,18.72c-.08.11-.18.24-.29.34l-4.39,4.39v.03c2.05,2.79,3.26,6.23,3.26,9.94,0,4.68-1.89,8.91-4.97,11.96-3.05,3.08-7.28,4.99-11.96,4.99-.95,0-1.84-.08-2.73-.24-1.31-.21-2.6-.58-3.81-1.1-1.21-.53-2.34-1.18-3.39-1.95h-.03l-4.34,4.36-.05.05c-.53.47-1.16.71-1.81.71-.5,0-1-.16-1.45-.42-.29-.18-.55-.45-.76-.74-.66-1.03-.55-2.37.29-3.29l4.42-4.39v-.03c-1.55-2.08-2.6-4.55-3.05-7.2-.16-.89-.24-1.81-.24-2.73,0-3.5,1.08-6.76,2.92-9.46.32-.45.63-.89.97-1.29.34-.42.71-.84,1.1-1.21,3.08-3.08,7.28-4.97,11.96-4.97.47,0,.92.03,1.39.05.92.08,1.79.24,2.66.45.45.1.87.21,1.29.37.84.29,1.63.63,2.39,1.03h.03c.76.42,1.5.87,2.18,1.37h.03l4.39-4.39c.11-.11.24-.21.37-.29,1-.66,2.39-.55,3.29.34s1,2.29.34,3.31h0ZM39.96,23.19c-1.89-1.21-4.13-1.92-6.52-1.92-2.94,0-5.62,1.05-7.73,2.76-2.71,2.23-4.44,5.62-4.44,9.38,0,.97.11,1.89.34,2.79.11.5.26,1,.45,1.47.21.53.45,1.05.71,1.52.13.26.26.5.42.74,0,0,16.77-16.74,16.77-16.74ZM45.61,33.42c0-2.39-.71-4.65-1.92-6.55l-16.77,16.8c1.89,1.21,4.1,1.92,6.52,1.92,6.7,0,12.17-5.47,12.17-12.17Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="7"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,33.55c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M51.11,33.55c0,1.45-1.18,2.63-2.63,2.63h-30.11c-1.45,0-2.63-1.17-2.63-2.63s1.18-2.63,2.63-2.63h30.11c1.45,0,2.63,1.18,2.63,2.63Z'/%3E%3C/svg%3E")}
+  .sym[data-sym="8"]{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M38.61,33.51c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 66.86 66.86'%3E%3Cpath d='M38.61,33.51c0,2.86-2.33,5.19-5.19,5.19s-5.19-2.33-5.19-5.19,2.33-5.19,5.19-5.19,5.19,2.33,5.19,5.19Z'/%3E%3C/svg%3E")}
+  /* the rail key's mark, a notch larger than the card's, because the rail is
+     where the vocabulary is learned */
+  .legend .k .sym{width:20px;height:20px}
   /* a tag has no hue to key, so it keeps its count and takes no mark */
   #tagRow .k i{display:none}
   .ident{min-width:0}
@@ -600,10 +603,10 @@
     display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden
   }
   .t-foot{display:flex;align-items:center;gap:7px;margin-top:var(--s1)}
-  /* The same swatch the legend keys carry, so a card and its legend key read as
-     one vocabulary. It classifies the card without printing the category name on
+  /* The same mark the rail key carries, so a card and its key read as one
+     vocabulary. It classifies the card without printing the category name on
      every card in the deck. */
-  .t-swatch{width:8px;height:8px;background:var(--c);flex:none}
+  .t-sym{width:14px;height:14px}
   /* The exception names itself. The hue is mixed toward --text because the raw
      palette hue measures 1.65:1 to 2.28:1 as text on --surface. */
   .t-cat{font-size:var(--fs-micro);font-weight:600;color:color-mix(in oklch,var(--c) 52%,var(--text))}
@@ -786,7 +789,7 @@
   .sheet-facts dd{margin:0;color:var(--text)}
   .sheet-facts dd.mono{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.02em}
   .sheet-cat{display:inline-flex;align-items:center;gap:7px}
-  .sheet-cat i{width:8px;height:8px;background:var(--c);flex:none}
+  .sheet-cat .sym{width:16px;height:16px}
   .sheet-tags{display:flex;flex-wrap:wrap;gap:var(--s2)}
   .sheet-tags span{
     font-size:var(--fs-micro);color:var(--text-dim);
@@ -872,6 +875,7 @@
     <div class="spark" id="spark" hidden></div>
   </div>
 
+
   <div class="head-ops">
     <div class="meta">
       <span><b id="cardCount">—</b> cards</span>
@@ -885,6 +889,7 @@
       <button class="link" id="downloadBtn" type="button">Download</button>
     </div>
   </div>
+
   <div class="rails">
     <div class="rail-row"><span class="rail-lbl">Type</span><div class="legend" id="legend"></div></div>
     <div class="rail-row" id="tagRow" hidden><span class="rail-lbl">Tag</span><div class="legend tags" id="tagRail"></div></div>
@@ -1043,7 +1048,7 @@ function paintMark(){
    measured against all six surfaces, three per scheme, and the worst case is
    3.00:1. Index order is unchanged, so the ColorSym symbol each slot carries is
    unchanged too. */
-const PALETTE=["oklch(59% 0.11 310)","oklch(57% 0.12 125)","oklch(59% 0.16 48)","oklch(57% 0.09 230)","oklch(59% 0.13 5)","oklch(56% 0.10 195)","oklch(57% 0.13 88)","oklch(59% 0.16 28)"];
+const PALETTE=["oklch(59% 0.14 310)","oklch(56% 0.15 125)","oklch(59% 0.19 48)","oklch(56.5% 0.12 230)","oklch(59% 0.16 5)","oklch(54.5% 0.13 195)","oklch(57% 0.16 88)","oklch(59% 0.19 28)"];
 /* per-board identity: each project's board namespaces its own browser + disk-handle
    state, so multiple boards served from the same localhost origin never clobber
    each other. Falls back to the title for pre-0.9 decks without a boardId. */
@@ -1053,7 +1058,7 @@ const LS_REV=LS_KEY+":rev";   /* pre-0.25 whole-deck mirror; retired on first sa
 const IDB_KEY=boardKey();
 const STAMP={done:["built","BUILT"],icebox:["parked","PARKED"]};
 const MOVES_VERSION=2;
-let state=null, fileHandle=null, catColors={};
+let state=null, fileHandle=null, catColors={}, catSyms={};
 /* baseDeck = the deck exactly as loaded (disk or SEED), before any override.
    moves    = the ONLY thing this page persists (see readMoves). */
 let baseJson=null, baseCols=[], moves={};
@@ -1293,8 +1298,8 @@ function normalize(d){
   if(Array.isArray(d.categories)){ names=d.categories.map(String); }
   else if(d.categories && typeof d.categories==="object"){ names=Object.keys(d.categories); colors=d.categories; }
   else { names=[]; }
-  catColors={};
-  names.forEach((n,i)=>{ catColors[n]=safeColor(colors[n],PALETTE[i%PALETTE.length]); });
+  catColors={}; catSyms={};
+  names.forEach((n,i)=>{ catColors[n]=safeColor(colors[n],PALETTE[i%PALETTE.length]); catSyms[n]=(i%PALETTE.length)+1; });
   d.categoryNames=names;
   /* The type most of a deck shares is the ordinary one, and ordinary needs no
      mark: on a board of 78 tasks and 9 epics, the thing you need to see is
@@ -1312,6 +1317,8 @@ function normalize(d){
   return d;
 }
 function catColor(cat){ return catColors[cat] || "var(--border-strong)"; }
+/* the ColorSym mark for a type, 1..8, assigned by index beside its hue */
+function catSym(cat){ return catSyms[cat] || 0; }
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function colName(id){ const c=state.columns.find(c=>String(c.id)===String(id)); return c?c.name:String(id); }
 function cardLabel(c){ return (c.id?c.id+", ":"")+(c.title||"untitled card"); }
@@ -1743,7 +1750,7 @@ function renderSheet(){
     facts.appendChild(el("dt",null,"Category"));
     const dd=el("dd","sheet-cat");
     dd.style.setProperty("--c",catColor(card.category));
-    const swatch=el("i"); swatch.setAttribute("aria-hidden","true");
+    const swatch=el("i","sym"); swatch.dataset.sym=String(catSym(card.category)); swatch.setAttribute("aria-hidden","true");
     dd.appendChild(swatch); dd.appendChild(document.createTextNode(card.category));
     facts.appendChild(dd);
   }
@@ -1990,10 +1997,12 @@ function ticketNode(card,key){
      among the tasks. A single-type deck marks nothing at all rather than
      printing the same word on every card in it. The name is in the card's
      label, the legend and the sheet either way. */
-  if(card.category&&(state.categoryNames||[]).length>1&&card.category!==state.baseCategory){
-    const sw=el("span","t-swatch"); sw.setAttribute("aria-hidden","true");
+  if(card.category&&(state.categoryNames||[]).length>1){
+    /* the mark on every typed card, the same one its rail key wears; the
+       word only on the exceptions, so the ordinary type is not printed N times */
+    const sw=el("i","sym t-sym"); sw.dataset.sym=String(catSym(card.category)); sw.setAttribute("aria-hidden","true");
     foot.appendChild(sw);
-    foot.appendChild(el("span","t-cat",card.category));
+    if(card.category!==state.baseCategory) foot.appendChild(el("span","t-cat",card.category));
   }
   foot.appendChild(el("span","t-id",card.id));
   const prio=priorityMark(card);
@@ -2052,7 +2061,8 @@ function render(){
     k.type="button";
     k.setAttribute("aria-pressed",filterCat===cat?"true":"false");
     k.style.setProperty("--c",catColor(cat));
-    k.appendChild(el("i")); k.appendChild(document.createTextNode(cat));
+    const m=el("i","sym"); m.dataset.sym=String(catSym(cat)); m.setAttribute("aria-hidden","true");
+    k.appendChild(m); k.appendChild(document.createTextNode(cat));
     k.addEventListener("click",()=>{ filterCat = (filterCat===cat) ? null : cat; render(); });
     lg.appendChild(k);
   });
