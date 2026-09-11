@@ -8,7 +8,9 @@
 .
 ├── .claude-plugin/
 │   └── marketplace.json     # Marketplace manifest — source of truth for every plugin's version + description
-├── adjudant/                # Vault editor/writer + project initializer, /adjudant with six verbs and a two-tier cleanup model (successor to the retired obsidian-bridge). Mid v3 redesign: see docs/superpowers/specs/2026-09-01-adjudant-v3-design.md
+├── .beans/                  # work items, TRACKED IN GIT. See "Work items" below
+├── .beans.yml               # beans config: types, statuses, priorities for this repo
+├── adjudant/                # Vault editor/writer + project initializer, /adjudant with six verbs and a two-tier cleanup model (successor to the retired obsidian-bridge). v4; the v3 redesign shipped
 ├── cabinet-of-imd/          # Crew/persona flavor layer (functionality sunset; character-only)
 ├── tui-toolbox/             # Operating language for agent-built helper CLIs (bash TUI + python helper); formerly cli-wrapper-helper
 ├── gemineye/                # Sandboxed Gemini second opinion via the agy CLI (SUNSET 2026-08-12: unlisted from marketplace, kept in tree)
@@ -21,6 +23,20 @@
 ├── README.md
 └── AGENTS.md / CLAUDE.md    # this file + Claude overrides
 ```
+
+## Work items
+
+This repo tracks work in **beans**, not in a vault and not in a todo list. `.beans/`
+is tracked in git, so a bean is reviewed and merged like code.
+
+1. Run `beans prime` and follow it. That output is generated from this repo's own
+   `.beans.yml`, so it is always current. Nothing restates it here.
+2. Find or create a bean before starting work.
+3. Keep its checklist current as you go: `- [ ]` becomes `- [x]` when the thing is done.
+4. Commit the bean file in the same commit as the code it describes.
+
+Hierarchy is enforced: milestone, then epic, then feature, then task or bug. A task
+cannot parent a task.
 
 ## Adding a new plugin
 
@@ -63,7 +79,29 @@ pre-commit run --all-files
 
 # Run adjudant's specific validators
 python3 adjudant/scripts/validate.py
+
+# Run the test suite
+python3 -m unittest discover -s adjudant/scripts -p 'test_*.py'
 ```
+
+Current gate: 28 validators, 1567 tests. Both must pass before a commit.
+
+## The board template is offline-locked
+
+`adjudant/skills/adjudant/templates/board.html` is the only HTML surface adjudant
+emits, and it is served from disk. Validator 24 fails the build on any off-machine
+`href`, `url()` or `@import`. A `data:` URI is allowed, because it fetches nothing.
+
+Two consequences a newcomer would otherwise undo:
+
+- The display face is an embedded woff2 subset, not a webfont link.
+- The mark is inline SVG, not an `<img>`. An external SVG is a separate document
+  and cannot see the page's custom properties, which is how the ink follows the
+  colour scheme.
+
+The template has no JavaScript test runner, by design. Its tests assert that the
+code implementing a behaviour is still shaped the way it was when that behaviour
+was last verified in a browser. A green suite is not a substitute for driving it.
 
 ## Universal drift defense (via hookify)
 
