@@ -237,6 +237,97 @@ class TestDriftGlyph(_Repo):
         self.assertFalse(self._drift(self._bar()))
 
 
+class TestBeansFlash(_Repo):
+    """A bean added, removed, closed or reopened flashes its delta next to
+    the count for a few seconds, then the readout goes back to plain. State
+    lives in the cache dir under HOME, keyed by beans dir; the first sight
+    of a dir records and stays silent."""
+
+    def _slot(self, out: str) -> str:
+        seg = next((s for s in out.split("│") if "◍" in s), "")
+        return seg.strip()
+
+    def _paint(self, ttl="60"):
+        return self._slot(self._bar(extra_env={"ADJUDANT_BEANS_FLASH_TTL": ttl}))
+
+    def _write(self, bid, st="todo"):
+        (self.repo / ".beans" / f"{bid}--{bid}-slug.md").write_text(
+            f"---\ntitle: {bid}\nstatus: {st}\ntype: task\n---\n")
+
+    def setUp(self):
+        super().setUp()
+        self._breadcrumb()
+        self._beans(("demo-1", "task", "todo"), ("demo-2", "task", "todo"),
+                    ("demo-3", "task", "todo"))
+
+    def test_first_paint_is_silent_and_records(self):
+        self.assertEqual(self._paint(), "↯ demo  ◍ 3")
+        cache = list((self.home / ".claude" / "statusline-cache").glob("beans-*"))
+        self.assertEqual(len(cache), 1)
+        self.assertTrue(cache[0].read_text().startswith("3 0 3 "))
+
+    def test_added_bean_flashes_plus(self):
+        self._paint()
+        self._write("demo-4")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+        # and keeps flashing on the next repaint inside the TTL
+        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+
+    def test_two_added_at_once_counts_both(self):
+        self._paint()
+        self._write("demo-4"); self._write("demo-5")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 5 +2")
+
+    def test_removed_bean_flashes_minus(self):
+        self._paint()
+        (self.repo / ".beans" / "demo-2--demo-2-slug.md").unlink()
+        self.assertEqual(self._paint(), "↯ demo  ◍ 2 −1")
+
+    def test_closed_bean_flashes_check(self):
+        self._paint()
+        self._write("demo-1", "completed")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 2 ✓1")
+
+    def test_reopened_bean_flashes_arrow(self):
+        self._write("demo-1", "completed")
+        self._paint()
+        self._write("demo-1", "todo")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 3 ↺1")
+
+    def test_flash_expires(self):
+        import time
+        self._paint(ttl="1")
+        self._write("demo-4")
+        self.assertEqual(self._paint(ttl="1"), "↯ demo  ◍ 4 +1")
+        time.sleep(1.2)
+        self.assertEqual(self._paint(ttl="1"), "↯ demo  ◍ 4")
+
+    def test_a_new_change_replaces_a_live_flash(self):
+        self._paint()
+        self._write("demo-4")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+        self._write("demo-4", "completed")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 3 ✓1")
+
+    def test_unchanged_counts_do_not_flash_or_rewrite(self):
+        self._paint()
+        cache = next((self.home / ".claude" / "statusline-cache").glob("beans-*"))
+        before = cache.stat().st_mtime_ns
+        # an edit that changes no count is not news
+        (self.repo / ".beans" / "demo-1--demo-1-slug.md").write_text(
+            "---\ntitle: renamed\nstatus: todo\ntype: task\n---\n")
+        self.assertEqual(self._paint(), "↯ demo  ◍ 3")
+        self.assertEqual(cache.stat().st_mtime_ns, before)
+
+    def test_last_open_bean_going_still_flashes(self):
+        for b in ("demo-1", "demo-2", "demo-3"):
+            self._write(b, "completed")
+        self._write("demo-4")
+        self._paint()
+        (self.repo / ".beans" / "demo-4--demo-4-slug.md").unlink()
+        self.assertEqual(self._paint(), "↯ demo  ◍ 0 −1")
+
+
 class TestShim(_Repo):
     """~/.claude/statusline-v2.sh is a shim that execs the plugin copy."""
 

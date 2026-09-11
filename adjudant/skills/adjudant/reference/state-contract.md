@@ -44,6 +44,8 @@ probing, not read from the breadcrumb.
 | `tasks/*.md` mtimes against the deck's | board lag |
 | newest `dreams/{YYYY-MM-DD}.md` or `dreams/{YYYY-MM-DD}-dream.md`, the filename only | dream age |
 | `$TMPDIR/adjudant-task-ledger-{session_id}.jsonl`, `.id` and `.status` per line | in-flight task count |
+| `{beans dir}/*.md` frontmatter (`status:`, `type:`, `priority:`, `parent:`), the id from the filename | the beans slot: open, in motion, closeable epics and milestones, bugs, critical; the in-progress feature ids behind the branch-rule glyph; the total behind the delta flash |
+| `~/.claude/statusline-cache/beans-{key}`, one line `open doing total flash_ts flash_text` | the statusline's own memory of the last counts per beans dir, so a change flashes `+N` / `−N` / `✓N` / `↺N` for eight seconds and then settles. Written by the bar, read by the bar; delete it and the next paint records silently |
 
 ## Rules
 

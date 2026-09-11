@@ -210,3 +210,10 @@ section 10 breaking: the main checkout is off `main`, the worktree you are
 in belongs to a finished bean, or a feature in progress has no branch. And
 in a fresh worktree the bar is quiet about all of that until you copy
 `.claude/adjudant` in, for the same reason the banner is.
+
+The beans count also reacts to writes. Add a bean and the count flashes
+`+1` in green for eight seconds; remove one and it flashes `−1` in red;
+close one and it flashes `✓1`; reopen one, `↺1`. Then the plain count is
+back. Nothing writes to the bar to make this happen: it remembers the last
+counts it saw and notices the difference on the next repaint, so a bean
+created by hand, by `beans create`, or by the board all flash the same.
