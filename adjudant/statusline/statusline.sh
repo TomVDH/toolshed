@@ -653,9 +653,12 @@ if [ -n "$beans_cfg" ] && [ "${beans_tracker:-beans}" = "beans" ]; then
     # stale-but-instant rather than block on a dataless read. Stock macOS ships
     # no timeout binary, so the unbounded call is the fallback, matching TCAT.
     read -r -d '' BEANS_AWK <<'BEANSAWK'
-# One pass. Six numbers and a list:
+# One pass. Six numbers, a list, and a seventh number:
 #   open, in-progress, critical, bugs, closeable-epics, closeable-milestones,
-#   then the ids of in-progress FEATURE beans joined by commas (`-` when none).
+#   then the ids of in-progress FEATURE beans joined by commas (`-` when none),
+#   then the total number of beans, open or not. The total is what tells an
+#   added bean from a closed one in the flash below: closing keeps the total
+#   and lowers open, adding raises the total.
 # The list feeds S1b: under adjudant's branch rule each of those ids owns a
 # feature/<id> branch, and one that does not is drift worth a glyph.
 #
@@ -673,6 +676,7 @@ FNR==1 { infm=0; seen=0; st=""; pr=""; ty=""; par=""; id=idof(FILENAME) }
 /^---[[:space:]]*$/ {
   if (infm && !seen) {
     seen = 1
+    all++
     stat[id] = st
     type[id] = ty
     # Draft is OPEN, matching beans (internal/ui/styles.go:175). This one flag
@@ -710,7 +714,7 @@ END {
     if      (type[p] == "milestone") mile++
     else if (type[p] == "epic")      epic++
   }
-  printf "%d %d %d %d %d %d %s", open, doing, crit, bug, epic, mile, (feat=="" ? "-" : feat)
+  printf "%d %d %d %d %d %d %s %d", open, doing, crit, bug, epic, mile, (feat=="" ? "-" : feat), all
 }
 BEANSAWK
     if   command -v timeout  >/dev/null 2>&1; then
@@ -725,6 +729,51 @@ BEANSAWK
     b_beans_open="${1:-0}"; b_beans_doing="${2:-0}"; b_beans_crit="${3:-0}"
     b_beans_bug="${4:-0}";  b_beans_epic="${5:-0}"; b_beans_mile="${6:-0}"
     b_beans_feat="${7:-}"; [ "$b_beans_feat" = "-" ] && b_beans_feat=""
+    b_beans_all="${8:-0}"
+
+    # -- The flash. A bean was just added, removed, closed or reopened: say
+    #    so for a few seconds next to the count, then go back to the plain
+    #    readout. No hook and no writer cooperation: the bar already reads
+    #    every bean on every repaint, so it remembers the last three counts
+    #    per beans dir and compares. One `read` builtin per repaint; one
+    #    redirect when something changed (the grind clock's pattern, for
+    #    the same reason: this runs every repaint and must not fork).
+    #
+    #    First sight of a beans dir records and stays silent, so a fresh
+    #    machine does not flash "+89". Only the counts are compared, not the
+    #    files, so a rename or an edit that leaves counts alone is not news.
+    #    A change while a flash is live replaces it and restarts the clock.
+    # Seconds the delta stays up. The env knob exists for the tests, which
+    # cannot wait eight real seconds for an expiry and should not fake NOW.
+    BEANS_FLASH_TTL="${ADJUDANT_BEANS_FLASH_TTL:-8}"
+    case "$BEANS_FLASH_TTL" in (*[!0-9]*|"") BEANS_FLASH_TTL=8;; esac
+    beans_flash=""
+    _bf_file="${CACHE_DIR}/beans-$(_ckey "$beans_dir")"
+    _bf_open=""; _bf_doing=""; _bf_all=""; _bf_ts=0; _bf_text=""
+    [ -f "$_bf_file" ] && read -r _bf_open _bf_doing _bf_all _bf_ts _bf_text < "$_bf_file" 2>/dev/null
+    case "$_bf_ts" in (*[!0-9]*|"") _bf_ts=0;; esac
+    _bf_new=""
+    if [ -n "$_bf_all" ]; then
+      if   [ "$b_beans_all"  -gt "$_bf_all"  ] 2>/dev/null; then _bf_new="+$(( b_beans_all - _bf_all ))"
+      elif [ "$b_beans_all"  -lt "$_bf_all"  ] 2>/dev/null; then _bf_new="−$(( _bf_all - b_beans_all ))"
+      elif [ "$b_beans_open" -lt "$_bf_open" ] 2>/dev/null; then _bf_new="✓$(( _bf_open - b_beans_open ))"
+      elif [ "$b_beans_open" -gt "$_bf_open" ] 2>/dev/null; then _bf_new="↺$(( b_beans_open - _bf_open ))"
+      fi
+    fi
+    if [ -n "$_bf_new" ]; then
+      _bf_ts=$NOW; _bf_text="$_bf_new"
+    fi
+    if [ -n "$_bf_new" ] || [ "$b_beans_open $b_beans_doing $b_beans_all" != "$_bf_open $_bf_doing $_bf_all" ]; then
+      printf '%s %s %s %s %s\n' "$b_beans_open" "$b_beans_doing" "$b_beans_all" "$_bf_ts" "$_bf_text" > "$_bf_file" 2>/dev/null
+    fi
+    if [ -n "$_bf_text" ] && [ $(( NOW - _bf_ts )) -lt "$BEANS_FLASH_TTL" ]; then
+      case "$_bf_text" in
+        +*) beans_flash=" ${DIFF_ADD}${_bf_text}${R}" ;;
+        −*) beans_flash=" ${DIFF_DEL}${_bf_text}${R}" ;;
+        ✓*) beans_flash=" ${VAULTOP}${_bf_text}${R}" ;;
+        *)  beans_flash=" ${BEANS}${_bf_text}${R}" ;;
+      esac
+    fi
 
     # Rendered in the WORK-ITEMS slot (Signal 5), not as a segment of its own.
     # One repo has one tracker, so one slot shows it: beans where the repo has
@@ -739,12 +788,17 @@ BEANSAWK
       # Escalating left to right: moving, then closeable largest unit first,
       # then broken, then urgent. The two ⬡ readings share a glyph and differ
       # only in hue, so they stay adjacent — gold milestone, orchid epic.
-      beans_extra=""
+      # The flash leads: it is the newest fact and it is gone in seconds.
+      beans_extra="$beans_flash"
       [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸${b_beans_doing}${R}"
       [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡${b_beans_mile}${R}"
       [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡${b_beans_epic}${R}"
       [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕${b_beans_bug}${R}"
       [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}!${b_beans_crit}${R}"
+      beans_label="${beans_pip}${beans_extra}"
+    elif [ -n "$beans_flash" ]; then
+      # The last open bean just went: nothing to count, but the going is news.
+      beans_pip="${BEANS}${BEANS_ICON} 0${R}"; beans_extra="$beans_flash"
       beans_label="${beans_pip}${beans_extra}"
     fi
   fi

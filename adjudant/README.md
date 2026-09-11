@@ -142,7 +142,9 @@ That writes a small shim to `~/.claude/statusline-v2.sh` and prints the
 `statusLine` block to add to `~/.claude/settings.json`. From then on every
 session start points the shim at the installed plugin copy, so a plugin update
 moves the bar with no other step. The git segment shows a red `!` in front of
-the branch when a beans-tracked repo breaks the branch rule above.
+the branch when a beans-tracked repo breaks the branch rule above, and the
+beans count flashes `+1`, `−1` or `✓1` for a few seconds after a bean is
+added, removed or closed.
 
 ## Pairing
 
