@@ -34,7 +34,8 @@ def _plain(text: str) -> str:
 
 
 def _render(cwd: Path, home: Path, *, script: Path = STATUSLINE,
-            extra_env: dict | None = None, sid: str = "test-sid") -> str:
+            extra_env: dict | None = None, sid: str = "test-sid",
+            raw: bool = False) -> str:
     payload = {
         "cwd": str(cwd),
         "workspace": {"current_dir": str(cwd), "project_dir": str(cwd)},
@@ -52,7 +53,12 @@ def _render(cwd: Path, home: Path, *, script: Path = STATUSLINE,
         env.update(extra_env)
     r = subprocess.run(["bash", str(script)], input=json.dumps(payload),
                        env=env, capture_output=True, text=True, timeout=20)
-    return _plain(r.stdout)
+    return r.stdout if raw else _plain(r.stdout)
+
+
+def _link(url: str, label: str) -> str:
+    """The OSC 8 wrap the script emits, byte for byte."""
+    return f"\x1b]8;;{url}\x1b\\{label}\x1b]8;;\x1b\\"
 
 
 class _Repo(unittest.TestCase):
@@ -152,6 +158,32 @@ class TestShape(_Repo):
         wt = self._worktree("demo-ab12")
         self.assertIn("⑂", self._bar(cwd=wt))
         self.assertNotIn("⑂", self._bar())
+
+    def test_branch_glyph_on_a_regular_checkout(self):
+        # The counterpart of ⑂: a plain checkout says so too, in the branch
+        # white, so the two states read as a pair rather than mark-or-nothing.
+        wt = self._worktree("demo-ab12")
+        self.assertIn("⎇ main", self._bar())
+        self.assertNotIn("⎇", self._bar(cwd=wt))
+        self._git("checkout", "-q", "--detach")
+        out = self._bar()
+        self.assertIn("⊘", out)
+        self.assertNotIn("⎇", out)
+
+    def test_branch_name_links_to_the_checkout_folder(self):
+        # Cmd+click on the name opens the folder the session is actually in:
+        # the project dir on a plain checkout, the worktree dir inside one.
+        wt = self._worktree("demo-ab12")
+        self.assertIn(_link(f"file://{self.repo}", "main"),
+                      self._bar(raw=True))
+        self.assertIn(_link(f"file://{wt}", "feature/demo-ab12"),
+                      self._bar(cwd=wt, raw=True))
+
+    def test_branch_link_percent_encodes_spaces(self):
+        wt = self.repo / ".worktrees" / "demo ab12"
+        self._git("worktree", "add", "-q", str(wt), "-b", "feature/sp")
+        url = f"file://{wt}".replace(" ", "%20")
+        self.assertIn(_link(url, "feature/sp"), self._bar(cwd=wt, raw=True))
 
 
 class TestDriftGlyph(_Repo):

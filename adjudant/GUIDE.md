@@ -198,7 +198,8 @@ flows through.
 
 The bar at the bottom of Claude Code is adjudant's too. It shows the git
 segment (branch, dirt, diff size, time since the last commit, ahead/behind,
-a `⑂` inside a worktree), the vault or beans slot (open items, what is in
+a `⎇` on a regular checkout or a `⑂` inside a worktree; the name opens
+the folder on Cmd+click), the vault or beans slot (open items, what is in
 motion, a handoff age), the model and context, and the day's cost. Install
 it once per machine with `statusline/install.sh` from the installed plugin
 (the README has the one-liner) and add the `statusLine` block it prints to

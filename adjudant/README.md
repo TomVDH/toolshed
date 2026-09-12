@@ -182,8 +182,12 @@ Glyphs in the git segment:
 
 | Glyph | Meaning |
 |---|---|
+| `⎇` | You are on a regular checkout. |
 | `⑂` | You are in a linked worktree, not the main checkout. |
 | red `!` | The repo breaks the branch rule. See below. |
+
+The branch name is a link. Cmd+click opens the folder the session works in: the
+worktree inside a linked worktree, the project folder otherwise.
 
 The red `!` appears in a beans-tracked repo when one of three things is true:
 
