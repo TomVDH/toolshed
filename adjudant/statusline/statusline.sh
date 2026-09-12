@@ -822,14 +822,14 @@ BEANSAWK
       # are suppressed so the flash stands alone with the pip. Bug and critical
       # counters always show: they are not ambient, they are alarms.
       beans_extra=""
-      [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕ ${b_beans_bug}${R}"
-      [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}! ${b_beans_crit}${R}"
+      [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕${b_beans_bug}${R}"
+      [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}!${b_beans_crit}${R}"
       if [ -n "$beans_flash" ]; then
         beans_extra+="$beans_flash"
       else
-        [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸ ${b_beans_doing}${R}"
-        [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡ ${b_beans_mile}${R}"
-        [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡ ${b_beans_epic}${R}"
+        [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸${b_beans_doing}${R}"
+        [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡${b_beans_mile}${R}"
+        [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡${b_beans_epic}${R}"
       fi
       beans_label="${beans_pip}${beans_extra}"
     elif [ -n "$beans_flash" ]; then
@@ -1114,7 +1114,7 @@ if [ -f "$breadcrumb" ]; then
       if [ -n "$banner" ]; then
         h_ba=$(echo "$banner" | sed -E 's/.*handoff age: ?\**([0-9]+[a-z]+).*/\1/')
         case "$h_ba" in (*[!0-9a-z]*|"") h_ba="?";; esac
-        handoff_label="⤳${h_ba}"
+        handoff_label="⤳ ${h_ba}"
         case "$banner" in
           *🔴*) handoff_col="$CTX_HOT"  ;;
           *🟡*) handoff_col="$CTX_WARN" ;;
@@ -1128,11 +1128,11 @@ if [ -f "$breadcrumb" ]; then
         if [ -n "$h_date" ]; then
           h_age=$(_daysdelta "$h_date")
           if [ -n "$h_age" ]; then
-            if   [ "$h_age" -lt 1   ]; then handoff_label="⤳fresh"
-            elif [ "$h_age" -lt 7   ]; then handoff_label="⤳${h_age}d"
+            if   [ "$h_age" -lt 1   ]; then handoff_label="⤳ fresh"
+            elif [ "$h_age" -lt 7   ]; then handoff_label="⤳ ${h_age}d"
             else
               h_weeks=$(( h_age / 7 ))
-              handoff_label="⤳${h_weeks}w"
+              handoff_label="⤳ ${h_weeks}w"
             fi
             # Color tier: 3-6d warn, 7d+ hot
             if   [ "$h_age" -ge 7 ]; then handoff_col="$CTX_HOT"
@@ -1251,8 +1251,8 @@ if [ -f "$breadcrumb" ]; then
       d_age=$(_daysdelta "${latest_dream:0:10}")
       if [ -n "$d_age" ] && [ "$d_age" -ge "$stale_after" ] 2>/dev/null; then
         drift_old=1
-        if [ "$d_age" -lt 7 ]; then drift_label="☾${d_age}d"
-        else                        drift_label="☾$(( d_age / 7 ))w"
+        if [ "$d_age" -lt 7 ]; then drift_label="☾ ${d_age}d"
+        else                        drift_label="☾ $(( d_age / 7 ))w"
         fi
         # Append the count when the report happens to carry a parseable one.
         drift_n=$(grep -oiE '[0-9]+[[:space:]]+(distinct[[:space:]]+)?drift item' "${proj_vault}/dreams/${latest_dream}" 2>/dev/null | head -1 | grep -oE '^[0-9]+')
