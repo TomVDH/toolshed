@@ -85,8 +85,7 @@ def main() -> int:
     if should_block:
         print(json.dumps({
             "decision": "block",
-            "reason": (f"You dropped {word}. Every message, last line, on its own. "
-                       "One reminder."),
+            "reason": f"{word} missing. Last line, every message. Said once.",
         }))
     return 0
 

@@ -35,7 +35,7 @@ intent_nag() {
   find "$tmp" -maxdepth 1 \( -name 'adjudant-intent-*' -o -name 'adjudant-turns-*' \
        -o -name 'adjudant-session-*' \) -mtime +1 -delete 2>/dev/null || true
   { : > "$fired"; } 2>/dev/null || true
-  printf -- '[adjudant] Intent line in `%s` is still a placeholder. One sentence, what you are here to do.\n' "$session_file"
+  printf -- '[adjudant] `%s`: intent line is a placeholder. Write it.\n' "$session_file"
 }
 
 # The canary's reporting half. SessionStart names the codeword once; this reads
@@ -56,8 +56,7 @@ except Exception:
     raise SystemExit(0)
 misses, turns = int(s.get("misses", 0)), int(s.get("turns", 0))
 if misses:
-    print(f"[adjudant] Canary dropped {misses}/{turns} turns. "
-          "Context is fraying — fresh session.")
+    print(f"[adjudant] Canary: {misses}/{turns} missed. Wrap up.")
 CANARY_PY
 }
 
@@ -118,7 +117,7 @@ except Exception:
     find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'adjudant-reminder-*' -mtime +1 -delete 2>/dev/null || true
     # brace group: silence stderr BEFORE the > open (unwritable TMPDIR)
     if [ -n "$marker" ]; then { : > "$marker"; } 2>/dev/null || true; fi
-    printf '[adjudant] No vault linked. `/adjudant connect` to start capturing.\n'
+    printf '[adjudant] No vault linked. Run `/adjudant connect`.\n'
   fi
 }
 

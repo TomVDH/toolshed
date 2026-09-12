@@ -102,7 +102,7 @@ def _voice_verdict(content: str, rel) -> int:
     if not hits:
         return 0
     named = ", ".join(repr(h) for h in hits[:4])
-    print(f"adjudant: {rel} has {named}. Cut it. (reference/voice.md)", file=sys.stderr)
+    print(f"adjudant: {rel} — {named}. Remove. (reference/voice.md)", file=sys.stderr)
     return 2
 
 
