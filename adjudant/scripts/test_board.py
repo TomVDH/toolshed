@@ -1681,7 +1681,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertNotIn("var(--mark-ink", self.src)
         self.assertNotIn("--mark-ink:", self.src)
         for who in ("him", "her"):
-            self.assertRegex(self.src, who + r":\{label:\"[^\"]+\",w:[\d.]+,d:\"[^\"]+\",\s*light:\{vh:[\d.]+,fig:\[", f"{who} has no light drawing")
+            self.assertRegex(self.src, who + r":\{label:\"[^\"]+\",band:\[\"#[0-9a-f]+\"[^\]]*\],w:[\d.]+,d:\"[^\"]+\",\s*light:\{vh:[\d.]+,fig:\[", f"{who} has no light drawing")
             self.assertRegex(self.src, who + r":\{[^\n]*\n\s*light:\{[^\n]*\n\s*dark:\{vh:[\d.]+,fig:\[", f"{who} has no dark drawing")
         fn = _js_function(self.src, "paintMark").replace(" ", "")
         self.assertIn("constart=DARK_SCHEME.matches?m.dark:m.light;", fn)
@@ -1783,7 +1783,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertNotIn("t-swatch", self.src)
         # the masks are defined once, on .sym, never per surface
         self.assertEqual(8, len(re.findall(r'\.sym\[data-sym="\d"\]\{', self.src)))
-        self.assertEqual(8, self.src.count('mask-image:url("data:image/svg+xml,') // 2)  # -webkit- and plain, once each
+        self.assertEqual(12, self.src.count('mask-image:url("data:image/svg+xml,') // 2)  # 8 ColorSym + 4 priority icons
 
     def test_the_sheet_leaves_the_top_layer_only_under_live_preview(self):
         # A modal dialog sits in the top layer, above impeccable's picker, so
@@ -1826,10 +1826,11 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         m = re.search(r"\n\s*\.legend \.k\{(.*?)\}", self.src, re.S)
         self.assertIsNotNone(m, ".legend .k rule missing")
         rule = m.group(1).replace(" ", "").replace("\n", "")
-        self.assertIn("background:none", rule)
+        self.assertIn("color-mix(inoklch,var(--c)", rule)
         self.assertIn("border:0", rule)
-        self.assertIn("box-shadow:inset0-2px0var(--c)", rule)
+        self.assertIn("border-radius:var(--r-chip)", rule)
         self.assertNotIn("border:1pxsolid", rule)
+        self.assertNotIn("box-shadow:inset", rule)
         # and the mark is large enough to be read as a shape, not a pip
         self.assertIn(".legend .k .sym{width:20px;height:20px}", self.src.replace("  ", ""))
         self.assertNotIn(".legend .k i{width:8px", self.src.replace("  ", ""))
@@ -2016,7 +2017,7 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         fn = _js_function(self.src, "paintFavicon")
         self.assertIn("data:image/svg+xml,", fn)
         self.assertIn("encodeURIComponent", fn)
-        self.assertIn("paintFavicon(MARK.band)", _js_function(self.src, "paintMark"))
+        self.assertIn("paintFavicon(band)", _js_function(self.src, "paintMark"))
         # a data URI fetches nothing, which is what validator 24 actually guards
         self.assertNotIn("url(http", self.src)
 
@@ -2125,7 +2126,8 @@ class TestTemplateIsOperableWithoutAMouse(unittest.TestCase):
         self.assertGreaterEqual(self.src.count('["#d2d7d8",'), 2, "the inverse drawings are the pale line")
         # one band, both figures, and it is still the wipe and the tab
         self.assertIn('band:["#7c1b16","#bd281c","#dd4d25"]', self.src)
-        self.assertEqual(1, self.src.count("band:["), "one band for both figures")
+        self.assertIn('band:["#5c2d82","#bd281c","#dd4d25"]', self.src)
+        self.assertEqual(2, self.src.count("band:["), "one band per figure")
 
     def test_the_two_filter_rails_say_which_axis_each_one_is(self):
         # They were two rows of identically shaped buttons, which read as one
@@ -2408,15 +2410,19 @@ class TestTemplateOpensACardHonestly(unittest.TestCase):
         # on a real board, 39 of 72 cards carried a mark the page threw away.
         self.assertIn("card.priority", _js_function(self.src, "priorityOf"))
         self.assertIn("priorityMark(card)", _js_function(self.src, "ticketNode"))
-        # a `low` or `deferred` bean must not shout in the same red as a `high`
-        self.assertIn("QUIET_PRIORITY", self.src)
+        self.assertIn("PRIO_QUIET", self.src)
+        self.assertIn("PRIO_CRITICAL", self.src)
+        self.assertIn('data-prio="critical"', self.src)
+        self.assertIn('data-prio="low"', self.src)
 
     def test_the_ordinary_category_is_not_printed_on_every_card(self):
-        # A vault deck is all `task` and a beans deck is mostly `task`, so
-        # naming the category on every card prints one word N times. What has to
-        # be visible is the exception: the epics among the tasks.
+        # Cards show only the type symbol (no word). The baseCategory is still
+        # computed in normalize() for the legend/sheet, but ticketNode never
+        # prints the category name — only the sym mark.
         self.assertIn("d.baseCategory", _js_function(self.src, "normalize"))
-        self.assertIn("state.baseCategory", _js_function(self.src, "ticketNode"))
+        face = _js_function(self.src, "ticketNode").replace(" ", "")
+        self.assertIn('el("i","symt-sym")', face)
+        self.assertNotIn("t-cat", face)
 
 
 class TestDeckToTaskWriteBack(unittest.TestCase):
