@@ -710,7 +710,7 @@ class TestUserPromptReminder(unittest.TestCase):
             r = _run("user-prompt-reminder.sh", project, home,
                      stdin=self._payload("note this decision in the vault"))
             self.assertEqual(r.returncode, 0)
-            self.assertIn("Vault not linked", r.stdout)
+            self.assertIn("No vault linked", r.stdout)
 
     def test_silent_on_unrelated_prompt(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -735,13 +735,13 @@ class TestUserPromptReminder(unittest.TestCase):
             project, home = self._unlinked_project(Path(tmp))
             r1 = _run("user-prompt-reminder.sh", project, home,
                       stdin=self._payload("vault please", session_id="s-once"))
-            self.assertIn("Vault not linked", r1.stdout)
+            self.assertIn("No vault linked", r1.stdout)
             r2 = _run("user-prompt-reminder.sh", project, home,
                       stdin=self._payload("vault again", session_id="s-once"))
             self.assertEqual(r2.stdout, "")  # suppressed for the same session
             r3 = _run("user-prompt-reminder.sh", project, home,
                       stdin=self._payload("vault anew", session_id="s-other"))
-            self.assertIn("Vault not linked", r3.stdout)  # new session fires
+            self.assertIn("No vault linked", r3.stdout)  # new session fires
 
 
 class TestZoneAwareness(unittest.TestCase):

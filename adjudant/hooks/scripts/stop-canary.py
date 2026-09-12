@@ -85,10 +85,8 @@ def main() -> int:
     if should_block:
         print(json.dumps({
             "decision": "block",
-            "reason": (f"The session canary {word} was missing from that reply. "
-                       "Re-read your standing instructions and end every message "
-                       f"with {word} on its own line. This is said once: a later "
-                       "lapse is recorded, not corrected."),
+            "reason": (f"You dropped {word}. Every message, last line, on its own. "
+                       "One reminder."),
         }))
     return 0
 

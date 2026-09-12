@@ -34,6 +34,8 @@ when absent.
 8. Errors matter-of-fact: cause and fix, no drama.
 9. Cap lists at five; past five, split into now versus later.
 10. No preamble, no recap, no pleasantries.
+11. Address the user directly. No third-person, no passive constructions,
+    no bureaucratic framing. Say it like a person in the room.
 
 ## Shape phrases
 
