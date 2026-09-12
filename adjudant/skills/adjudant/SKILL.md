@@ -1,16 +1,16 @@
 ---
 name: adjudant
-description: Operate an Obsidian vault from a code project. `/adjudant {connect|status|clean|dream|draw|board}` — connect onboards a project and asks where it lives; status reports where you are, what is wrong, and what is stale; clean removes what the vault does not need; dream reads the prose and reports what only judgement finds; draw builds diagrams, canvases, and bases; board runs a self-hosted kanban. Also fires whenever decisions, sessions, or notes are written into a linked vault.
-version: 4.1.33
+description: Operate an Obsidian vault from a code project. `/adjudant {connect|status|clean|dream|draw|board|orchestrate}` — connect onboards a project and asks where it lives; status reports where you are, what is wrong, and what is stale; clean removes what the vault does not need; dream reads the prose and reports what only judgement finds; draw builds diagrams, canvases, and bases; board runs a self-hosted kanban; orchestrate designates this session as an orchestrator. Also fires whenever decisions, sessions, or notes are written into a linked vault.
+version: 4.2.0
 user-invocable: true
-argument-hint: "[connect|status|clean|dream|draw|board] [args]"
+argument-hint: "[connect|status|clean|dream|draw|board|orchestrate] [args]"
 license: MIT
 ---
 
 # Adjudant
 
 <!-- VERBS:SUMMARY:START -->
-Vault editor/writer and project initializer. One skill, one command, six verbs.
+Vault editor/writer and project initializer. One skill, one command, seven verbs.
 <!-- VERBS:SUMMARY:END -->
 
 Pairs with hookify for universal drift-defense hooks.
@@ -26,6 +26,7 @@ Pairs with hookify for universal drift-defense hooks.
 | `dream` | `reference/dream.md` | Semantic refresh, the deepest tier: surfaces stale, superseded, redundant, or orphaned content as scored candidates you judge before anything changes. --folder scopes the walk to one subtree. |
 | `draw` | `reference/draw.md` | Create a canvas, base, or mermaid diagram, either hand-authored or generated from vault data. |
 | `board` | `reference/board.md` | Scaffold a self-hosted kanban seeded from tasks/ or beans: drag to move, open a card for the rest. Re-seeding keeps your dragged cards. |
+| `orchestrate` | `reference/orchestrate.md` | Turn this session into an orchestrator: delegates to worker sessions, tracks with beans, writes specs to the vault, works in plan mode. Hardened role. |
 | _(internals)_ | `reference/internals.md` | Not a verb. Hook wiring, verb-to-helper map, environment probes. Load only when the question is about adjudant's own machinery |
 <!-- VERBS:ROUTER:END -->
 
@@ -50,7 +51,7 @@ Verb weights live in `scripts/command-metadata.json` (`weight: light | medium | 
 <!-- VERBS:WEIGHTS:START -->
 - **Heavy verbs** (`dream`): run the backing helper with `--estimate-only` FIRST. If `cost.warn` is true, stop, show the numbers, and ask the user to proceed, scope down, or abort. Proceed only on explicit confirmation. If `warn` is false, run normally and include the estimate as one line.
 - **Medium verbs** (`status`, `clean`): no pre-flight. The helper's JSON carries a `cost` block; render it as one line.
-- **Light verbs** (`connect`, `draw`, `board`): no estimate; the static weight badge is enough.
+- **Light verbs** (`connect`, `draw`, `board`, `orchestrate`): no estimate; the static weight badge is enough.
 <!-- VERBS:WEIGHTS:END -->
 - The heavy list above is by verb weight. Two flag-scoped forms escalate into it and get the same `--estimate-only` pre-flight: `clean --deep` and `status all`.
 - `status all` sums two estimates: `status.py --estimate-only` plus `repo_scan.py --estimate-only`.

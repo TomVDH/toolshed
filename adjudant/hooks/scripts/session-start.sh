@@ -167,10 +167,11 @@ except Exception:
   # not leak \r into paths/slugs (it used to create phantom `slug\r/` dirs).
   vault_path=$(sed -n 's/^vault_path[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
   slug=$(sed -n 's/^slug[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
-  local voice_knob advisor_knob tracker_knob
+  local voice_knob advisor_knob tracker_knob orchestrator_knob
   voice_knob=$(sed -n 's/^voice[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
   advisor_knob=$(sed -n 's/^advisor[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
   tracker_knob=$(sed -n 's/^tracker[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
+  orchestrator_knob=$(sed -n 's/^orchestrator[:=][[:space:]]*//p' "$breadcrumb" 2>/dev/null | head -n1 | tr -d '\r' || true)
 
   [ -z "$slug" ] && return 0
   # The breadcrumb is a REPO-COMMITTED file: a cloned repo can carry any slug.
@@ -251,6 +252,15 @@ print(v or "")' "$CLAUDE_PLUGIN_ROOT/scripts" "$project_dir" 2>/dev/null || true
   case "${advisor_knob:-off}" in
     on|true|1|yes)
       printf -- '- Advisor: on. Load `reference/advisor.md` now and follow it: notice tasks, gaps, gaffes, and stale context while working. Urgent findings surface inline; the rest go to the board or the next status report. Run a context pulse at resume.\n'
+      ;;
+    *) : ;;
+  esac
+
+  # Orchestrator mode. `orchestrator: on` in the breadcrumb. Plan, delegate,
+  # track with beans, write to vault. Direct code only under 10 lines.
+  case "${orchestrator_knob:-off}" in
+    on|true|1|yes)
+      printf -- '- Orchestrator: active. Plan, delegate, track with beans. Direct code only under 10 lines. Load `reference/orchestrate.md` for the full contract. Poll `ListAgents` now and report what sessions exist.\n'
       ;;
     *) : ;;
   esac

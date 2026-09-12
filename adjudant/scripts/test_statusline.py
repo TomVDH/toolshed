@@ -351,7 +351,7 @@ class TestBeansFlash(_Repo):
                     ("demo-3", "task", "todo"))
 
     def test_first_paint_is_silent_and_records(self):
-        self.assertEqual(self._paint(), "↯ demo  ◍ 3")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 3")
         cache = list((self.home / ".claude" / "statusline-cache").glob("beans-*"))
         self.assertEqual(len(cache), 1)
         self.assertTrue(cache[0].read_text().startswith("3 0 3 "))
@@ -359,45 +359,45 @@ class TestBeansFlash(_Repo):
     def test_added_bean_flashes_plus(self):
         self._paint()
         self._write("demo-4")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 4 +1")
         # and keeps flashing on the next repaint inside the TTL
-        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 4 +1")
 
     def test_two_added_at_once_counts_both(self):
         self._paint()
         self._write("demo-4"); self._write("demo-5")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 5 +2")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 5 +2")
 
     def test_removed_bean_flashes_minus(self):
         self._paint()
         (self.repo / ".beans" / "demo-2--demo-2-slug.md").unlink()
-        self.assertEqual(self._paint(), "↯ demo  ◍ 2 −1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 2 −1")
 
     def test_closed_bean_flashes_check(self):
         self._paint()
         self._write("demo-1", "completed")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 2 ✓1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 2 ✓1")
 
     def test_reopened_bean_flashes_arrow(self):
         self._write("demo-1", "completed")
         self._paint()
         self._write("demo-1", "todo")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 3 ↺1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 3 ↺1")
 
     def test_flash_expires(self):
         import time
         self._paint(ttl="1")
         self._write("demo-4")
-        self.assertEqual(self._paint(ttl="1"), "↯ demo  ◍ 4 +1")
+        self.assertEqual(self._paint(ttl="1"), "↯ demo · ◍ 4 +1")
         time.sleep(1.2)
-        self.assertEqual(self._paint(ttl="1"), "↯ demo  ◍ 4")
+        self.assertEqual(self._paint(ttl="1"), "↯ demo · ◍ 4")
 
     def test_a_new_change_replaces_a_live_flash(self):
         self._paint()
         self._write("demo-4")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 4 +1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 4 +1")
         self._write("demo-4", "completed")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 3 ✓1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 3 ✓1")
 
     def test_unchanged_counts_do_not_flash_or_rewrite(self):
         self._paint()
@@ -406,7 +406,7 @@ class TestBeansFlash(_Repo):
         # an edit that changes no count is not news
         (self.repo / ".beans" / "demo-1--demo-1-slug.md").write_text(
             "---\ntitle: renamed\nstatus: todo\ntype: task\n---\n")
-        self.assertEqual(self._paint(), "↯ demo  ◍ 3")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 3")
         self.assertEqual(cache.stat().st_mtime_ns, before)
 
     def test_last_open_bean_going_still_flashes(self):
@@ -415,7 +415,7 @@ class TestBeansFlash(_Repo):
         self._write("demo-4")
         self._paint()
         (self.repo / ".beans" / "demo-4--demo-4-slug.md").unlink()
-        self.assertEqual(self._paint(), "↯ demo  ◍ 0 −1")
+        self.assertEqual(self._paint(), "↯ demo · ◍ 0 −1")
 
 
 class TestShim(_Repo):

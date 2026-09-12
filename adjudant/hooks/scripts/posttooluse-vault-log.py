@@ -105,6 +105,17 @@ def _bootstrap() -> None:
                 c in "abcdefghijklmnopqrstuvwxyz0123456789-" for c in slug)
 
 
+def _ops_flash_py(msg: str, project_dir: str) -> None:
+    try:
+        cache = Path.home() / ".claude" / "statusline-cache"
+        if not cache.is_dir():
+            return
+        key = project_dir.replace("/", "_").replace(" ", "-")[-120:]
+        (cache / f"ops-{key}").write_text(f"{int(time.time())} {msg}\n")
+    except Exception:
+        pass
+
+
 def _mark_vault_write(session_id: str = "") -> None:
     """Tell the statusline adjudant just documented something. Never raises.
 
@@ -318,6 +329,7 @@ def main() -> int:
         with session_file.open("a") as f:
             f.write(f"- {ts} · {label}: {entry}\n")
         _mark_vault_write(session_id)
+        _ops_flash_py(f"vault: {label}", os.environ.get("CLAUDE_PROJECT_DIR", ""))
     except OSError:
         pass  # log-write failure must not block job 2
 

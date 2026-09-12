@@ -776,12 +776,16 @@ BEANSAWK
     case "$BEANS_FLASH_TTL" in (*[!0-9]*|"") BEANS_FLASH_TTL=8;; esac
     beans_flash=""
     _bf_file="${CACHE_DIR}/beans-$(_ckey "$beans_dir")"
-    _bf_open=""; _bf_doing=""; _bf_all=""; _bf_ts=0; _bf_text=""
-    [ -f "$_bf_file" ] && read -r _bf_open _bf_doing _bf_all _bf_ts _bf_text < "$_bf_file" 2>/dev/null
+    _bf_open=""; _bf_doing=""; _bf_all=""; _bf_crit=""; _bf_bug=""; _bf_ts=0; _bf_text=""
+    [ -f "$_bf_file" ] && read -r _bf_open _bf_doing _bf_all _bf_crit _bf_bug _bf_ts _bf_text < "$_bf_file" 2>/dev/null
     case "$_bf_ts" in (*[!0-9]*|"") _bf_ts=0;; esac
+    case "$_bf_crit" in (*[!0-9]*|"") _bf_crit=0;; esac
+    case "$_bf_bug" in (*[!0-9]*|"") _bf_bug=0;; esac
     _bf_new=""
     if [ -n "$_bf_all" ]; then
-      if   [ "$b_beans_all"  -gt "$_bf_all"  ] 2>/dev/null; then _bf_new="+$(( b_beans_all - _bf_all ))"
+      if   [ "$b_beans_crit" -gt "$_bf_crit" ] 2>/dev/null; then _bf_new="!$(( b_beans_crit - _bf_crit ))"
+      elif [ "$b_beans_bug"  -gt "$_bf_bug"  ] 2>/dev/null; then _bf_new="✕$(( b_beans_bug - _bf_bug ))"
+      elif [ "$b_beans_all"  -gt "$_bf_all"  ] 2>/dev/null; then _bf_new="+$(( b_beans_all - _bf_all ))"
       elif [ "$b_beans_all"  -lt "$_bf_all"  ] 2>/dev/null; then _bf_new="−$(( _bf_all - b_beans_all ))"
       elif [ "$b_beans_open" -lt "$_bf_open" ] 2>/dev/null; then _bf_new="✓$(( _bf_open - b_beans_open ))"
       elif [ "$b_beans_open" -gt "$_bf_open" ] 2>/dev/null; then _bf_new="↺$(( b_beans_open - _bf_open ))"
@@ -790,15 +794,17 @@ BEANSAWK
     if [ -n "$_bf_new" ]; then
       _bf_ts=$NOW; _bf_text="$_bf_new"
     fi
-    if [ -n "$_bf_new" ] || [ "$b_beans_open $b_beans_doing $b_beans_all" != "$_bf_open $_bf_doing $_bf_all" ]; then
-      printf '%s %s %s %s %s\n' "$b_beans_open" "$b_beans_doing" "$b_beans_all" "$_bf_ts" "$_bf_text" > "$_bf_file" 2>/dev/null
+    if [ -n "$_bf_new" ] || [ "$b_beans_open $b_beans_doing $b_beans_all $b_beans_crit $b_beans_bug" != "$_bf_open $_bf_doing $_bf_all $_bf_crit $_bf_bug" ]; then
+      printf '%s %s %s %s %s %s %s\n' "$b_beans_open" "$b_beans_doing" "$b_beans_all" "$b_beans_crit" "$b_beans_bug" "$_bf_ts" "$_bf_text" > "$_bf_file" 2>/dev/null
     fi
     if [ -n "$_bf_text" ] && [ $(( NOW - _bf_ts )) -lt "$BEANS_FLASH_TTL" ]; then
       case "$_bf_text" in
-        +*) beans_flash=" ${DIFF_ADD}${_bf_text}${R}" ;;
-        −*) beans_flash=" ${DIFF_DEL}${_bf_text}${R}" ;;
-        ✓*) beans_flash=" ${VAULTOP}${_bf_text}${R}" ;;
-        *)  beans_flash=" ${BEANS}${_bf_text}${R}" ;;
+        !*) beans_flash="\033[48;2;70;20;20m${CTX_HOT} ${_bf_text} ${R}" ;;
+        ✕*) beans_flash="\033[48;2;45;45;50m${BUG} ${_bf_text} ${R}" ;;
+        +*) beans_flash="\033[48;2;30;55;28m${DIFF_ADD} ${_bf_text} ${R}" ;;
+        −*) beans_flash="\033[48;2;60;28;25m${DIFF_DEL} ${_bf_text} ${R}" ;;
+        ✓*) beans_flash="\033[48;2;28;50;38m${VAULTOP} ${_bf_text} ${R}" ;;
+        *)  beans_flash="\033[48;2;55;42;25m${BEANS} ${_bf_text} ${R}" ;;
       esac
     fi
 
@@ -812,21 +818,44 @@ BEANSAWK
       # clickable would put three hover targets on one figure and imply they
       # lead somewhere different. Signal 5 wraps beans_pip alone.
       beans_pip="${BEANS}${BEANS_ICON} ${b_beans_open}${R}"
-      # Escalating left to right: moving, then closeable largest unit first,
-      # then broken, then urgent. The two ⬡ readings share a glyph and differ
-      # only in hue, so they stay adjacent — gold milestone, orchid epic.
-      # The flash leads: it is the newest fact and it is gone in seconds.
-      beans_extra="$beans_flash"
-      [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸${b_beans_doing}${R}"
-      [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡${b_beans_mile}${R}"
-      [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡${b_beans_epic}${R}"
+      # When a flash is live, it IS the extra — the doing/milestone/epic counts
+      # are suppressed so the flash stands alone with the pip. Bug and critical
+      # counters always show: they are not ambient, they are alarms.
+      beans_extra=""
       [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕${b_beans_bug}${R}"
       [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}!${b_beans_crit}${R}"
+      if [ -n "$beans_flash" ]; then
+        beans_extra+="$beans_flash"
+      else
+        [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸${b_beans_doing}${R}"
+        [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡${b_beans_mile}${R}"
+        [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡${b_beans_epic}${R}"
+      fi
       beans_label="${beans_pip}${beans_extra}"
     elif [ -n "$beans_flash" ]; then
       # The last open bean just went: nothing to count, but the going is news.
       beans_pip="${BEANS}${BEANS_ICON} 0${R}"; beans_extra="$beans_flash"
       beans_label="${beans_pip}${beans_extra}"
+    fi
+  fi
+fi
+
+# ── S0c: ops flash — adjudant operation status ─────────────────────────────
+# Any hook or verb can write a one-line message to the ops flash file:
+#   printf '%s %s\n' "$(date +%s)" "board: 44 cards" > "$CACHE_DIR/ops-$(ckey)"
+# The statusline picks it up on the next repaint and shows it for OPS_FLASH_TTL
+# seconds, then it expires. Same pattern as the bean flash, different slot.
+ops_flash=""
+OPS_FLASH_TTL="${ADJUDANT_OPS_FLASH_TTL:-8}"
+case "$OPS_FLASH_TTL" in (*[!0-9]*|"") OPS_FLASH_TTL=8;; esac
+if [ -n "${CACHE_DIR:-}" ] && [ -n "${project_dir:-}" ]; then
+  _of_file="${CACHE_DIR}/ops-$(_ckey "$project_dir")"
+  if [ -f "$_of_file" ]; then
+    _of_ts=0; _of_text=""
+    read -r _of_ts _of_text < "$_of_file" 2>/dev/null
+    case "$_of_ts" in (*[!0-9]*|"") _of_ts=0;; esac
+    if [ -n "$_of_text" ] && [ $(( NOW - _of_ts )) -lt "$OPS_FLASH_TTL" ]; then
+      ops_flash=" ${BOLT_FRESH}⚡${_of_text}${R}"
     fi
   fi
 fi
@@ -1300,9 +1329,10 @@ if [ -f "$breadcrumb" ]; then
 
   # -- tail: ambient telemetry, nothing here is a call to act
   if [ -n "$board_label" ]; then
-    s2_tail_col+="${SP}${board_col}${board_label}${R}"
+    s2_tail_col+=" \033[38;2;100;100;105m·\033[0m ${board_col}${board_label}${R}"
     [ -n "$board_dir" ] && s2_tail_col+=" ${board_dir_col}${board_dir}${R}"
   fi
+  [ -n "$ops_flash"    ] && s2_tail_col+="${ops_flash}"
   [ -n "$drift_label"  ] && s2_tail_col+="${SP}${CTX_WARN}${drift_label}${R}"
   [ -n "$ledger_label" ] && s2_tail_col+="${SP}${METRIC}${ledger_label}${R}"
 fi

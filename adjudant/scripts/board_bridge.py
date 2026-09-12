@@ -28,10 +28,23 @@ survived the minimal YAML parser and poisoned card ids.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
+
+
+def _ops_flash(msg: str, project_dir: str) -> None:
+    cache = Path.home() / ".claude" / "statusline-cache"
+    if not cache.is_dir():
+        return
+    key = str(project_dir).replace("/", "_").replace(" ", "-")[-120:]
+    try:
+        (cache / f"ops-{key}").write_text(f"{int(time.time())} {msg}\n")
+    except OSError:
+        pass
 from typing import Optional
 
 from _render import render
@@ -98,6 +111,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 1
     print(verdict)
+    if verdict in ("reseeded", "created", "tasks-synced", "html-refreshed"):
+        _ops_flash(f"board: {verdict}", args.project_dir)
     return 0
 
 
