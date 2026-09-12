@@ -489,16 +489,28 @@ else
   #    the hash is nine columns of noise, so it is suppressed. It comes back on a
   #    detached HEAD, where it is the ONLY identity available — marked with ⊘ so
   #    the state is explicit rather than inferred from an absence.
+  #
+  #    The name is an OSC 8 link to the folder the session is actually in:
+  #    workspace.current_dir, which is the worktree dir inside a linked worktree
+  #    and the project dir otherwise. Cmd+click opens it in Finder; a terminal
+  #    without OSC 8 shows the bare name. file:// wants spaces as %20, and a
+  #    OneDrive path has them. Same wrap as the board and handoff links in S2.
+  #
+  #    A plain checkout gets ⎇ in front, in the branch white, so it reads as
+  #    the counterpart of the indigo ⑂ a linked worktree shows, not as the
+  #    absence of one. Never both; a detached HEAD keeps ⊘ alone.
   if [ -z "$branch" ] && [ -n "$hash_plain" ]; then
     s1_col+="${BRANCH_DIRTY}⊘${R} ${HASH}${hash_plain}${R}"
     [ -n "$dirty" ] && s1_col+="${HASH}${dirty}${R}"
   else
+    [ -z "$wt" ] && s1_col+="${BRANCH}⎇${R} "
+    branch_lnk="\033]8;;file://${cwd// /%20}\033\\\\${branch}\033]8;;\033\\\\"
     if [ -n "$tracked_dirty" ]; then
-      s1_col+="${BRANCH_DIRTY}${branch}${dirty}${R}"
+      s1_col+="${BRANCH_DIRTY}${branch_lnk}${dirty}${R}"
     elif [ -n "$untracked" ]; then
-      s1_col+="${BRANCH}${branch}${R}${HASH}${untracked}${R}"
+      s1_col+="${BRANCH}${branch_lnk}${R}${HASH}${untracked}${R}"
     else
-      s1_col+="${BRANCH}${branch}${R}"
+      s1_col+="${BRANCH}${branch_lnk}${R}"
     fi
   fi
 
