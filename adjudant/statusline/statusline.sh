@@ -1329,7 +1329,7 @@ if [ -f "$breadcrumb" ]; then
 
   # -- tail: ambient telemetry, nothing here is a call to act
   if [ -n "$board_label" ]; then
-    s2_tail_col+=" \033[38;2;100;100;105m·\033[0m ${board_col}${board_label}${R}"
+    s2_tail_col+="${SEP}${board_col}${board_label}${R}"
     [ -n "$board_dir" ] && s2_tail_col+=" ${board_dir_col}${board_dir}${R}"
   fi
   [ -n "$ops_flash"    ] && s2_tail_col+="${ops_flash}"
