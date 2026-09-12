@@ -822,14 +822,14 @@ BEANSAWK
       # are suppressed so the flash stands alone with the pip. Bug and critical
       # counters always show: they are not ambient, they are alarms.
       beans_extra=""
-      [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕${b_beans_bug}${R}"
-      [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}!${b_beans_crit}${R}"
+      [ "${b_beans_bug:-0}"   -gt 0 ] 2>/dev/null && beans_extra+=" ${BUG}✕ ${b_beans_bug}${R}"
+      [ "${b_beans_crit:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX_HOT}! ${b_beans_crit}${R}"
       if [ -n "$beans_flash" ]; then
         beans_extra+="$beans_flash"
       else
-        [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸${b_beans_doing}${R}"
-        [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡${b_beans_mile}${R}"
-        [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡${b_beans_epic}${R}"
+        [ "${b_beans_doing:-0}" -gt 0 ] 2>/dev/null && beans_extra+=" ${CTX}▸ ${b_beans_doing}${R}"
+        [ "${b_beans_mile:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${MILE}⬡ ${b_beans_mile}${R}"
+        [ "${b_beans_epic:-0}"  -gt 0 ] 2>/dev/null && beans_extra+=" ${EPIC}⬡ ${b_beans_epic}${R}"
       fi
       beans_label="${beans_pip}${beans_extra}"
     elif [ -n "$beans_flash" ]; then
@@ -1410,15 +1410,17 @@ case "$rl5_raw" in (*[!0-9.]*|"") rl5_raw="";; esac
 if [ -n "$rl5_raw" ]; then
   rl5=$(printf "%.0f" "$rl5_raw" 2>/dev/null) || rl5=""
 fi
-if [ -n "$rl5" ] && [ "$rl5" -ge 50 ] 2>/dev/null; then
+if [ -n "$rl5" ] && [ "$rl5" -ge 25 ] 2>/dev/null; then
   if [ "$rl5" -gt 100 ]; then
     rl_col="${CTX_HOT}⊘${R}"
+  elif [ "$rl5" -ge 90 ]; then
+    rl_col="${CTX_HOT}●${R}"
+  elif [ "$rl5" -ge 75 ]; then
+    rl_col="${CTX_WARN}◕${R}"
+  elif [ "$rl5" -ge 50 ]; then
+    rl_col="${CTX}◑${R}"
   else
-    _rl=(▁ ▂ ▃ ▄ ▅ ▆ ▇ █)
-    _i=$(( (rl5 + 12) * 8 / 100 ))
-    [ "$_i" -lt 1 ] && _i=1; [ "$_i" -gt 8 ] && _i=8
-    _c="$CTX_WARN"; [ "$rl5" -gt 85 ] && _c="$CTX_HOT"
-    rl_col="${_c}${_rl[$((_i-1))]}${R}"
+    rl_col="${METRIC}◔${R}"
   fi
 fi
 
