@@ -182,7 +182,7 @@ mkdir -p "$CACHE_DIR" 2>/dev/null
 # collapse runs of it and an absent middle field would silently shift every
 # later field left (an empty effort.level would land ctx% in $effort_raw).
 # \037 is not whitespace, so empty fields are preserved positionally.
-IFS=$'\037' read -r cwd proj_dir sid model_raw effort_raw used_pct rl5_raw <<<"$(
+IFS=$'\037' read -r cwd proj_dir sid model_raw effort_raw used_pct rl5_raw ctx_size <<<"$(
   printf '%s' "$input" | jq -r '[
     (.workspace.current_dir // .cwd // ""),
     (.workspace.project_dir // .workspace.current_dir // .cwd // ""),
@@ -190,7 +190,8 @@ IFS=$'\037' read -r cwd proj_dir sid model_raw effort_raw used_pct rl5_raw <<<"$
     (.model.display_name // .model.id // ""),
     (.effort.level // ""),
     ((.context_window.used_percentage // "") | tostring),
-    ((.rate_limits.five_hour.used_percentage // "") | tostring)
+    ((.rate_limits.five_hour.used_percentage // "") | tostring),
+    ((.context_window.context_window_size // "") | tostring)
   ] | join("")' 2>/dev/null)"
 
 # Where the breadcrumb is read from. The project root, except in a linked
@@ -845,9 +846,9 @@ fi
 #      the worktree outlived its bean. One awk over one file.
 #   3. An in-progress feature bean has no feature/<id> branch. One
 #      `for-each-ref` (~5ms), and only when the awk pass listed any such bean.
-# Sits in front of the branch like ⑂ does, because s1_col is already
-# assembled by the time the beans scan has run and splicing into its middle
-# would couple this block to S1's layout.
+# Recolours the glyph S1 already placed, because s1_col is assembled by the
+# time the beans scan has run; a substitution on the glyph's own colour code
+# is the one seam that does not couple this block to S1's layout.
 git_drift=""
 if [ "${beans_tracker:-}" = "beans" ] && [ -n "$branch" ] && [ -n "$beans_cfg" ]; then
   if [ -z "$wt" ]; then
@@ -876,8 +877,14 @@ if [ "${beans_tracker:-}" = "beans" ] && [ -n "$branch" ] && [ -n "$beans_cfg" ]
     IFS="$_old_ifs"
   fi
 fi
+# The red is the message, and it goes on the checkout glyph: ⎇ or ⑂ painted
+# in the diff-red instead of white or indigo. The glyph is already in s1_col
+# with its colour in front of it, so this is one substitution, not a second
+# mark. Drift needs a branch name (the gate above), and a named branch always
+# has one of the two glyphs, so there is no third case.
 if [ -n "$git_drift" ]; then
-  s1_col="${DIFF_DEL}!${R} ${s1_col}"
+  s1_col="${s1_col/"${BRANCH}⎇"/"${DIFF_DEL}⎇"}"
+  s1_col="${s1_col/"${WT}⑂"/"${DIFF_DEL}⑂"}"
 fi
 
 
@@ -1386,6 +1393,13 @@ if [ -n "$rl5" ] && [ "$rl5" -ge 50 ] 2>/dev/null; then
 fi
 
 s4_col="${MODEL}${model}${R}"
+# Extended context is named, the default is not. context_window_size is
+# 200000 by default and 1000000 on a model with the larger window; the size
+# is the fact, so the tag follows it rather than the model's name (which may
+# or may not say "(1M context)", and that parenthetical is dropped above).
+case "$ctx_size" in
+  [1-9][0-9][0-9][0-9][0-9][0-9][0-9]*) s4_col+=" ${MODEL}1M${R}" ;;
+esac
 [ -n "$e"       ] && s4_col+="${SP}${EFFORT}${e}${R}"
 [ -n "$ultra"   ] && s4_col+=" ${ULTRA}●${R}"
 [ -n "$ctx_col" ] && s4_col+="${SP}${ctx_col}"
