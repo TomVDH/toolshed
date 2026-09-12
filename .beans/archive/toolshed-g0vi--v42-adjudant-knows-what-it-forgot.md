@@ -1,11 +1,11 @@
 ---
 # toolshed-g0vi
 title: v4.2 — Adjudant knows what it forgot
-status: todo
+status: scrapped
 type: milestone
 priority: high
 created_at: 2026-09-10T09:25:27Z
-updated_at: 2026-09-10T09:25:27Z
+updated_at: 2026-09-12T18:53:20Z
 ---
 
 The archive verb and the memory that survives it.
@@ -30,3 +30,7 @@ because of it. Nothing downstream of that reassessment can start.
 `reference/state-contract.md:27` also lists a statusline state
 `"remising" (reserved, nothing writes it yet)` — the statusline in iCloud is
 already polling for a directory no code creates.
+
+## Reasons for Scrapping
+
+Both children (remise, MEMORY.md) scrapped. Milestone is an empty container.

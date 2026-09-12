@@ -1,10 +1,11 @@
 ---
 # toolshed-iiu9
 title: MEMORY.md, the perma-memory
-status: todo
+status: scrapped
 type: feature
+priority: normal
 created_at: 2026-09-10T09:25:27Z
-updated_at: 2026-09-10T09:25:27Z
+updated_at: 2026-09-12T18:52:12Z
 parent: toolshed-g0vi
 ---
 
@@ -20,3 +21,7 @@ Three questions still open in that doc:
 - [ ] The analysis-to-promotion contract: what earns a line in MEMORY.md
 
 Separable from remise, but remise is what makes it necessary.
+
+## Reasons for Scrapping
+
+Beans tracks work, /remember tracks session state, Claude auto-memory tracks user context. Three systems already cover what MEMORY.md would do.
