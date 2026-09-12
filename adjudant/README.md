@@ -28,7 +28,7 @@ Link the project once:
 Every other verb reads that file. You do not type the path again.
 
 <!-- VERBS:TABLE:START -->
-## The six verbs
+## The seven verbs
 
 | Verb | What it does |
 |---|---|
@@ -38,6 +38,7 @@ Every other verb reads that file. You do not type the path again.
 | `/adjudant dream [--folder <path>]` | Reads the prose and reports what only judgement finds. |
 | `/adjudant draw <canvas\|base\|diagram> <name\|type>` | Builds diagrams, canvases, and bases. |
 | `/adjudant board [scaffold\|serve\|status] [--project SLUG\|--all] [--from-tasks] [--force]` | Runs a self-hosted kanban. |
+| `/adjudant orchestrate [on\|off]` | Designates this session as an orchestrator. |
 <!-- VERBS:TABLE:END -->
 
 Start with `status`. It changes nothing. It tells you what the other verbs do next.

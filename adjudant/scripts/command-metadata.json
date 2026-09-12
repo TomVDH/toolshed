@@ -1,6 +1,6 @@
 {
   "name": "adjudant",
-  "version": "4.1.33",
+  "version": "4.2.0",
   "verbs": [
     {
       "name": "connect",
@@ -59,6 +59,15 @@
       "description": "Scaffold a self-hosted kanban seeded from tasks/ or beans: drag to move, open a card for the rest. Re-seeding keeps your dragged cards.",
       "argumentHint": "[scaffold|serve|status] [--project SLUG|--all] [--from-tasks] [--force]",
       "reference": "reference/board.md",
+      "weight": "light"
+    },
+    {
+      "name": "orchestrate",
+      "audience": "full",
+      "blurb": "designates this session as an orchestrator",
+      "description": "Turn this session into an orchestrator: delegates to worker sessions, tracks with beans, writes specs to the vault, works in plan mode. Hardened role.",
+      "argumentHint": "[on|off]",
+      "reference": "reference/orchestrate.md",
       "weight": "light"
     }
   ],
