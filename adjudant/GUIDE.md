@@ -207,7 +207,7 @@ it once per machine with `statusline/install.sh` from the installed plugin
 
 After that nothing is yours to maintain: each session start points the shim
 in `~/.claude` at the plugin copy that is installed right now. Two things
-worth knowing. The `!` in front of the branch is the branch rule from
+worth knowing. The checkout glyph turning red is the branch rule from
 section 10 breaking: the main checkout is off `main`, the worktree you are
 in belongs to a finished bean, or a feature in progress has no branch. And
 in a fresh worktree the bar is quiet about all of that until you copy

@@ -141,8 +141,8 @@ in `~/.claude/adjudant-statusline-path`, falls back to the newest installed
 plugin copy, honours `ADJUDANT_STATUSLINE`) and `install.sh` (run once per
 machine). It reads adjudant's files directly, never its Python, because it
 repaints several times a second; the files it reads are the table in
-`state-contract.md`. Its git segment carries one glyph of adjudant's own: a
-red `!` in front of the branch when a `tracker: beans` repo breaks the branch
+`state-contract.md`. Its git segment carries one signal of adjudant's own: the
+checkout glyph (`⎇` or `⑂`) turns red when a `tracker: beans` repo breaks the branch
 rule (main checkout off main, a `feature/<id>` worktree whose bean is closed,
 or an in-progress feature with no branch). `scripts/test_statusline.py` drives
 it against real repositories and worktrees under a throwaway HOME;

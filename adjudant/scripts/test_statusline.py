@@ -33,9 +33,10 @@ def _plain(text: str) -> str:
     return _ANSI.sub("", text)
 
 
+
 def _render(cwd: Path, home: Path, *, script: Path = STATUSLINE,
             extra_env: dict | None = None, sid: str = "test-sid",
-            raw: bool = False) -> str:
+            raw: bool = False, ctx_size: int | None = None) -> str:
     payload = {
         "cwd": str(cwd),
         "workspace": {"current_dir": str(cwd), "project_dir": str(cwd)},
@@ -44,6 +45,8 @@ def _render(cwd: Path, home: Path, *, script: Path = STATUSLINE,
         "effort": {"level": "medium"},
         "context_window": {"used_percentage": 12},
     }
+    if ctx_size is not None:
+        payload["context_window"]["context_window_size"] = ctx_size
     env = dict(os.environ)
     env["HOME"] = str(home)
     env["TMPDIR"] = str(home)
@@ -159,6 +162,30 @@ class TestShape(_Repo):
         self.assertIn("⑂", self._bar(cwd=wt))
         self.assertNotIn("⑂", self._bar())
 
+    def test_drift_paints_the_glyph_red_and_drops_the_bang(self):
+        # The red is the message; it sits on the glyph, not in front of it.
+        red = TestDriftGlyph.RED
+        self._breadcrumb()
+        self._beans(("demo-ab12", "task", "todo"))
+        self._git("switch", "-qc", "feature/demo-ab12")
+        out = self._bar(raw=True)
+        self.assertIn(f"{red}⎇", out)
+        self.assertNotIn("! ", _plain(out))
+        self._beans(("demo-zz99", "feature", "completed"))
+        wt = self._worktree("demo-zz99")
+        out = self._bar(cwd=wt, raw=True)
+        self.assertIn(f"{red}⑂", out)
+        self.assertNotIn("! ", _plain(out))
+        # A detached HEAD has no branch name, and the drift rules need one,
+        # so it carries no mark of either kind: ⊘ and the hash, nothing red.
+        self._git("switch", "-q", "main")
+        self._beans(("demo-ip77", "feature", "in-progress"))
+        self._git("checkout", "-q", "--detach")
+        out = self._bar(raw=True)
+        self.assertIn("⊘", _plain(out))
+        self.assertNotIn("! ", _plain(out))
+        self.assertNotIn(red, out.split("│")[1])
+
     def test_branch_glyph_on_a_regular_checkout(self):
         # The counterpart of ⑂: a plain checkout says so too, in the branch
         # white, so the two states read as a pair rather than mark-or-nothing.
@@ -179,6 +206,14 @@ class TestShape(_Repo):
         self.assertIn(_link(f"file://{wt}", "feature/demo-ab12"),
                       self._bar(cwd=wt, raw=True))
 
+    def test_extended_context_is_named_next_to_the_model(self):
+        # context_window_size is 200000 by default and 1000000 on a model
+        # with extended context. The bar says 1M then, and nothing otherwise:
+        # not on the default size, not when the field is absent.
+        self.assertIn("Test 1M", self._bar(ctx_size=1_000_000))
+        self.assertNotIn("1M", self._bar(ctx_size=200_000))
+        self.assertNotIn("1M", self._bar())
+
     def test_branch_link_percent_encodes_spaces(self):
         wt = self.repo / ".worktrees" / "demo ab12"
         self._git("worktree", "add", "-q", str(wt), "-b", "feature/sp")
@@ -187,20 +222,21 @@ class TestShape(_Repo):
 
 
 class TestDriftGlyph(_Repo):
-    """One red `!` in front of the git segment when the repo breaks the
-    branch rule. Gated on `tracker: beans`; other repos are never nagged."""
+    """The checkout glyph (⎇ or ⑂) turns red when the repo breaks the
+    branch rule; there is no separate mark. Gated on `tracker: beans`;
+    other repos are never nagged."""
 
-    @staticmethod
-    def _drift(out: str) -> bool:
-        # The glyph sits at the very front of the git segment, before ⑂ and
-        # the branch. The bar may open with an account badge segment, so find
-        # the segment that carries the branch rather than assuming position.
-        # The beans slot's own `!N` (critical count) carries a digit, so a
-        # bare "! " is unambiguous.
-        for seg in out.split("│"):
-            if "main" in seg or "feature/" in seg:
-                return seg.lstrip().startswith("! ")
-        return False
+    RED = "\x1b[38;2;185;95;85m"
+
+    @classmethod
+    def _drift(cls, out: str) -> bool:
+        # `out` is the raw bar. Drift is the glyph painted in the diff-red;
+        # a healthy bar paints ⎇ white and ⑂ indigo.
+        return f"{cls.RED}⎇" in out or f"{cls.RED}⑂" in out
+
+    def _bar(self, cwd=None, **kw):
+        kw.setdefault("raw", True)
+        return super()._bar(cwd, **kw)
 
     def test_main_checkout_off_main_is_drift(self):
         self._breadcrumb()

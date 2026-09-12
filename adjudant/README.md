@@ -184,19 +184,19 @@ Glyphs in the git segment:
 |---|---|
 | `⎇` | You are on a regular checkout. |
 | `⑂` | You are in a linked worktree, not the main checkout. |
-| red `!` | The repo breaks the branch rule. See below. |
+| red `⎇` or `⑂` | The repo breaks the branch rule. See below. |
 
 The branch name is a link. Cmd+click opens the folder the session works in: the
 worktree inside a linked worktree, the project folder otherwise.
 
-The red `!` appears in a beans-tracked repo when one of three things is true:
+The glyph turns red in a beans-tracked repo when one of three things is true:
 
 1. The main checkout is on a branch other than `main`.
 2. You are on `feature/<id>` and that bean is completed or scrapped. The worktree
    outlived its bean.
 3. A feature bean is in progress and no `feature/<id>` branch exists.
 
-`/adjudant status` names which one. The glyph goes when the repo is back on the
+`/adjudant status` names which one. The colour goes when the repo is back on the
 rule.
 
 Glyphs in the work-items slot, when beans owns the repo:
