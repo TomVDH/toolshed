@@ -1,11 +1,11 @@
 ---
 # toolshed-3og7
 title: 'Board visual polish: priority icons, scrolling, cards, detail view, brand animation'
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-09-12T08:16:07Z
-updated_at: 2026-09-12T08:30:55Z
+updated_at: 2026-09-12T18:41:04Z
 parent: toolshed-e4y3
 ---
 
