@@ -50,13 +50,42 @@ canary_report() {
   [ -f "$state" ] || return 0
   python3 - "$state" <<'CANARY_PY' 2>/dev/null || true
 import json, sys
+SWAN = {
+    "GRAMERCY": "great thanks, from Old French grand merci",
+    "QUINCUNX": "five points in a cross — four corners and a centre",
+    "SPANDREL": "the triangular space an arch leaves behind",
+    "COLOPHON": "the last page of a book, the finishing touch",
+    "TREBUCHET": "a counterweight that throws stones at walls",
+    "PALIMPSEST": "a page scraped clean, rewritten, traces still showing",
+    "ORRERY": "a clockwork model of the planets",
+    "CLEPSYDRA": "a water clock — Greek for water thief",
+    "CARTOUCHE": "the oval frame around a pharaoh's name",
+    "SCRIPTORIUM": "the room where the monks copied manuscripts",
+    "INCUNABULA": "books from the cradle of printing, before 1501",
+    "MARGINALIA": "notes in the margins",
+    "PORTCULLIS": "the sliding gate — porte coulisse",
+    "BARBICAN": "the outer gatehouse of a castle",
+    "ASTROLABE": "star-taker, for measuring the sky",
+    "THEODOLITE": "the angle-measuring instrument surveyors carry",
+    "VELLUM": "calfskin stretched into a page",
+    "FIRKIN": "a quarter-barrel, from the Dutch for fourth",
+    "GAMBREL": "a roof with two slopes per side, the lower one steep",
+    "SALTIRE": "the X-shaped cross on Scotland's flag",
+    "ZEUGMA": "one word governing two senses at once",
+    "MANTICORE": "man-eater — human head, lion body, scorpion tail",
+}
 try:
     s = json.load(open(sys.argv[1]))
 except Exception:
     raise SystemExit(0)
 misses, turns = int(s.get("misses", 0)), int(s.get("turns", 0))
-if misses:
-    print(f"[adjudant] Canary: {misses}/{turns} missed. Wrap up.")
+word = s.get("word", "")
+if misses and turns > 0:
+    if misses / turns > 0.5 and word in SWAN:
+        print(f"[adjudant] Canary: {misses}/{turns} missed. "
+              f"☠ {SWAN[word]}.")
+    else:
+        print(f"[adjudant] Canary: {misses}/{turns} missed. Wrap up.")
 CANARY_PY
 }
 
